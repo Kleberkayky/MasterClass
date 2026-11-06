@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Class - Painel Principal</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0a171e url('imagem3.jpg') no-repeat center center fixed;
+            background-size: cover;
+            position: relative;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(90, 200, 250, 0.25) 0%, rgba(23, 185, 120, 0) 70%);
+            top: -150px;
+            left: -100px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .dashboard-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1350px;
+            height: 85vh;
+            max-height: 750px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .glass-panel {
+            background: rgba(175, 175, 175, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-side {
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .panel-center {
+            flex: 2.2;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h3 {
+            color: #ffffff;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            letter-spacing: -0.3px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+        }
+
+        .menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .menu-item {
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #b96d17 0%, #b8174d 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.1s ease, border-color 0.1s ease;
+            display: block;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: #d46216;
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .menu-item.btn-logout {
+            background: linear-gradient(135deg, #b81717 0%, #750808 100%);
+        }
+
+        .content-sub-panel {
+            background: linear-gradient(135deg, #b96d17e8 0%, #b8174de3 100%);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 14px;
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .content-body {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+        }
+
+        .content-body code {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #72f2c6;
+            text-shadow: none;
+        }
+
+        .content-body pre {
+            background: rgba(5, 12, 16, 0.9);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #d4ffec;
+            text-shadow: none;
+        }
+
+        /* Estilização do Painel de Sessão Ativa / Perfil */
+        .user-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            object-fit: cover;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            transition: filter 0.2s ease;
+        }
+
+        .avatar-wrapper:hover .user-avatar {
+            filter: brightness(0.7);
+        }
+
+        .avatar-upload-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            text-shadow: 0 1px 3px #000;
+        }
+
+        .avatar-wrapper:hover .avatar-upload-icon {
+            opacity: 1;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            margin-top: 4px;
+        }
+
+        .role-Aluno { background: #088395; color: #fff; }
+        .role-Professor { background: #b96d17; color: #fff; }
+        .role-Administrador { background: #b8174d; color: #fff; }
+
+        .edit-name-group {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .edit-name-input {
+            width: 100%;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .btn-save-name {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: #17b978;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        #profileMsg {
+            font-size: 0.75rem;
+            margin-top: 6px;
+            display: none;
+            color: #d4ffec;
+            text-shadow: 0 1px 2px #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <!-- 1. Menu Principal Adaptativo -->
+        <div class="glass-panel panel-side">
+            <h3>Menu Master Class</h3>
+            <ul class="menu-list" id="mainMenu">
+                <li><a class="menu-item active" data-page="home"> Início</a></li>
+                <li><a class="menu-item" data-page="zod_concept"> Validação com Zod</a></li>
+                <li><a class="menu-item" data-page="crypto_concept"> Criptografia (Bcrypt)</a></li>
+                <li><a class="menu-item" data-page="middleware_concept"> Middleware de Permissão</a></li>
+            </ul>
+        </div>
+
+        <!-- 2. Painel Central com Sub-Painel de Alta Opacidade -->
+        <div class="glass-panel panel-center">
+            <h3 id="centerTitle">Painel de Controle</h3>
+            <div class="content-sub-panel">
+                <div class="content-body" id="centerContent">
+                    <p>Carregando dados da sua conta...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Perfil do Usuário Autenticado (Com Upload e Alteração de Nome) -->
+        <div class="glass-panel panel-side">
+            <h3>Sessão Ativa</h3>
+            <div class="user-card">
+                <!-- Upload de Foto de Perfil -->
+                <div class="avatar-wrapper" id="avatarClickArea" title="Clique para trocar sua foto de perfil">
+                    <img src="imagem4.jpeg" alt="Foto do Usuário" class="user-avatar" id="userAvatar">
+                    <span class="avatar-upload-icon">📷 Alterar</span>
+                </div>
+                <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
+
+                <div style="width: 100%;">
+                    <!-- Campo de Alteração de Nome -->
+                    <div id="nameDisplayArea" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <span id="userName" style="color:#fff; font-weight:700; font-size:1rem; text-shadow: 0 1px 3px rgba(0,0,0,0.6);">-</span>
+                        <span id="btnEditName" style="cursor:pointer; font-size:0.8rem; color:#72f2c6;" title="Editar nome">✏️</span>
+                    </div>
+
+                    <div id="nameEditForm" class="edit-name-group" style="display: none;">
+                        <input type="text" id="inputNewName" class="edit-name-input" placeholder="Novo nome">
+                        <button id="btnSaveName" class="btn-save-name">Salvar</button>
+                    </div>
+
+                    <div id="userEmail" style="color:rgba(255,255,255,0.85); font-size:0.8rem; margin-top:4px; text-shadow: 0 1px 3px rgba(0,0,0,0.6);">-</div>
+                    <span id="userRoleBadge" class="role-badge">-</span>
+                    <div id="profileMsg"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const storedUser = localStorage.getItem('masterclass_user');
+        
+        if (!storedUser) {
+            window.location.href = 'index.html';
+        }
+
+        let user = JSON.parse(storedUser);
+
+        function updateProfileUI() {
+            document.getElementById('userName').innerText = user.name;
+            document.getElementById('userEmail').innerText = user.email;
+            
+            if (user.avatar) {
+                document.getElementById('userAvatar').src = user.avatar;
+            }
+
+            const badge = document.getElementById('userRoleBadge');
+            badge.innerText = user.role;
+            badge.className = `role-badge role-${user.role}`;
+        }
+
+        updateProfileUI();
+
+        // -------------------------------------------------------------
+        // LÓGICA DE UPLOAD DA FOTO DE PERFIL
+        // -------------------------------------------------------------
+        const avatarClickArea = document.getElementById('avatarClickArea');
+        const avatarFileInput = document.getElementById('avatarFileInput');
+
+        avatarClickArea.addEventListener('click', () => {
+            avatarFileInput.click();
+        });
+
+        avatarFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64Image = event.target.result;
+
+                try {
+                    const response = await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user.email, avatar: base64Image })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        user.avatar = base64Image;
+                        localStorage.setItem('masterclass_user', JSON.stringify(user));
+                        updateProfileUI();
+                        showProfileMsg('Foto atualizada!');
+                    }
+                } catch (err) {
+                    console.error("Erro ao salvar foto:", err);
+                }
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        // -------------------------------------------------------------
+        // LÓGICA DE EDITAÇÃO DO NOME DE USUÁRIO
+        // -------------------------------------------------------------
+        const nameDisplayArea = document.getElementById('nameDisplayArea');
+        const nameEditForm = document.getElementById('nameEditForm');
+        const btnEditName = document.getElementById('btnEditName');
+        const inputNewName = document.getElementById('inputNewName');
+        const btnSaveName = document.getElementById('btnSaveName');
+
+        btnEditName.addEventListener('click', () => {
+            inputNewName.value = user.name;
+            nameDisplayArea.style.display = 'none';
+            nameEditForm.style.display = 'flex';
+        });
+
+        btnSaveName.addEventListener('click', async () => {
+            const newName = inputNewName.value.trim();
+            if (!newName) return;
+
+            try {
+                const response = await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email, name: newName })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    user.name = data.user.name;
+                    localStorage.setItem('masterclass_user', JSON.stringify(user));
+                    updateProfileUI();
+                    nameEditForm.style.display = 'none';
+                    nameDisplayArea.style.display = 'flex';
+                    showProfileMsg('Nome atualizado!');
+                }
+            } catch (err) {
+                console.error("Erro ao salvar nome:", err);
+            }
+        });
+
+        function showProfileMsg(txt) {
+            const msg = document.getElementById('profileMsg');
+            msg.innerText = txt;
+            msg.style.display = 'block';
+            setTimeout(() => { msg.style.display = 'none'; }, 2000);
+        }
+
+        // -------------------------------------------------------------
+        // PÁGINAS COMPARTILHADAS (ZOD, CRYPTO E MIDDLEWARE)
+        // -------------------------------------------------------------
+        const mainMenu = document.getElementById('mainMenu');
+        const centerTitle = document.getElementById('centerTitle');
+        const centerContent = document.getElementById('centerContent');
+
+        const sharedPages = {
+            zod_concept: {
+                title: "Conceito & Aplicação da Validação com Zod",
+                content: `
+                    <p><strong>O que é o Zod?</strong><br>
+                    O <strong>Zod</strong> é uma biblioteca de validação e declaração de esquemas focada em <em>TypeScript/JavaScript</em>. Ele permite definir a "forma" exata que os dados devem ter antes de serem processados pela aplicação.</p>
+
+                    <p><strong>Como foi implementado neste projeto (<code>server.js</code>):</strong></p>
+                    <pre>const registerSchema = z.object({
+  email: z.string().email({ message: 'Insira um e-mail válido.' }),
+  role: z.enum(['Aluno', 'Professor', 'Administrador']),
+  password: z.string().min(8).regex(passwordRegex)
+});</pre>
+                `
+            },
+            crypto_concept: {
+                title: "Conceito & Aplicação da Criptografia (Bcrypt)",
+                content: `
+                    <p><strong>O que é o Bcrypt?</strong><br>
+                    O <strong>Bcrypt</strong> é um algoritmo de <em>hashing</em> unidirecional projetado para proteção de credenciais. Ao contrário de uma criptografia tradicional, um <em>hash</em> não pode ser "descriptografado".</p>
+
+                    <p><strong>Como foi implementado neste projeto (<code>users.json</code> & <code>server.js</code>):</strong></p>
+                    <pre>const passwordHash = await bcrypt.hash(password, 10);</pre>
+                `
+            },
+            middleware_concept: {
+                title: "Funcionamento do Middleware de Permissão",
+                content: `
+                    <p><strong>O que é este Middleware?</strong><br>
+                    O middleware <code>verificarPermissao(...perfisPermitidos)</code> é uma função intermediária do Express que bloqueia ou libera rotas baseando-se no perfil do usuário (<code>Aluno</code>, <code>Professor</code>, <code>Administrador</code>).</p>
+
+                    <p><strong>Como foi construído no <code>server.js</code>:</strong></p>
+                    <pre>function verificarPermissao(...perfisPermitidos) {
+  return (req, res, next) => {
+    const perfilUsuario = req.headers['x-user-role'];
+
+    if (!perfisPermitidos.includes(perfilUsuario)) {
+      return res.status(403).json({ message: 'Acesso negado' });
+    }
+    next();
+  };
+}</pre>
+
+                    <p><strong>Como aplicar nas rotas do Express:</strong></p>
+                    <pre>// Apenas Administradores podem acessar esta rota:
+app.get('/api/admin/relatorio', verificarPermissao('Administrador'), handler);
+
+// Professores e Administradores podem acessar:
+app.get('/api/professor/pauta', verificarPermissao('Professor', 'Administrador'), handler);</pre>
+                `
+            }
+        };
+
+        const roleViews = {
+            Aluno: {
+                menu: `
+                    <li><a class="menu-item" data-page="courses"> Meus Cursos</a></li>
+                    <li><a class="menu-item" data-page="grades"> Notas e Trabalhos</a></li>
+                `,
+                pages: {
+                    home: {
+                        title: `Portal do Aluno - Bem-vindo(a), ${user.name}!`,
+                        content: `<p>Acesse suas disciplinas, materiais de aula e acompanhe seu rendimento acadêmico na Master Class.</p>`
+                    },
+                    courses: {
+                        title: "Cursos Matriculados",
+                        content: `<p>• Desenvolvimento Web Full Stack<br>• Engenharia de Software e Qualidade<br>• UI/UX Design Neo Frutiger Glass</p>`
+                    },
+                    grades: {
+                        title: "Boletim Acadêmico",
+                        content: `<p>• Programação Web: <strong>9.5</strong><br>• Arquitetura de Software: <strong>10.0</strong></p>`
+                    }
+                }
+            },
+            Professor: {
+                menu: `
+                    <li><a class="menu-item" data-page="classes"> Minhas Turmas</a></li>
+                    <li><a class="menu-item" data-page="assessments"> Lançar Notas</a></li>
+                `,
+                pages: {
+                    home: {
+                        title: `Portal do Professor - Prof. ${user.name}`,
+                        content: `<p>Gerencie plano de aula, diários de classe e avaliações da Master Class.</p>`
+                    },
+                    classes: {
+                        title: "Turmas Ativas",
+                        content: `<p>• Turma A - Engenharia de Software<br>• Turma B - Design de Interfaces</p>`
+                    },
+                    assessments: {
+                        title: "Lançamento de Avaliações",
+                        content: `<p>Selecione a turma e atribua notas aos trabalhos e exames dos alunos.</p>`
+                    }
+                }
+            },
+            Administrador: {
+                menu: `
+                    <li><a class="menu-item" data-page="users"> Gerenciar Usuários</a></li>
+                    <li><a class="menu-item" data-page="system"> Status do Sistema</a></li>
+                `,
+                pages: {
+                    home: {
+                        title: `Painel Administrativo Master Class`,
+                        content: `<p>Você está autenticado como <strong>Administrador Master</strong>. Possui controle total de cadastro de usuários e monitoramento das diretrizes de segurança da plataforma.</p>`
+                    },
+                    users: {
+                        title: "Gestão de Usuários Registrados",
+                        content: `<p>Todos os dados de usuários cadastrados são persistidos em <code>users.json</code> com senhas devidamente protegidas por hash Bcrypt.</p>`
+                    },
+                    system: {
+                        title: "Status e Arquitetura do Sistema",
+                        content: `<p>• <strong>Validador de Schemas:</strong> Zod Engine<br>• <strong>Criptografia:</strong> Bcryptjs (10 rounds)<br>• <strong>Persistência:</strong> Arquivo JSON local<br>• <strong>Servidor:</strong> Express.js Node.js Server</p>`
+                    }
+                }
+            }
+        };
+
+        const currentRoleView = roleViews[user.role] || roleViews.Aluno;
+        const allPages = { ...currentRoleView.pages, ...sharedPages };
+
+        mainMenu.insertAdjacentHTML('beforeend', currentRoleView.menu);
+        mainMenu.insertAdjacentHTML('beforeend', `
+            <li><a href="#" id="logoutBtn" class="menu-item btn-logout"> Sair da Conta</a></li>
+        `);
+
+        centerTitle.innerText = allPages.home.title;
+        centerContent.innerHTML = allPages.home.content;
+
+        mainMenu.addEventListener('click', (e) => {
+            const item = e.target.closest('.menu-item[data-page]');
+            if (!item) return;
+
+            e.preventDefault();
+            const pageKey = item.getAttribute('data-page');
+            const pageData = allPages[pageKey];
+
+            if (!pageData) return;
+
+            const currentActive = mainMenu.querySelector('.menu-item.active');
+            if (currentActive) currentActive.classList.remove('active');
+            item.classList.add('active');
+
+            centerTitle.innerText = pageData.title;
+            centerContent.innerHTML = pageData.content;
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('masterclass_user');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
