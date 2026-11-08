@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # BANCO-DE-DADOS-2
 
 Este repositório contém o código-fonte da aplicação web desenvolvida para a disciplina de Banco de Dados 2.
@@ -76,3 +77,6 @@ node server.js
 - **Lucide React**: Biblioteca de ícones interativos.
 - **Tailwind CSS**: Estilização e layout responsivo.
 - **React Router**: Gerenciamento de rotas e navegação.
+=======
+# BANCO-DE-DADOS-2
+>>>>>>> 81a2e70defddca623fd17c03ac1523d319381008
