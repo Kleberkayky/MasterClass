@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Class - Acesso e Cadastro</title>
+    <link rel="icon" type="image/png" href="imagem8.png">
+    <style>
+        :root {
+            --bg-color: #0a171e;
+            --bg-image: url('imagem2.jpg');
+            --glass-bg: rgba(175, 175, 175, 0.22); /* Opacidade baixa leve estilo vidro */
+            --glass-border: rgba(255, 255, 255, 0.25);
+            --glass-border-top: rgba(255, 255, 255, 0.5);
+            --btn-grad-top: rgba(255, 255, 255, 0.35);
+            --btn-grad-bottom: rgba(255, 255, 255, 0.014);
+            --btn-primary-bg: linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #dc2626 100%);
+            --btn-primary-shadow: rgba(234, 88, 12, 0.35);
+            --text-main: #ffffff;
+            --accent-glow: rgba(245, 158, 11, 0.2);
+            /* Padrão DESATIVADO (Com Blur ativo para placas de vídeo/GPUs modernas) */
+            --blur-effect: blur(12px);
+        }
+
+        body.dark-theme {
+            --bg-color: #050914;
+            --bg-image: url('imagem6.webp');
+            --glass-bg: rgba(15, 23, 42, 0.65);
+            --glass-border: rgba(147, 51, 234, 0.35);
+            --glass-border-top: rgba(168, 85, 247, 0.6);
+            --btn-primary-bg: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+            --btn-primary-shadow: rgba(99, 102, 241, 0.35);
+            --accent-glow: rgba(99, 102, 241, 0.2);
+        }
+
+        /* Quando o Modo Legado está ATIVADO: Remove o blur para rodar leve via CPU a 60 FPS */
+        body.legacy-mode {
+            --blur-effect: none !important;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-color) var(--bg-image) no-repeat center center fixed;
+            background-size: cover;
+            overflow-y: auto;
+            position: relative;
+            padding: 20px 0;
+            color: var(--text-main);
+            backface-visibility: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, rgba(0, 0, 0, 0) 70%);
+            top: -100px;
+            left: -100px;
+            border-radius: 50%;
+            pointer-events: none;
+            will-change: auto;
+        }
+
+        .theme-toggle-top {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-top: 1px solid var(--glass-border-top);
+            border-radius: 30px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            backdrop-filter: var(--blur-effect);
+            -webkit-backdrop-filter: var(--blur-effect);
+        }
+
+        .theme-toggle-top span {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-top: 1px solid var(--glass-border-top);
+            border-radius: 28px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            padding: 32px 40px;
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            z-index: 10;
+            backdrop-filter: var(--blur-effect);
+            -webkit-backdrop-filter: var(--blur-effect);
+        }
+
+        .tooltip-glass {
+            position: fixed;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 600;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+            transform: translate3d(0, 0, 0);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+        }
+        .tooltip-glass.visible {
+            opacity: 1;
+        }
+
+        .school-photo-container {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .school-photo {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 6px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.95);
+            text-align: center;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.22);
+            font-size: 0.95rem;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+            outline: none;
+        }
+
+        select option {
+            background: #0a171e;
+            color: #ffffff;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        input:focus, select:focus {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .field-error {
+            color: #ffb3ba;
+            font-size: 0.8rem;
+            margin-top: 6px;
+            font-weight: 500;
+            display: none;
+        }
+
+        input.error-input, select.error-input {
+            border-color: #ff4d6d !important;
+            background: rgba(255, 77, 109, 0.2) !important;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-top: 1px solid rgba(255, 255, 255, 0.8);
+            background: 
+                linear-gradient(to bottom, var(--btn-grad-top) 0%, var(--btn-grad-bottom) 50%),
+                var(--btn-primary-bg);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px var(--btn-primary-shadow);
+            transition: filter 0.1s ease;
+        }
+
+        button:hover {
+            filter: brightness(1.1);
+        }
+
+        .toggle-mode {
+            margin-top: 18px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 0.85rem;
+        }
+
+        .toggle-mode a {
+            color: #ffffff;
+            font-weight: 700;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        #globalMessage {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            text-align: center;
+            display: none;
+        }
+
+        .success {
+            background: rgba(23, 185, 120, 0.35) !important;
+            color: #d4ffec;
+        }
+
+        .error {
+            background: rgba(255, 77, 109, 0.3) !important;
+            color: #ffd1d6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tooltip-glass" id="globalTooltip"></div>
+
+    <div class="theme-toggle-top has-tooltip" data-tooltip="Alternar Tema Claro/Escuro" id="themeToggleBtn">
+        <span id="themeIcon">🌙</span>
+        <span id="themeLabel">Modo Escuro</span>
+    </div>
+
+    <div class="glass-card">
+        <div class="school-photo-container">
+            <img src="imagem5.jpeg" alt="Escola Master Class" class="school-photo has-tooltip" data-tooltip="Escola Master Class" id="schoolImg" onerror="this.src='https://via.placeholder.com/90?text=Escola'">
+        </div>
+
+        <h2 id="formTitle">Master Class</h2>
+        <div class="subtitle" id="formSubtitle">Acesse sua conta educacional</div>
+
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="loginEmail">E-mail</label>
+                <input type="email" id="loginEmail" placeholder="seu.email@exemplo.com" required>
+            </div>
+
+            <div class="input-group">
+                <label for="loginPassword">Senha</label>
+                <input type="password" id="loginPassword" placeholder="Sua senha" required>
+            </div>
+
+            <button type="submit">Entrar na Plataforma</button>
+        </form>
+
+        <form id="registerForm" style="display: none;">
+            <div class="input-group">
+                <label for="name">Nome Completo</label>
+                <input type="text" id="name" placeholder="Ex: João da Silva">
+                <div id="error-name" class="field-error"></div>
+            </div>
+
+            <div class="input-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="seu.email@exemplo.com">
+                <div id="error-email" class="field-error"></div>
+            </div>
+
+            <div class="input-group">
+                <label for="confirmEmail">Confirmar E-mail</label>
+                <input type="email" id="confirmEmail" placeholder="Repita o e-mail">
+                <div id="error-confirmEmail" class="field-error"></div>
+            </div>
+
+            <div class="input-group">
+                <label for="role">Tipo de Usuário</label>
+                <select id="role">
+                    <option value="Aluno">Aluno</option>
+                    <option value="Professor">Professor</option>
+                    <option value="Administrador">Administrador</option>
+                </select>
+                <div id="error-role" class="field-error"></div>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" placeholder="Sua senha segura">
+                <div id="error-password" class="field-error"></div>
+            </div>
+
+            <div class="input-group">
+                <label for="confirmPassword">Confirmar Senha</label>
+                <input type="password" id="confirmPassword" placeholder="Repita a senha">
+                <div id="error-confirmPassword" class="field-error"></div>
+            </div>
+
+            <button type="submit">Finalizar Cadastro</button>
+        </form>
+
+        <div id="globalMessage"></div>
+
+        <div class="toggle-mode">
+            <span id="toggleText">Você não tem uma conta?</span> 
+            <a id="toggleBtn">Cadastre-se</a>
+        </div>
+    </div>
+
+    <script>
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeIcon = document.getElementById('themeIcon');
+        const themeLabel = document.getElementById('themeLabel');
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                document.body.classList.add('dark-theme');
+                themeIcon.innerText = '☀️';
+                themeLabel.innerText = 'Modo Claro';
+                localStorage.setItem('masterclass_theme', 'dark');
+            } else {
+                document.body.classList.remove('dark-theme');
+                themeIcon.innerText = '🌙';
+                themeLabel.innerText = 'Modo Escuro';
+                localStorage.setItem('masterclass_theme', 'light');
+            }
+        }
+
+        const savedTheme = localStorage.getItem('masterclass_theme');
+        applyTheme(savedTheme === 'dark');
+
+        // Carrega o estado do modo legado configurado na página principal
+        if (localStorage.getItem('masterclass_legacy') === 'true') {
+            document.body.classList.add('legacy-mode');
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = !document.body.classList.contains('dark-theme');
+            applyTheme(isDark);
+        });
+
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const formTitle = document.getElementById('formTitle');
+        const formSubtitle = document.getElementById('formSubtitle');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const toggleText = document.getElementById('toggleText');
+        const globalMessage = document.getElementById('globalMessage');
+
+        let isLoginMode = true;
+
+        const tooltip = document.getElementById('globalTooltip');
+        document.addEventListener('mouseover', (e) => {
+            const target = e.target.closest('.has-tooltip');
+            if (target) {
+                const text = target.getAttribute('data-tooltip');
+                if (text) {
+                    tooltip.innerText = text;
+                    tooltip.classList.add('visible');
+                }
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (tooltip.classList.contains('visible')) {
+                tooltip.style.left = `${e.clientX + 12}px`;
+                tooltip.style.top = `${e.clientY + 12}px`;
+            }
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            const target = e.target.closest('.has-tooltip');
+            if (target) {
+                tooltip.classList.remove('visible');
+            }
+        });
+
+        toggleBtn.addEventListener('click', () => {
+            isLoginMode = !isLoginMode;
+            globalMessage.style.display = 'none';
+
+            if (isLoginMode) {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                formTitle.innerText = 'Master Class';
+                formSubtitle.innerText = 'Acesse sua conta educacional';
+                toggleText.innerText = 'Você não tem uma conta?';
+                toggleBtn.innerText = 'Cadastre-se';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                formTitle.innerText = 'Criar Conta';
+                formSubtitle.innerText = 'Junte-se à Master Class';
+                toggleText.innerText = 'Já possui uma conta?';
+                toggleBtn.innerText = 'Fazer Login';
+            }
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            globalMessage.style.display = 'none';
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('masterclass_user', JSON.stringify(data.user));
+                    
+                    globalMessage.style.display = 'block';
+                    globalMessage.className = 'success';
+                    globalMessage.innerText = `Bem-vindo(a), ${data.user.name}! Redirecionando...`;
+
+                    setTimeout(() => {
+                        window.location.href = 'home_page.html';
+                    }, 800);
+                } else {
+                    globalMessage.style.display = 'block';
+                    globalMessage.className = 'error';
+                    globalMessage.innerText = data.message || 'Erro ao realizar login.';
+                }
+            } catch (err) {
+                console.error(err);
+                globalMessage.style.display = 'block';
+                globalMessage.className = 'error';
+                globalMessage.innerText = 'Erro ao conectar ao servidor.';
+            }
+        });
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            document.querySelectorAll('.field-error').forEach(el => {
+                el.style.display = 'none';
+                el.innerText = '';
+            });
+            document.querySelectorAll('input, select').forEach(el => {
+                el.classList.remove('error-input');
+            });
+            globalMessage.style.display = 'none';
+
+            const payload = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                confirmEmail: document.getElementById('confirmEmail').value,
+                role: document.getElementById('role').value,
+                password: document.getElementById('password').value,
+                confirmPassword: document.getElementById('confirmPassword').value
+            };
+
+            try {
+                const submitBtn = registerForm.querySelector('button[type="submit"]');
+                submitBtn.innerText = 'Cadastrando...';
+                submitBtn.disabled = true;
+
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                
+                submitBtn.innerText = 'Finalizar Cadastro';
+                submitBtn.disabled = false;
+
+                if (response.ok) {
+                    globalMessage.style.display = 'block';
+                    globalMessage.className = 'success';
+                    globalMessage.innerText = data.message || 'Cadastro realizado com sucesso!';
+                    registerForm.reset();
+
+                    setTimeout(() => {
+                        toggleBtn.click();
+                    }, 1200);
+                } else {
+                    if (data.issues && Array.isArray(data.issues)) {
+                        data.issues.forEach(issue => {
+                            const fieldName = issue.path[0];
+                            const errorDiv = document.getElementById(`error-${fieldName}`);
+                            const inputField = document.getElementById(fieldName);
+
+                            if (errorDiv) {
+                                errorDiv.innerText = `* ${issue.message}`;
+                                errorDiv.style.display = 'block';
+                            }
+                            if (inputField) {
+                                inputField.classList.add('error-input');
+                            }
+                        });
+                    }
+                }
+            } catch (err) {
+                const submitBtn = registerForm.querySelector('button[type="submit"]');
+                submitBtn.innerText = 'Finalizar Cadastro';
+                submitBtn.disabled = false;
+
+                globalMessage.style.display = 'block';
+                globalMessage.className = 'error';
+                globalMessage.innerText = 'Erro ao conectar ao servidor.';
+            }
+        });
+    </script>
+</body>
+</html>

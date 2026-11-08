@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Class - Painel Principal</title>
+    <link rel="icon" type="image/png" href="imagem8.png">
+    <style>
+        :root {
+            --bg-color: #0a171e;
+            --bg-image: url('imagem3.jpg');
+            --glass-bg: rgba(175, 175, 175, 0.22);
+            --glass-border: rgba(255, 255, 255, 0.25);
+            --glass-border-top: rgba(255, 255, 255, 0.5);
+            --btn-primary-bg: linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #dc2626 100%);
+            --btn-primary-shadow: rgba(234, 88, 12, 0.35);
+            --text-main: #ffffff;
+            --subpanel-bg: linear-gradient(135deg, rgba(245, 158, 11, 0.85) 0%, rgba(220, 38, 38, 0.85) 100%);
+            /* Padrão DESATIVADO (Com Blur ativo) */
+            --blur-effect: blur(12px);
+        }
+
+        body.dark-theme {
+            --bg-color: #050914;
+            --bg-image: url('imagem7.jpg');
+            --glass-bg: rgba(15, 23, 42, 0.65);
+            --glass-border: rgba(147, 51, 234, 0.35);
+            --glass-border-top: rgba(168, 85, 247, 0.6);
+            --btn-primary-bg: linear-gradient(135deg, #1e40af 0%, #4c1d95 50%, #6b21a8 100%);
+            --btn-primary-shadow: rgba(76, 29, 149, 0.4);
+            --subpanel-bg: linear-gradient(135deg, rgba(30, 58, 138, 0.85) 0%, rgba(88, 28, 135, 0.85) 100%);
+        }
+
+        /* Quando o Modo Legado está ATIVADO: Remove o blur para rodar leve via CPU (idêntico ao visual limpo sem blur) */
+        body.legacy-mode {
+            --blur-effect: none !important;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            background: var(--bg-color) var(--bg-image) no-repeat center center fixed;
+            background-size: cover;
+            position: relative;
+            padding: 20px;
+            overflow-x: hidden;
+            color: var(--text-main);
+            backface-visibility: hidden;
+        }
+
+        .tooltip-glass {
+            position: fixed;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 600;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+        }
+        .tooltip-glass.visible {
+            opacity: 1;
+        }
+
+        .dashboard-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1450px;
+            height: calc(100vh - 40px);
+            margin: auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-top: 1px solid var(--glass-border-top);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            height: 100%;
+            backdrop-filter: var(--blur-effect);
+            -webkit-backdrop-filter: var(--blur-effect);
+        }
+
+        /* Barra Lateral Minimizada por Padrão (.collapsed) */
+        .sidebar {
+            width: 86px;
+            padding: 24px 12px;
+            transition: width 0.25s ease, padding 0.25s ease;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .sidebar:not(.collapsed) {
+            width: 280px;
+            padding: 24px;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sidebar:not(.collapsed) .sidebar-brand {
+            justify-content: flex-start;
+        }
+
+        .school-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            flex-shrink: 0;
+        }
+
+        .sidebar-brand-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            white-space: nowrap;
+            display: none;
+        }
+
+        .sidebar:not(.collapsed) .sidebar-brand-title {
+            display: inline;
+        }
+
+        .menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .glass-btn {
+            width: 100%;
+            padding: 14px 0;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-top: 1px solid rgba(255, 255, 255, 0.8);
+            background: var(--btn-primary-bg);
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px var(--btn-primary-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: filter 0.1s ease;
+        }
+
+        .sidebar:not(.collapsed) .glass-btn {
+            padding: 14px 18px;
+            justify-content: flex-start;
+        }
+
+        .glass-btn:hover, .glass-btn.active {
+            filter: brightness(1.1);
+        }
+
+        .glass-btn .btn-icon {
+            font-size: 1.2rem;
+            min-width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .profile-btn-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid #fff;
+            display: block;
+        }
+
+        .glass-btn .btn-text {
+            display: none;
+        }
+
+        .sidebar:not(.collapsed) .glass-btn .btn-text {
+            display: inline;
+        }
+
+        .glass-btn.btn-logout {
+            margin-top: auto;
+            background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+        }
+
+        .panel-center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .panel-center-header {
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 12px;
+        }
+
+        h3 {
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .content-sub-panel {
+            background: var(--subpanel-bg);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 16px;
+            padding: 24px;
+            flex-grow: 1;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+            backdrop-filter: var(--blur-effect);
+            -webkit-backdrop-filter: var(--blur-effect);
+        }
+
+        .content-body {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .topic-card {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            transition: background 0.15s ease;
+        }
+
+        .topic-card:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .modules-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .module-box {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .module-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 6px;
+            color: #fef3c7;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            width: fit-content;
+            margin-bottom: 12px;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .user-profile-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 16px;
+            max-width: 450px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+
+        .avatar-upload-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            background: rgba(0,0,0,0.6);
+            padding: 4px 10px;
+            border-radius: 12px;
+            transition: opacity 0.15s ease;
+        }
+
+        .avatar-wrapper:hover .avatar-upload-icon {
+            opacity: 1;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+
+        .role-Aluno { background: #088395; color: #fff; }
+        .role-Professor { background: #b96d17; color: #fff; }
+        .role-Administrador { background: #b8174d; color: #fff; }
+
+        .edit-name-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .edit-name-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .btn-save-name {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: var(--btn-primary-bg);
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        .course-card {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .course-card:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .course-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .course-desc {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            margin-top: 10px;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.3);
+            transition: .2s;
+            border-radius: 26px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #6366f1;
+        }
+
+        input:checked + .slider:before {
+            transform: translate3d(24px, 0, 0);
+        }
+
+        .warning-box {
+            background: rgba(234, 88, 12, 0.25);
+            border: 1px solid rgba(234, 88, 12, 0.6);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #fef3c7;
+            margin-top: 10px;
+        }
+
+        #profileMsg, #toastMsg {
+            font-size: 0.85rem;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+            background: rgba(245, 158, 11, 0.4);
+            color: #fef3c7;
+            border: 1px solid rgba(245, 158, 11, 0.6);
+            text-align: center;
+        }
+
+        @media (max-width: 850px) {
+            body {
+                height: auto;
+                overflow-y: auto;
+            }
+            .dashboard-container {
+                flex-direction: column;
+                height: auto;
+            }
+            .sidebar, .sidebar:not(.collapsed) {
+                width: 100% !important;
+                height: auto;
+                padding: 16px;
+            }
+            .menu-list {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .glass-btn {
+                width: auto;
+                padding: 14px 18px;
+                justify-content: flex-start;
+            }
+            .glass-btn .btn-text {
+                display: inline;
+            }
+            .glass-btn.btn-logout {
+                margin-top: 0;
+            }
+            .sidebar-brand-title {
+                display: inline;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tooltip-glass" id="globalTooltip"></div>
+
+    <div class="dashboard-container">
+        
+        <aside class="glass-panel sidebar collapsed" id="sidebar">
+            <div class="sidebar-brand has-tooltip" data-tooltip="Expandir/Minimizar Barra Lateral" id="sidebarBrandToggle">
+                <img src="imagem5.jpeg" alt="Logo Escola Master Class" class="school-logo has-tooltip" data-tooltip="Escola Master Class" id="schoolImg" onerror="this.src='https://via.placeholder.com/48?text=Escola'">
+                <span class="sidebar-brand-title">Master Class</span>
+            </div>
+
+            <ul class="menu-list" id="mainMenu">
+                <li>
+                    <a class="glass-btn has-tooltip active" data-tooltip="Meu Curso" data-page="my_courses">
+                        <span class="btn-icon">📚</span>
+                        <span class="btn-text">Meu Curso</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Minhas Notas" data-page="my_grades">
+                        <span class="btn-icon">📝</span>
+                        <span class="btn-text">Minhas Notas</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Meu Perfil" data-page="my_profile">
+                        <span class="btn-icon">
+                            <img src="" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar">
+                        </span>
+                        <span class="btn-text">Meu Perfil</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings">
+                        <span class="btn-icon">⚙️</span>
+                        <span class="btn-text">Configurações</span>
+                    </a>
+                </li>
+            </ul>
+
+            <a href="#" id="logoutBtn" class="glass-btn btn-logout has-tooltip" data-tooltip="Sair da Conta">
+                <span class="btn-icon">🚪</span>
+                <span class="btn-text">Sair da Conta</span>
+            </a>
+        </aside>
+
+        <main class="glass-panel panel-center">
+            <div class="panel-center-header">
+                <h3 id="centerTitle">Meu Curso</h3>
+            </div>
+            
+            <div class="content-sub-panel">
+                <div id="toastMsg"></div>
+                <div class="content-body" id="centerContent">
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        const storedUser = localStorage.getItem('masterclass_user');
+        
+        if (!storedUser) {
+            window.location.href = 'index.html';
+        }
+
+        let user = JSON.parse(storedUser);
+
+        function updateNavAvatar() {
+            const avatarSrc = user.avatar || 'imagem4.jpeg';
+            document.getElementById('navProfileAvatar').src = avatarSrc;
+        }
+        updateNavAvatar();
+
+        const tooltip = document.getElementById('globalTooltip');
+        document.addEventListener('mouseover', (e) => {
+            const target = e.target.closest('.has-tooltip');
+            if (target) {
+                const text = target.getAttribute('data-tooltip');
+                if (text) {
+                    tooltip.innerText = text;
+                    tooltip.classList.add('visible');
+                }
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (tooltip.classList.contains('visible')) {
+                tooltip.style.left = `${e.clientX + 14}px`;
+                tooltip.style.top = `${e.clientY + 14}px`;
+            }
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            const target = e.target.closest('.has-tooltip');
+            if (target) {
+                tooltip.classList.remove('visible');
+            }
+        });
+
+        const sidebar = document.getElementById('sidebar');
+        const sidebarBrandToggle = document.getElementById('sidebarBrandToggle');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('collapsed');
+        }
+
+        sidebarBrandToggle.addEventListener('click', toggleSidebar);
+
+        const centerTitle = document.getElementById('centerTitle');
+        const centerContent = document.getElementById('centerContent');
+        const mainMenu = document.getElementById('mainMenu');
+
+        function showToast(txt) {
+            const toast = document.getElementById('toastMsg');
+            toast.innerText = txt;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2500);
+        }
+
+        const prog2Data = {
+            html: {
+                title: "🌐 HTML (Estruturação Web)",
+                modules: {
+                    intro: {
+                        name: "1. Introdução ao HTML",
+                        desc: "Aprenda a estruturar páginas web utilizando tags semânticas (<header>, <main>, <footer>), criando esqueletos limpos, acessíveis e organizados para os navegadores."
+                    },
+                    intermediate: {
+                        name: "2. Intermediário: Formulários e Tabelas",
+                        desc: "Domine a captação de dados de usuários com inputs avançados, validações nativas do HTML5 e a organização estruturada de tabelas."
+                    },
+                    advanced: {
+                        name: "3. Avançado: HTML Semântico Avançado e SEO",
+                        desc: "Aprofunde-se em boas práticas de acessibilidade (ARIA labels) e metatags para otimização de motores de busca (SEO)."
+                    }
+                }
+            },
+            css: {
+                title: "🎨 CSS (Estilização e Layouts)",
+                modules: {
+                    intro: {
+                        name: "1. Introdução ao CSS",
+                        desc: "Compreenda o conceito de seletores, herança de estilos, modelo de caixas (Box Model) e posicionamento básico de elementos."
+                    },
+                    intermediate: {
+                        name: "2. Intermediário: Flexbox e Grid",
+                        desc: "Construa layouts modernos e responsivos utilizando Flexbox para alinhamentos em eixo único e Grid para estruturas bidimensionais."
+                    },
+                    advanced: {
+                        name: "3. Avançado: Animações, Variáveis e Glassmorphic",
+                        desc: "Explore animações fluidas via CPU, variáveis customizadas (:root) e efeitos avançados de transparência e desfoque."
+                    }
+                }
+            },
+            js: {
+                title: "⚡ JavaScript / Node.js (Lógica e Servidor)",
+                modules: {
+                    intro: {
+                        name: "1. Introdução ao JavaScript",
+                        desc: "Estude variáveis, funções, estruturas condicionais e manipulação básica do DOM para interatividade."
+                    },
+                    intermediate: {
+                        name: "2. Intermediário: Assincronicidade e APIs",
+                        desc: "Compreenda requisições assíncronas (Fetch API, Promises, Async/Await) e introdução ao Node.js para backend."
+                    },
+                    advanced: {
+                        name: "3. Avançado: Express.js e Arquitetura MVC",
+                        desc: "Desenvolva servidores robustos utilizando Express.js, rotas modulares e manipulação de arquivos JSON."
+                    }
+                }
+            },
+            middleware: {
+                title: "🛡️ Middlewares (Interceptação e Controle)",
+                modules: {
+                    intro: {
+                        name: "1. Introdução a Middlewares",
+                        desc: "Entenda o conceito de funções intermediárias que interceptam requisições HTTP para injetar parâmetros."
+                    },
+                    intermediate: {
+                        name: "2. Intermediário: Autenticação e Sessões",
+                        desc: "Crie barreiras de segurança eficientes para verificar tokens de acesso (JWT) ou sessões ativas de usuários."
+                    },
+                    advanced: {
+                        name: "3. Avançado: Middlewares Dinâmicos e de Erros",
+                        desc: "Implemente tratamentos globais de exceção e controle de permissões baseado em papéis (RBAC)."
+                    }
+                }
+            },
+            crypto: {
+                title: "🔒 Criptografia (Segurança de Dados)",
+                modules: {
+                    intro: {
+                        name: "1. Introdução à Segurança de Senhas",
+                        desc: "Compreenda por que nunca devemos salvar senhas em texto plano e os riscos de vazamentos."
+                    },
+                    intermediate: {
+                        name: "2. Intermediário: Hashing com Bcrypt",
+                        desc: "Aprenda a aplicar o algoritmo Bcrypt com salt rounds adequados para transformar senhas em hashes seguros."
+                    },
+                    advanced: {
+                        name: "3. Avançado: Criptografia Simétrica e Assimétrica",
+                        desc: "Estude encriptação ponta a ponta, chaves públicas e privadas e assinaturas digitais."
+                    }
+                }
+            },
+            routes: {
+                title: "🛣️ Rotas (Gerenciamento de Endpoints)",
+                modules: {
+                    intro: {
+                        name: "1. Introdução ao Roteamento Web",
+                        desc: "Entenda como os servidores mapeiam URLs e métodos HTTP (GET, POST) para direcionar funcionalidades."
+                    },
+                    intermediate: {
+                        name: "2. Intermediário: Parâmetros e Query Strings",
+                        desc: "Aprenda a extrair dados enviados pelas URLs através de rotas dinâmicas (:id) e filtros."
+                    },
+                    advanced: {
+                        name: "3. Avançado: Router Modular em Express",
+                        desc: "Organize grandes aplicações dividindo as rotas em múltiplos arquivos utilizando express.Router()."
+                    }
+                }
+            }
+        };
+
+        function renderPage(pageKey, subParam = null) {
+            switch(pageKey) {
+                case 'my_courses':
+                    centerTitle.innerText = "Meu Curso";
+                    centerContent.innerHTML = `
+                        <p>Abaixo estão os cursos disponíveis em sua grade acadêmica:</p>
+                        <div class="courses-grid">
+                            <div class="course-card" id="prog2Card" style="border: 2px solid rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.3);">
+                                <div class="course-title">💻 Programação 2</div>
+                                <div class="course-desc">Clique para acessar os tópicos detalhados do curso e seus módulos didáticos.</div>
+                                <span style="font-size:0.8rem; background: rgba(245, 158, 11, 0.5); padding: 4px 8px; border-radius: 6px; width: fit-content;">Ativo</span>
+                            </div>
+
+                            <div class="course-card generic-course-btn">
+                                <div class="course-title">🎨 Design de Interfaces UI/UX</div>
+                                <div class="course-desc">Princípios de Glassmorphic e Neo Frutiger Design.</div>
+                                <span style="font-size:0.8rem; opacity: 0.8;">Brevemente</span>
+                            </div>
+
+                            <div class="course-card generic-course-btn">
+                                <div class="course-title">🗄️ Bancos de Dados Avançados</div>
+                                <div class="course-desc">Modelagem relacional e otimização de consultas SQL.</div>
+                                <span style="font-size:0.8rem; opacity: 0.8;">Brevemente</span>
+                            </div>
+                        </div>
+                    `;
+
+                    document.getElementById('prog2Card').addEventListener('click', () => {
+                        renderProg2Topics();
+                    });
+
+                    document.querySelectorAll('.generic-course-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            showToast("Em breve teremos mais cursos disponíveis para você!");
+                        });
+                    });
+                    break;
+
+                case 'my_grades':
+                    centerTitle.innerText = "Minhas Notas";
+                    centerContent.innerHTML = `
+                        <p>Consulte seu histórico de desempenho na disciplina de <strong>Programação 2</strong>:</p>
+                        <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3);">
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                                <span>Avaliação 1 (Validação Zod & Criptografia):</span>
+                                <strong>10.0</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                                <span>Avaliação 2 (Middlewares & Sessão):</span>
+                                <strong>9.5</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 8px;">
+                                <span>Média Parcial:</span>
+                                <strong style="color: #fef3c7;">9.75</strong>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'my_profile':
+                    centerTitle.innerText = "Meu Perfil - Sessão Ativa";
+                    centerContent.innerHTML = `
+                        <div class="user-profile-container">
+                            <div class="avatar-wrapper has-tooltip" data-tooltip="Clique para alterar foto" id="avatarClickArea">
+                                <img src="${user.avatar || 'imagem4.jpeg'}" alt="Foto de Perfil" class="user-avatar" id="userAvatar">
+                                <span class="avatar-upload-icon">📷 Alterar Foto</span>
+                            </div>
+                            <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
+
+                            <div style="width: 100%;">
+                                <div id="nameDisplayArea" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <h4 id="userName" style="font-size: 1.3rem; font-weight: 700;">${user.name}</h4>
+                                    <span id="btnEditName" class="has-tooltip" data-tooltip="Editar Nome" style="cursor:pointer; font-size:1rem;">✏️</span>
+                                </div>
+
+                                <div id="nameEditForm" class="edit-name-group" style="display: none;">
+                                    <input type="text" id="inputNewName" class="edit-name-input" placeholder="Digite o novo nome">
+                                    <button id="btnSaveName" class="btn-save-name">Salvar</button>
+                                </div>
+
+                                <div id="userEmail" style="opacity: 0.9; font-size:0.9rem; margin-top:6px;">${user.email}</div>
+                                <span id="userRoleBadge" class="role-badge role-${user.role}">${user.role}</span>
+                                <div id="profileMsg"></div>
+                            </div>
+                        </div>
+                    `;
+                    setupProfileEvents();
+                    break;
+
+                case 'settings':
+                    centerTitle.innerText = "Configurações da Plataforma";
+                    const isDark = document.body.classList.contains('dark-theme');
+                    const isLegacy = document.body.classList.contains('legacy-mode');
+                    centerContent.innerHTML = `
+                        <p>Personalize a aparência e preferências da plataforma:</p>
+                        
+                        <div class="theme-switch-wrapper">
+                            <div>
+                                <strong>Tema Escuro (Com Fundo Personalizado)</strong>
+                                <div style="font-size:0.8rem; opacity:0.85;">Ativa o visual noturno com degradê e imagem de fundo dedicada.</div>
+                            </div>
+                            <label class="theme-switch has-tooltip" data-tooltip="Alternar Tema Claro/Escuro">
+                                <input type="checkbox" id="themeToggleCheckbox" ${isDark ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="theme-switch-wrapper">
+                            <div>
+                                <strong>Modo de Desempenho (Máquinas Legadas)</strong>
+                                <div style="font-size:0.8rem; opacity:0.85;">Desativa o efeito pesado de blur para garantir 60 FPS estáveis via CPU.</div>
+                            </div>
+                            <label class="theme-switch has-tooltip" data-tooltip="Alternar Modo de Desempenho">
+                                <input type="checkbox" id="legacyToggleCheckbox" ${isLegacy ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="warning-box">
+                            ⚠️ <strong>Aviso sobre o Modo Legado:</strong> Quando ativado, o painel utiliza transparências leves idênticas à versão otimizada padrão sem o desfoque gráfico (blur), aliviando a GPU e mantendo o desempenho ideal em hardwares legados.
+                        </div>
+                    `;
+
+                    document.getElementById('themeToggleCheckbox').addEventListener('change', (e) => {
+                        if (e.target.checked) {
+                            document.body.classList.add('dark-theme');
+                            localStorage.setItem('masterclass_theme', 'dark');
+                        } else {
+                            document.body.classList.remove('dark-theme');
+                            localStorage.setItem('masterclass_theme', 'light');
+                        }
+                    });
+
+                    document.getElementById('legacyToggleCheckbox').addEventListener('change', (e) => {
+                        if (e.target.checked) {
+                            document.body.classList.add('legacy-mode');
+                            localStorage.setItem('masterclass_legacy', 'true');
+                        } else {
+                            document.body.classList.remove('legacy-mode');
+                            localStorage.setItem('masterclass_legacy', 'false');
+                        }
+                    });
+                    break;
+            }
+        }
+
+        function renderProg2Topics() {
+            centerTitle.innerText = "Programação 2 - Tópicos Principais";
+            centerContent.innerHTML = `
+                <button class="back-btn" id="backToCourses">⬅ Voltar aos Cursos</button>
+                <p>Selecione abaixo o tópico que deseja estudar para visualizar os módulos didáticos:</p>
+                <div class="topics-grid">
+                    <div class="topic-card" data-topic="html">🌐 HTML</div>
+                    <div class="topic-card" data-topic="css">🎨 CSS</div>
+                    <div class="topic-card" data-topic="js">⚡ JavaScript / Node</div>
+                    <div class="topic-card" data-topic="middleware">🛡️ Middleware</div>
+                    <div class="topic-card" data-topic="crypto">🔒 Criptografia</div>
+                    <div class="topic-card" data-topic="routes">🛣️ Rotas</div>
+                </div>
+            `;
+
+            document.getElementById('backToCourses').addEventListener('click', () => {
+                renderPage('my_courses');
+            });
+
+            document.querySelectorAll('.topic-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const topicKey = card.getAttribute('data-topic');
+                    renderProg2Modules(topicKey);
+                });
+            });
+        }
+
+        function renderProg2Modules(topicKey) {
+            const topic = prog2Data[topicKey];
+            centerTitle.innerText = topic.title;
+            centerContent.innerHTML = `
+                <button class="back-btn" id="backToTopics">⬅ Voltar aos Tópicos</button>
+                <p>Escolha um dos módulos abaixo para aprofundar seu aprendizado de forma didática:</p>
+                <div class="modules-container">
+                    <div class="module-box">
+                        <div class="module-title">${topic.modules.intro.name}</div>
+                        <div class="module-desc">${topic.modules.intro.desc}</div>
+                    </div>
+                    <div class="module-box">
+                        <div class="module-title">${topic.modules.intermediate.name}</div>
+                        <div class="module-desc">${topic.modules.intermediate.desc}</div>
+                    </div>
+                    <div class="module-box">
+                        <div class="module-title">${topic.modules.advanced.name}</div>
+                        <div class="module-desc">${topic.modules.advanced.desc}</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('backToTopics').addEventListener('click', () => {
+                renderProg2Topics();
+            });
+        }
+
+        function setupProfileEvents() {
+            const avatarClickArea = document.getElementById('avatarClickArea');
+            const avatarFileInput = document.getElementById('avatarFileInput');
+
+            avatarClickArea.addEventListener('click', () => avatarFileInput.click());
+
+            avatarFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const base64Image = event.target.result;
+                    try {
+                        const response = await fetch('/api/profile', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: user.email, avatar: base64Image })
+                        });
+
+                        if (response.ok) {
+                            user.avatar = base64Image;
+                            localStorage.setItem('masterclass_user', JSON.stringify(user));
+                            document.getElementById('userAvatar').src = base64Image;
+                            updateNavAvatar();
+                            showToast('Foto de perfil atualizada com sucesso!');
+                        }
+                    } catch (err) {
+                        console.error("Erro ao salvar foto:", err);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            const nameDisplayArea = document.getElementById('nameDisplayArea');
+            const nameEditForm = document.getElementById('nameEditForm');
+            const btnEditName = document.getElementById('btnEditName');
+            const inputNewName = document.getElementById('inputNewName');
+            const btnSaveName = document.getElementById('btnSaveName');
+
+            btnEditName.addEventListener('click', () => {
+                inputNewName.value = user.name;
+                nameDisplayArea.style.display = 'none';
+                nameEditForm.style.display = 'flex';
+            });
+
+            btnSaveName.addEventListener('click', async () => {
+                const newName = inputNewName.value.trim();
+                if (!newName) return;
+
+                try {
+                    const response = await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user.email, name: newName })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        user.name = data.user.name;
+                        localStorage.setItem('masterclass_user', JSON.stringify(user));
+                        document.getElementById('userName').innerText = user.name;
+                        nameEditForm.style.display = 'none';
+                        nameDisplayArea.style.display = 'flex';
+                        showToast('Nome atualizado!');
+                    }
+                } catch (err) {
+                    console.error("Erro ao salvar nome:", err);
+                }
+            });
+        }
+
+        mainMenu.addEventListener('click', (e) => {
+            const btn = e.target.closest('.glass-btn[data-page]');
+            if (!btn) return;
+
+            e.preventDefault();
+            const pageKey = btn.getAttribute('data-page');
+
+            mainMenu.querySelectorAll('.glass-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            renderPage(pageKey);
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('masterclass_user');
+            window.location.href = 'index.html';
+        });
+
+        const savedTheme = localStorage.getItem('masterclass_theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+
+        if (localStorage.getItem('masterclass_legacy') === 'true') {
+            document.body.classList.add('legacy-mode');
+        }
+
+        renderPage('my_courses');
+    </script>
+</body>
+</html>
