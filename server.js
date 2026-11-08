@@ -6,12 +6,11 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 const USERS_FILE = path.join(__dirname, 'users.json');
+const COURSES_FILE = path.join(__dirname, 'courses.json');
 
-// Aumenta o limite de payload para suportar imagens em Base64
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '20mb' }));
 app.use(express.static(__dirname));
 
-// Função auxiliar para carregar usuários do JSON
 function loadUsers() {
   if (!fs.existsSync(USERS_FILE)) {
     const defaultPasswordHash = bcrypt.hashSync('K16449766k@', 10);
@@ -23,6 +22,7 @@ function loadUsers() {
         role: 'Administrador',
         avatar: '',
         passwordHash: defaultPasswordHash,
+        assignedCourse: '',
         createdAt: new Date().toISOString()
       }
     ];
@@ -39,87 +39,181 @@ function loadUsers() {
   }
 }
 
-// Função auxiliar para salvar usuários no JSON
 function saveUsers(users) {
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
 }
 
-loadUsers();
+function loadCourses() {
+  if (!fs.existsSync(COURSES_FILE)) {
+    const initialCourses = [
+      {
+        id: 'prog2',
+        title: 'Programação 2',
+        description: 'Desenvolvimento web completo, Zod, Middlewares e Criptografia.',
+        modules: [
+          { id: 'mod1', name: 'Módulo 1: Fundamentos e Estruturação', contents: [] },
+          { id: 'mod2', name: 'Módulo 2: Intermediário e APIs', contents: [] },
+          { id: 'mod3', name: 'Módulo 3: Avançado e Arquitetura', contents: [] }
+        ]
+      },
+      {
+        id: 'uiux',
+        title: 'Design de Interfaces UI/UX',
+        description: 'Princípios de Glassmorphic e Neo Frutiger Design.',
+        modules: [
+          { id: 'mod1', name: 'Módulo 1: Fundamentos de UI', contents: [] },
+          { id: 'mod2', name: 'Módulo 2: Wireframes e Prototipagem', contents: [] },
+          { id: 'mod3', name: 'Módulo 3: Design System Avançado', contents: [] }
+        ]
+      },
+      {
+        id: 'db',
+        title: 'Bancos de Dados Avançados',
+        description: 'Modelagem relacional e otimização de consultas SQL e PL/pgSQL.',
+        modules: [
+          { id: 'mod1', name: 'Módulo 1: Modelagem Relacional e Normalização', contents: [] },
+          { id: 'mod2', name: 'Módulo 2: Otimização de Consultas SQL', contents: [] },
+          { id: 'mod3', name: 'Módulo 3: PL/pgSQL e Triggers', contents: [] }
+        ]
+      }
+    ];
+    fs.writeFileSync(COURSES_FILE, JSON.stringify(initialCourses, null, 2), 'utf-8');
+    return initialCourses;
+  }
 
-// =========================================================================
-// MIDDLEWARE DE PERMISSÃO DE ACESSO (EXPLICADO ABAIXO)
-// =========================================================================
+  try {
+    const data = fs.readFileSync(COURSES_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (err) {
+    console.error("Erro ao ler courses.json:", err);
+    return [];
+  }
+}
+
+function saveCourses(courses) {
+  fs.writeFileSync(COURSES_FILE, JSON.stringify(courses, null, 2), 'utf-8');
+}
+
+loadUsers();
+loadCourses();
+
 function verificarPermissao(...perfisPermitidos) {
   return (req, res, next) => {
-    // 1. Pega o perfil enviado nos headers (simulando token/sessão decodificada)
     const perfilUsuario = req.headers['x-user-role'];
 
     if (!perfilUsuario) {
       return res.status(401).json({ message: 'Não autenticado. Perfil não informado.' });
     }
 
-    // 2. Verifica se o perfil do usuário está incluído na lista de perfis autorizados da rota
-    if (!perfisPermitidos.includes(perfilUsuario)) {
+    const perfilTratado = perfilUsuario.trim().toLowerCase();
+    const permitidosTratados = perfisPermitidos.map(p => p.toLowerCase());
+
+    if (!permitidosTratados.includes(perfilTratado)) {
       return res.status(403).json({ 
-        message: `Acesso negado: Perfil '${perfilUsuario}' não tem permissão para esta funcionalidade.` 
+        message: `Acesso negado: Perfil '${perfilUsuario}' não tem permissão.` 
       });
     }
 
-    // 3. Permite a requisição prosseguir
     next();
   };
 }
 
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!\%*?&]{8,}$/;
 
 const registerSchema = z.object({
   name: z.string().optional(),
-  email: z
-    .string()
-    .min(1, { message: 'O e-mail é obrigatório.' })
-    .email({ message: 'Insira um e-mail válido.' }),
-  
-  confirmEmail: z
-    .string()
-    .min(1, { message: 'A confirmação de e-mail é obrigatória.' })
-    .email({ message: 'Insira um e-mail válido.' }),
-
-  role: z.enum(['Aluno', 'Professor', 'Administrador'], {
-    required_error: 'Selecione o tipo de conta.'
-  }),
-
-  password: z
-    .string()
-    .min(1, { message: 'A senha é obrigatória.' })
-    .min(8, { message: 'A senha deve conter no mínimo 8 caracteres.' })
-    .regex(passwordRegex, {
-      message: 'A senha deve conter maiúscula, minúscula, número e caractere especial (@$!%*?&).'
-    }),
-
-  confirmPassword: z
-    .string()
-    .min(1, { message: 'A confirmação de senha é obrigatória.' })
-})
-.refine(data => data.email === data.confirmEmail, {
+  email: z.string().min(1, { message: 'O e-mail é obrigatório.' }).email({ message: 'Insira um e-mail válido.' }),
+  confirmEmail: z.string().min(1, { message: 'A confirmação de e-mail é obrigatória.' }).email({ message: 'Insira um e-mail válido.' }),
+  role: z.enum(['Aluno', 'Professor', 'Administrador'], { required_error: 'Selecione o tipo de conta.' }),
+  password: z.string().min(1, { message: 'A senha é obrigatória.' }).min(8, { message: 'A senha deve conter no mínimo 8 caracteres.' }).regex(passwordRegex, { message: 'A senha deve conter maiúscula, minúscula, número e caractere especial (@$!%*?&).' }),
+  confirmPassword: z.string().min(1, { message: 'A confirmação de senha é obrigatória.' })
+}).refine(data => data.email === data.confirmEmail, {
   message: 'Os e-mails não coincidem.',
   path: ['confirmEmail'],
-})
-.refine(data => data.password === data.confirmPassword, {
+}).refine(data => data.password === data.confirmPassword, {
   message: 'As senhas não coincidem.',
   path: ['confirmPassword'],
 });
 
-// Endpoint de Cadastro
+// Cursos API
+app.get('/api/courses', (req, res) => {
+  const courses = loadCourses();
+  return res.status(200).json({ courses });
+});
+
+app.post('/api/admin/courses', verificarPermissao('Administrador'), (req, res) => {
+  const { title, description } = req.body;
+  if (!title || title.trim() === '') {
+    return res.status(400).json({ message: 'O título do curso é obrigatório.' });
+  }
+
+  const courses = loadCourses();
+  const newCourse = {
+    id: 'course_' + Date.now(),
+    title: title.trim(),
+    description: description ? description.trim() : '',
+    modules: [
+      { id: 'mod1', name: 'Módulo 1: Fundamentos', contents: [] },
+      { id: 'mod2', name: 'Módulo 2: Intermediário', contents: [] },
+      { id: 'mod3', name: 'Módulo 3: Avançado', contents: [] }
+    ]
+  };
+
+  courses.push(newCourse);
+  saveCourses(courses);
+  return res.status(200).json({ message: 'Curso criado com sucesso!', course: newCourse });
+});
+
+// Adicionar conteúdo ao módulo (Professor ou Administrador)
+app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao('Professor', 'Administrador'), (req, res) => {
+  const { courseId, moduleId } = req.params;
+  const { subject, description, textHtml, fileName, fileData, fileType } = req.body;
+
+  if (!subject || subject.trim() === '') {
+    return res.status(400).json({ message: 'O assunto é obrigatório.' });
+  }
+
+  const courses = loadCourses();
+  const course = courses.find(c => c.id === courseId);
+  if (!course) {
+    return res.status(404).json({ message: 'Curso não encontrado.' });
+  }
+
+  const moduleObj = course.modules.find(m => m.id === moduleId);
+  if (!moduleObj) {
+    return res.status(404).json({ message: 'Módulo não encontrado.' });
+  }
+
+  const newContent = {
+    id: 'content_' + Date.now(),
+    subject: subject.trim(),
+    description: description ? description.trim() : '',
+    textHtml: textHtml || '',
+    file: fileName ? { name: fileName, data: fileData, type: fileType } : null,
+    createdAt: new Date().toISOString()
+  };
+
+  moduleObj.contents.push(newContent);
+  saveCourses(courses);
+
+  return res.status(200).json({ message: 'Conteúdo publicado com sucesso!' });
+});
+
+// Registro público
 app.post('/register', async (req, res) => {
   const result = registerSchema.safeParse(req.body);
-
   if (!result.success) {
     return res.status(400).json({ issues: result.error.issues });
   }
 
   const { name, email, password, role } = result.data;
-  const users = loadUsers();
+  if (role === 'Administrador') {
+    return res.status(403).json({
+      issues: [{ path: ['role'], message: 'Novos administradores só podem ser criados por administradores autenticados.' }]
+    });
+  }
 
+  const users = loadUsers();
   const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (existingUser) {
     return res.status(400).json({
@@ -128,36 +222,64 @@ app.post('/register', async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-
   const newUser = {
     id: Date.now().toString(),
     name: name && name.trim() !== '' ? name.trim() : 'Usuário Master Class',
     email: email.toLowerCase(),
     role: role,
     avatar: '',
+    assignedCourse: '',
     passwordHash: passwordHash,
     createdAt: new Date().toISOString()
   };
 
   users.push(newUser);
   saveUsers(users);
-
-  return res.status(200).json({
-    message: 'Cadastro na Master Class realizado com sucesso!'
-  });
+  return res.status(200).json({ message: 'Cadastro na Master Class realizado com sucesso!' });
 });
 
-// Endpoint de Login
+// Criar usuário por Admin
+app.post('/api/admin/create-user', verificarPermissao('Administrador'), async (req, res) => {
+  const result = registerSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ issues: result.error.issues });
+  }
+
+  const { name, email, password, role } = result.data;
+  const users = loadUsers();
+  const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  if (existingUser) {
+    return res.status(400).json({
+      issues: [{ path: ['email'], message: 'Este e-mail já está cadastrado no sistema.' }]
+    });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const newUser = {
+    id: Date.now().toString(),
+    name: name && name.trim() !== '' ? name.trim() : 'Usuário Master Class',
+    email: email.toLowerCase(),
+    role: role,
+    avatar: '',
+    assignedCourse: '',
+    passwordHash: passwordHash,
+    createdAt: new Date().toISOString()
+  };
+
+  users.push(newUser);
+  saveUsers(users);
+  return res.status(200).json({ message: `Conta de ${role} criada com sucesso pelo Administrador!` });
+});
+
+// Login
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-
   if (!email || !password) {
     return res.status(400).json({ message: 'Informe e-mail e senha.' });
   }
 
   const users = loadUsers();
   const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
   if (!user) {
     return res.status(401).json({ message: 'E-mail ou senha inválidos.' });
   }
@@ -170,27 +292,24 @@ app.post('/login', async (req, res) => {
   return res.status(200).json({
     message: 'Login realizado com sucesso!',
     user: {
-      name: user.name,
       email: user.email,
+      name: user.name,
       role: user.role,
-      avatar: user.avatar || ''
+      avatar: user.avatar || '',
+      assignedCourse: user.assignedCourse || ''
     }
   });
 });
 
-// =========================================================================
-// ROTA DE ATUALIZAÇÃO DO PERFIL (NOME E FOTO POR UPLOAD)
-// =========================================================================
+// Atualizar perfil (Nome, Avatar e Curso Atribuído ao Professor)
 app.put('/api/profile', (req, res) => {
-  const { email, name, avatar } = req.body;
-
+  const { email, name, avatar, assignedCourse } = req.body;
   if (!email) {
     return res.status(400).json({ message: 'Identificação do usuário é necessária.' });
   }
 
   const users = loadUsers();
   const userIndex = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
-
   if (userIndex === -1) {
     return res.status(404).json({ message: 'Usuário não encontrado.' });
   }
@@ -201,32 +320,71 @@ app.put('/api/profile', (req, res) => {
   if (avatar !== undefined) {
     users[userIndex].avatar = avatar;
   }
+  if (assignedCourse !== undefined) {
+    users[userIndex].assignedCourse = assignedCourse;
+  }
 
   saveUsers(users);
-
   return res.status(200).json({
     message: 'Perfil atualizado com sucesso!',
     user: {
       name: users[userIndex].name,
       email: users[userIndex].email,
       role: users[userIndex].role,
-      avatar: users[userIndex].avatar
+      avatar: users[userIndex].avatar,
+      assignedCourse: users[userIndex].assignedCourse
     }
   });
 });
 
-// =========================================================================
-// EXEMPLOS DE ROTAS RESTRITAS UTILIZANDO O MIDDLEWARE 'verificarPermissao'
-// =========================================================================
-
-// Rota restrita APENAS para Administradores
-app.get('/api/admin/relatorio', verificarPermissao('Administrador'), (req, res) => {
-  return res.status(200).json({ message: 'Acesso concedido: Relatório Administrativo retornado.' });
+// Administração de Contas
+app.get('/api/admin/users', verificarPermissao('Administrador'), (req, res) => {
+  const { role } = req.query;
+  const users = loadUsers();
+  const filteredUsers = role ? users.filter(u => u.role.toLowerCase() === role.trim().toLowerCase()) : users;
+  const safeUsers = filteredUsers.map(({ passwordHash, ...rest }) => rest);
+  return res.status(200).json({ users: safeUsers });
 });
 
-// Rota restrita para Professores e Administradores
-app.get('/api/professor/pauta', verificarPermissao('Professor', 'Administrador'), (req, res) => {
-  return res.status(200).json({ message: 'Acesso concedido: Pauta de chamadas retornada.' });
+app.put('/api/admin/users/:email', verificarPermissao('Administrador'), async (req, res) => {
+  const targetEmail = decodeURIComponent(req.params.email).toLowerCase();
+  const { name, email, role, password } = req.body;
+  const users = loadUsers();
+  const userIndex = users.findIndex(u => u.email.toLowerCase() === targetEmail);
+
+  if (userIndex === -1) {
+    return res.status(404).json({ message: 'Usuário não encontrado.' });
+  }
+
+  if (name) users[userIndex].name = name.trim();
+  if (role) users[userIndex].role = role;
+  if (email && email.toLowerCase() !== targetEmail) {
+    const conflict = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (conflict) {
+      return res.status(400).json({ message: 'Este novo e-mail já está em uso.' });
+    }
+    users[userIndex].email = email.toLowerCase();
+  }
+  if (password && password.trim() !== '') {
+    users[userIndex].passwordHash = await bcrypt.hash(password, 10);
+  }
+
+  saveUsers(users);
+  return res.status(200).json({ message: 'Conta atualizada com sucesso!' });
+});
+
+app.delete('/api/admin/users/:email', verificarPermissao('Administrador'), (req, res) => {
+  const targetEmail = decodeURIComponent(req.params.email).toLowerCase();
+  let users = loadUsers();
+  const initialLength = users.length;
+  users = users.filter(u => u.email.toLowerCase() !== targetEmail);
+
+  if (users.length === initialLength) {
+    return res.status(404).json({ message: 'Usuário não encontrado.' });
+  }
+
+  saveUsers(users);
+  return res.status(200).json({ message: 'Conta excluída com sucesso!' });
 });
 
 app.listen(3000, () => {

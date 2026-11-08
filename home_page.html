@@ -16,7 +16,8 @@
             --btn-primary-shadow: rgba(234, 88, 12, 0.35);
             --text-main: #ffffff;
             --subpanel-bg: linear-gradient(135deg, rgba(245, 158, 11, 0.85) 0%, rgba(220, 38, 38, 0.85) 100%);
-            /* Padrão DESATIVADO (Com Blur ativo) */
+            --input-bg: rgba(255, 255, 255, 0.22);
+            --select-bg-option: #0a171e;
             --blur-effect: blur(12px);
         }
 
@@ -29,9 +30,10 @@
             --btn-primary-bg: linear-gradient(135deg, #1e40af 0%, #4c1d95 50%, #6b21a8 100%);
             --btn-primary-shadow: rgba(76, 29, 149, 0.4);
             --subpanel-bg: linear-gradient(135deg, rgba(30, 58, 138, 0.85) 0%, rgba(88, 28, 135, 0.85) 100%);
+            --input-bg: rgba(15, 23, 42, 0.5);
+            --select-bg-option: #050914;
         }
 
-        /* Quando o Modo Legado está ATIVADO: Remove o blur para rodar leve via CPU (idêntico ao visual limpo sem blur) */
         body.legacy-mode {
             --blur-effect: none !important;
         }
@@ -70,9 +72,7 @@
             transition: opacity 0.1s ease;
             text-shadow: 0 1px 2px rgba(0,0,0,0.6);
         }
-        .tooltip-glass.visible {
-            opacity: 1;
-        }
+        .tooltip-glass.visible { opacity: 1; }
 
         .dashboard-container {
             display: flex;
@@ -100,7 +100,6 @@
             -webkit-backdrop-filter: var(--blur-effect);
         }
 
-        /* Barra Lateral Minimizada por Padrão (.collapsed) */
         .sidebar {
             width: 86px;
             padding: 24px 12px;
@@ -126,9 +125,7 @@
             user-select: none;
         }
 
-        .sidebar:not(.collapsed) .sidebar-brand {
-            justify-content: flex-start;
-        }
+        .sidebar:not(.collapsed) .sidebar-brand { justify-content: flex-start; }
 
         .school-logo {
             width: 48px;
@@ -146,9 +143,7 @@
             display: none;
         }
 
-        .sidebar:not(.collapsed) .sidebar-brand-title {
-            display: inline;
-        }
+        .sidebar:not(.collapsed) .sidebar-brand-title { display: inline; }
 
         .menu-list {
             list-style: none;
@@ -183,9 +178,7 @@
             justify-content: flex-start;
         }
 
-        .glass-btn:hover, .glass-btn.active {
-            filter: brightness(1.1);
-        }
+        .glass-btn:hover, .glass-btn.active { filter: brightness(1.1); }
 
         .glass-btn .btn-icon {
             font-size: 1.2rem;
@@ -206,13 +199,8 @@
             display: block;
         }
 
-        .glass-btn .btn-text {
-            display: none;
-        }
-
-        .sidebar:not(.collapsed) .glass-btn .btn-text {
-            display: inline;
-        }
+        .glass-btn .btn-text { display: none; }
+        .sidebar:not(.collapsed) .glass-btn .btn-text { display: inline; }
 
         .glass-btn.btn-logout {
             margin-top: auto;
@@ -237,11 +225,7 @@
             padding-bottom: 12px;
         }
 
-        h3 {
-            color: #ffffff;
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
+        h3 { color: #ffffff; font-size: 1.25rem; font-weight: 700; }
 
         .content-sub-panel {
             background: var(--subpanel-bg);
@@ -264,152 +248,6 @@
             gap: 16px;
         }
 
-        .topics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
-            margin-top: 10px;
-        }
-
-        .topic-card {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 12px;
-            padding: 16px;
-            cursor: pointer;
-            text-align: center;
-            font-weight: 600;
-            transition: background 0.15s ease;
-        }
-
-        .topic-card:hover {
-            background: rgba(255, 255, 255, 0.35);
-        }
-
-        .modules-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 10px;
-        }
-
-        .module-box {
-            background: rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            padding: 16px;
-        }
-
-        .module-title {
-            font-weight: 700;
-            font-size: 1.05rem;
-            margin-bottom: 6px;
-            color: #fef3c7;
-        }
-
-        .back-btn {
-            background: rgba(255, 255, 255, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            padding: 8px 16px;
-            border-radius: 8px;
-            color: #fff;
-            cursor: pointer;
-            font-weight: 600;
-            width: fit-content;
-            margin-bottom: 12px;
-        }
-        .back-btn:hover {
-            background: rgba(255, 255, 255, 0.4);
-        }
-
-        .user-profile-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 16px;
-            max-width: 450px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .avatar-wrapper {
-            position: relative;
-            cursor: pointer;
-        }
-
-        .user-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.8);
-            object-fit: cover;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-        }
-
-        .avatar-upload-icon {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #fff;
-            font-size: 0.8rem;
-            font-weight: bold;
-            opacity: 0;
-            pointer-events: none;
-            background: rgba(0,0,0,0.6);
-            padding: 4px 10px;
-            border-radius: 12px;
-            transition: opacity 0.15s ease;
-        }
-
-        .avatar-wrapper:hover .avatar-upload-icon {
-            opacity: 1;
-        }
-
-        .role-badge {
-            display: inline-block;
-            padding: 6px 16px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-top: 6px;
-        }
-
-        .role-Aluno { background: #088395; color: #fff; }
-        .role-Professor { background: #b96d17; color: #fff; }
-        .role-Administrador { background: #b8174d; color: #fff; }
-
-        .edit-name-group {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            width: 100%;
-        }
-
-        .edit-name-input {
-            width: 100%;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            font-size: 0.9rem;
-            outline: none;
-        }
-
-        .btn-save-name {
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            background: var(--btn-primary-bg);
-            color: #fff;
-            font-weight: bold;
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
-
         .courses-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -428,130 +266,159 @@
             cursor: pointer;
             transition: background 0.15s ease;
         }
+        .course-card:hover { background: rgba(255, 255, 255, 0.3); }
+        .course-title { font-size: 1.05rem; font-weight: 700; }
+        .course-desc { font-size: 0.85rem; opacity: 0.9; }
 
-        .course-card:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .user-profile-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 16px;
+            max-width: 450px;
+            margin: 0 auto;
+            width: 100%;
         }
 
-        .course-title {
-            font-size: 1.05rem;
-            font-weight: 700;
+        .avatar-wrapper { position: relative; cursor: pointer; }
+        .user-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         }
+        .avatar-upload-icon {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff; font-size: 0.8rem; font-weight: bold;
+            opacity: 0; pointer-events: none;
+            background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 12px;
+            transition: opacity 0.15s ease;
+        }
+        .avatar-wrapper:hover .avatar-upload-icon { opacity: 1; }
 
-        .course-desc {
+        .role-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 12px;
             font-size: 0.85rem;
-            opacity: 0.9;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+        .role-Aluno { background: #088395; color: #fff; }
+        .role-Professor { background: #b96d17; color: #fff; }
+        .role-Administrador { background: #b8174d; color: #fff; }
+
+        .edit-name-group { display: flex; gap: 8px; margin-top: 10px; width: 100%; }
+        .edit-name-input, .admin-input, .admin-select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: var(--input-bg);
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .admin-select option { background: var(--select-bg-option); color: #fff; }
+
+        .btn-save-name {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: var(--btn-primary-bg);
+            color: #fff; font-weight: bold; font-size: 0.85rem; cursor: pointer;
         }
 
         .theme-switch-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            margin-top: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px; background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.4); margin-top: 10px;
         }
-
-        .theme-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
-        }
-
-        .theme-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
+        .theme-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.3);
-            transition: .2s;
-            border-radius: 26px;
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.3); transition: .2s; border-radius: 26px;
             border: 1px solid rgba(255, 255, 255, 0.4);
         }
-
         .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .2s;
-            border-radius: 50%;
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background-color: white; transition: .2s; border-radius: 50%;
         }
-
-        input:checked + .slider {
-            background-color: #6366f1;
-        }
-
-        input:checked + .slider:before {
-            transform: translate3d(24px, 0, 0);
-        }
+        input:checked + .slider { background-color: #6366f1; }
+        input:checked + .slider:before { transform: translate3d(24px, 0, 0); }
 
         .warning-box {
-            background: rgba(234, 88, 12, 0.25);
-            border: 1px solid rgba(234, 88, 12, 0.6);
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            color: #fef3c7;
-            margin-top: 10px;
+            background: rgba(234, 88, 12, 0.25); border: 1px solid rgba(234, 88, 12, 0.6);
+            padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; color: #fef3c7; margin-top: 10px;
         }
 
         #profileMsg, #toastMsg {
-            font-size: 0.85rem;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            display: none;
-            background: rgba(245, 158, 11, 0.4);
-            color: #fef3c7;
-            border: 1px solid rgba(245, 158, 11, 0.6);
-            text-align: center;
+            font-size: 0.85rem; padding: 10px; border-radius: 8px; margin-top: 10px; display: none;
+            background: rgba(245, 158, 11, 0.4); color: #fef3c7; border: 1px solid rgba(245, 158, 11, 0.6); text-align: center;
+        }
+
+        /* Estilos do Editor do Professor e Tabelas Admin */
+        .editor-toolbar {
+            display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;
+        }
+        .editor-toolbar button, .editor-toolbar label {
+            background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4);
+            padding: 6px 12px; border-radius: 6px; color: #fff; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+        }
+        .editor-toolbar button:hover, .editor-toolbar label:hover { background: rgba(255,255,255,0.4); }
+        
+        .rich-text-editor {
+            width: 100%; min-height: 200px; max-height: 400px; overflow-y: auto;
+            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 8px; padding: 12px; color: #fff; outline: none;
+        }
+        .rich-text-editor img { max-width: 100%; border-radius: 6px; margin: 8px 0; }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.25); border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 8px 16px; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 600; width: fit-content; margin-bottom: 12px;
+        }
+        .back-btn:hover { background: rgba(255, 255, 255, 0.4); }
+
+        .modules-container { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+        .module-box {
+            background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px; padding: 16px; cursor: pointer; transition: background 0.15s ease;
+        }
+        .module-box:hover { background: rgba(0, 0, 0, 0.4); }
+        .module-title { font-weight: 700; font-size: 1.05rem; margin-bottom: 6px; color: #fef3c7; }
+
+        .admin-table { width: 100%; border-collapse: collapse; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; font-size: 0.88rem; margin-top: 10px; }
+        .admin-table th, .admin-table td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .admin-table th { background: rgba(0,0,0,0.35); color: #fef3c7; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+            z-index: 1000; backdrop-filter: var(--blur-effect); -webkit-backdrop-filter: var(--blur-effect);
+        }
+        .modal-card {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-border-top);
+            border-radius: 20px; padding: 24px; width: 100%; max-width: 440px; box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            color: var(--text-main); backdrop-filter: var(--blur-effect); -webkit-backdrop-filter: var(--blur-effect);
         }
 
         @media (max-width: 850px) {
-            body {
-                height: auto;
-                overflow-y: auto;
-            }
-            .dashboard-container {
-                flex-direction: column;
-                height: auto;
-            }
-            .sidebar, .sidebar:not(.collapsed) {
-                width: 100% !important;
-                height: auto;
-                padding: 16px;
-            }
-            .menu-list {
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            .glass-btn {
-                width: auto;
-                padding: 14px 18px;
-                justify-content: flex-start;
-            }
-            .glass-btn .btn-text {
-                display: inline;
-            }
-            .glass-btn.btn-logout {
-                margin-top: 0;
-            }
-            .sidebar-brand-title {
-                display: inline;
-            }
+            body { height: auto; overflow-y: auto; }
+            .dashboard-container { flex-direction: column; height: auto; }
+            .sidebar, .sidebar:not(.collapsed) { width: 100% !important; height: auto; padding: 16px; }
+            .menu-list { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+            .glass-btn { width: auto; padding: 14px 18px; justify-content: flex-start; }
+            .glass-btn .btn-text { display: inline; }
+            .glass-btn.btn-logout { margin-top: 0; }
+            .sidebar-brand-title { display: inline; }
         }
     </style>
 </head>
@@ -609,8 +476,7 @@
             
             <div class="content-sub-panel">
                 <div id="toastMsg"></div>
-                <div class="content-body" id="centerContent">
-                </div>
+                <div class="content-body" id="centerContent"></div>
             </div>
         </main>
 
@@ -618,12 +484,46 @@
 
     <script>
         const storedUser = localStorage.getItem('masterclass_user');
-        
-        if (!storedUser) {
-            window.location.href = 'index.html';
-        }
+        if (!storedUser) { window.location.href = 'index.html'; }
 
         let user = JSON.parse(storedUser);
+
+        // Injeção de menus na barra lateral baseada no perfil
+        const mainMenu = document.getElementById('mainMenu');
+        const settingsLi = mainMenu.querySelector('[data-page="settings"]').parentElement;
+
+        if (user.role === 'Administrador') {
+            // Remover "Minhas Notas" da barra lateral do Administrador
+            const gradesLi = mainMenu.querySelector('[data-page="my_grades"]')?.parentElement;
+            if (gradesLi) gradesLi.remove();
+
+            // Mudar a opção "Meu Curso" para "Painel admin"
+            const myCoursesBtn = mainMenu.querySelector('[data-page="my_courses"]');
+            if (myCoursesBtn) {
+                myCoursesBtn.setAttribute('data-tooltip', 'Painel admin');
+                myCoursesBtn.setAttribute('data-page', 'admin_courses');
+                myCoursesBtn.querySelector('.btn-icon').innerHTML = '🛡️';
+                myCoursesBtn.querySelector('.btn-text').innerText = 'Painel admin';
+            }
+
+            const adminAccLi = document.createElement('li');
+            adminAccLi.innerHTML = `
+                <a class="glass-btn has-tooltip" data-tooltip="Controle de Contas" data-page="admin_accounts">
+                    <span class="btn-icon">🛡️</span>
+                    <span class="btn-text">Controle de Contas</span>
+                </a>
+            `;
+            mainMenu.insertBefore(adminAccLi, settingsLi);
+
+            const adminCourseLi = document.createElement('li');
+            adminCourseLi.innerHTML = `
+                <a class="glass-btn has-tooltip" data-tooltip="Gerenciar Cursos" data-page="admin_courses">
+                    <span class="btn-icon">📂</span>
+                    <span class="btn-text">Gerenciar Cursos</span>
+                </a>
+            `;
+            mainMenu.insertBefore(adminCourseLi, settingsLi);
+        }
 
         function updateNavAvatar() {
             const avatarSrc = user.avatar || 'imagem4.jpeg';
@@ -636,39 +536,26 @@
             const target = e.target.closest('.has-tooltip');
             if (target) {
                 const text = target.getAttribute('data-tooltip');
-                if (text) {
-                    tooltip.innerText = text;
-                    tooltip.classList.add('visible');
-                }
+                if (text) { tooltip.innerText = text; tooltip.classList.add('visible'); }
             }
         });
-
         document.addEventListener('mousemove', (e) => {
             if (tooltip.classList.contains('visible')) {
                 tooltip.style.left = `${e.clientX + 14}px`;
                 tooltip.style.top = `${e.clientY + 14}px`;
             }
         });
-
         document.addEventListener('mouseout', (e) => {
-            const target = e.target.closest('.has-tooltip');
-            if (target) {
-                tooltip.classList.remove('visible');
-            }
+            if (e.target.closest('.has-tooltip')) { tooltip.classList.remove('visible'); }
         });
 
         const sidebar = document.getElementById('sidebar');
-        const sidebarBrandToggle = document.getElementById('sidebarBrandToggle');
-
-        function toggleSidebar() {
+        document.getElementById('sidebarBrandToggle').addEventListener('click', () => {
             sidebar.classList.toggle('collapsed');
-        }
-
-        sidebarBrandToggle.addEventListener('click', toggleSidebar);
+        });
 
         const centerTitle = document.getElementById('centerTitle');
         const centerContent = document.getElementById('centerContent');
-        const mainMenu = document.getElementById('mainMenu');
 
         function showToast(txt) {
             const toast = document.getElementById('toastMsg');
@@ -677,160 +564,86 @@
             setTimeout(() => { toast.style.display = 'none'; }, 2500);
         }
 
-        const prog2Data = {
-            html: {
-                title: "🌐 HTML (Estruturação Web)",
-                modules: {
-                    intro: {
-                        name: "1. Introdução ao HTML",
-                        desc: "Aprenda a estruturar páginas web utilizando tags semânticas (<header>, <main>, <footer>), criando esqueletos limpos, acessíveis e organizados para os navegadores."
-                    },
-                    intermediate: {
-                        name: "2. Intermediário: Formulários e Tabelas",
-                        desc: "Domine a captação de dados de usuários com inputs avançados, validações nativas do HTML5 e a organização estruturada de tabelas."
-                    },
-                    advanced: {
-                        name: "3. Avançado: HTML Semântico Avançado e SEO",
-                        desc: "Aprofunde-se em boas práticas de acessibilidade (ARIA labels) e metatags para otimização de motores de busca (SEO)."
-                    }
-                }
-            },
-            css: {
-                title: "🎨 CSS (Estilização e Layouts)",
-                modules: {
-                    intro: {
-                        name: "1. Introdução ao CSS",
-                        desc: "Compreenda o conceito de seletores, herança de estilos, modelo de caixas (Box Model) e posicionamento básico de elementos."
-                    },
-                    intermediate: {
-                        name: "2. Intermediário: Flexbox e Grid",
-                        desc: "Construa layouts modernos e responsivos utilizando Flexbox para alinhamentos em eixo único e Grid para estruturas bidimensionais."
-                    },
-                    advanced: {
-                        name: "3. Avançado: Animações, Variáveis e Glassmorphic",
-                        desc: "Explore animações fluidas via CPU, variáveis customizadas (:root) e efeitos avançados de transparência e desfoque."
-                    }
-                }
-            },
-            js: {
-                title: "⚡ JavaScript / Node.js (Lógica e Servidor)",
-                modules: {
-                    intro: {
-                        name: "1. Introdução ao JavaScript",
-                        desc: "Estude variáveis, funções, estruturas condicionais e manipulação básica do DOM para interatividade."
-                    },
-                    intermediate: {
-                        name: "2. Intermediário: Assincronicidade e APIs",
-                        desc: "Compreenda requisições assíncronas (Fetch API, Promises, Async/Await) e introdução ao Node.js para backend."
-                    },
-                    advanced: {
-                        name: "3. Avançado: Express.js e Arquitetura MVC",
-                        desc: "Desenvolva servidores robustos utilizando Express.js, rotas modulares e manipulação de arquivos JSON."
-                    }
-                }
-            },
-            middleware: {
-                title: "🛡️ Middlewares (Interceptação e Controle)",
-                modules: {
-                    intro: {
-                        name: "1. Introdução a Middlewares",
-                        desc: "Entenda o conceito de funções intermediárias que interceptam requisições HTTP para injetar parâmetros."
-                    },
-                    intermediate: {
-                        name: "2. Intermediário: Autenticação e Sessões",
-                        desc: "Crie barreiras de segurança eficientes para verificar tokens de acesso (JWT) ou sessões ativas de usuários."
-                    },
-                    advanced: {
-                        name: "3. Avançado: Middlewares Dinâmicos e de Erros",
-                        desc: "Implemente tratamentos globais de exceção e controle de permissões baseado em papéis (RBAC)."
-                    }
-                }
-            },
-            crypto: {
-                title: "🔒 Criptografia (Segurança de Dados)",
-                modules: {
-                    intro: {
-                        name: "1. Introdução à Segurança de Senhas",
-                        desc: "Compreenda por que nunca devemos salvar senhas em texto plano e os riscos de vazamentos."
-                    },
-                    intermediate: {
-                        name: "2. Intermediário: Hashing com Bcrypt",
-                        desc: "Aprenda a aplicar o algoritmo Bcrypt com salt rounds adequados para transformar senhas em hashes seguros."
-                    },
-                    advanced: {
-                        name: "3. Avançado: Criptografia Simétrica e Assimétrica",
-                        desc: "Estude encriptação ponta a ponta, chaves públicas e privadas e assinaturas digitais."
-                    }
-                }
-            },
-            routes: {
-                title: "🛣️ Rotas (Gerenciamento de Endpoints)",
-                modules: {
-                    intro: {
-                        name: "1. Introdução ao Roteamento Web",
-                        desc: "Entenda como os servidores mapeiam URLs e métodos HTTP (GET, POST) para direcionar funcionalidades."
-                    },
-                    intermediate: {
-                        name: "2. Intermediário: Parâmetros e Query Strings",
-                        desc: "Aprenda a extrair dados enviados pelas URLs através de rotas dinâmicas (:id) e filtros."
-                    },
-                    advanced: {
-                        name: "3. Avançado: Router Modular em Express",
-                        desc: "Organize grandes aplicações dividindo as rotas em múltiplos arquivos utilizando express.Router()."
-                    }
-                }
+        async function fetchCourses() {
+            try {
+                const res = await fetch('/api/courses');
+                const data = await res.json();
+                return res.ok ? data.courses : [];
+            } catch (err) {
+                console.error(err);
+                return [];
             }
-        };
+        }
 
-        function renderPage(pageKey, subParam = null) {
+        async function renderPage(pageKey) {
+            const courses = await fetchCourses();
+
             switch(pageKey) {
                 case 'my_courses':
                     centerTitle.innerText = "Meu Curso";
-                    centerContent.innerHTML = `
-                        <p>Abaixo estão os cursos disponíveis em sua grade acadêmica:</p>
-                        <div class="courses-grid">
-                            <div class="course-card" id="prog2Card" style="border: 2px solid rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.3);">
-                                <div class="course-title">💻 Programação 2</div>
-                                <div class="course-desc">Clique para acessar os tópicos detalhados do curso e seus módulos didáticos.</div>
-                                <span style="font-size:0.8rem; background: rgba(245, 158, 11, 0.5); padding: 4px 8px; border-radius: 6px; width: fit-content;">Ativo</span>
+                    if (user.role === 'Professor') {
+                        const assigned = courses.find(c => c.id === user.assignedCourse);
+                        if (!assigned) {
+                            centerContent.innerHTML = `
+                                <p>⚠️ Você ainda não selecionou qual curso vai lecionar.</p>
+                                <p>Por favor, vá em <strong>Meu Perfil</strong> para escolher o seu curso atribuído.</p>
+                            `;
+                            return;
+                        }
+                        renderProfessorCourseView(assigned);
+                    } else if (user.role === 'Administrador') {
+                        centerContent.innerHTML = `
+                            <p>Painel do Administrador - Visão Geral dos Cursos:</p>
+                            <div class="courses-grid">
+                                ${courses.map(c => `
+                                    <div class="course-card view-course-details" data-id="${c.id}">
+                                        <div class="course-title">💻 ${c.title}</div>
+                                        <div class="course-desc">${c.description}</div>
+                                        <span style="font-size:0.8rem; background: rgba(245, 158, 11, 0.5); padding: 4px 8px; border-radius: 6px; width: fit-content;">Ativo</span>
+                                    </div>
+                                `).join('')}
                             </div>
-
-                            <div class="course-card generic-course-btn">
-                                <div class="course-title">🎨 Design de Interfaces UI/UX</div>
-                                <div class="course-desc">Princípios de Glassmorphic e Neo Frutiger Design.</div>
-                                <span style="font-size:0.8rem; opacity: 0.8;">Brevemente</span>
-                            </div>
-
-                            <div class="course-card generic-course-btn">
-                                <div class="course-title">🗄️ Bancos de Dados Avançados</div>
-                                <div class="course-desc">Modelagem relacional e otimização de consultas SQL.</div>
-                                <span style="font-size:0.8rem; opacity: 0.8;">Brevemente</span>
-                            </div>
-                        </div>
-                    `;
-
-                    document.getElementById('prog2Card').addEventListener('click', () => {
-                        renderProg2Topics();
-                    });
-
-                    document.querySelectorAll('.generic-course-btn').forEach(btn => {
-                        btn.addEventListener('click', () => {
-                            showToast("Em breve teremos mais cursos disponíveis para você!");
+                        `;
+                        document.querySelectorAll('.view-course-details').forEach(card => {
+                            card.addEventListener('click', () => {
+                                const c = courses.find(x => x.id === card.getAttribute('data-id'));
+                                if (c) renderProfessorCourseView(c, true);
+                            });
                         });
-                    });
+                    } else {
+                        // Aluno
+                        centerContent.innerHTML = `
+                            <p>Abaixo estão os cursos disponíveis em sua grade acadêmica:</p>
+                            <div class="courses-grid">
+                                ${courses.map(c => `
+                                    <div class="course-card student-view-course" data-id="${c.id}" style="border: 2px solid rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.3);">
+                                        <div class="course-title">💻 ${c.title}</div>
+                                        <div class="course-desc">${c.description}</div>
+                                        <span style="font-size:0.8rem; background: rgba(245, 158, 11, 0.5); padding: 4px 8px; border-radius: 6px; width: fit-content;">Disponível</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                        document.querySelectorAll('.student-view-course').forEach(card => {
+                            card.addEventListener('click', () => {
+                                const c = courses.find(x => x.id === card.getAttribute('data-id'));
+                                if (c) renderStudentCourseDetails(c);
+                            });
+                        });
+                    }
                     break;
 
                 case 'my_grades':
                     centerTitle.innerText = "Minhas Notas";
                     centerContent.innerHTML = `
-                        <p>Consulte seu histórico de desempenho na disciplina de <strong>Programação 2</strong>:</p>
+                        <p>Consulte seu histórico de desempenho acadêmico:</p>
                         <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3);">
                             <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-                                <span>Avaliação 1 (Validação Zod & Criptografia):</span>
+                                <span>Avaliação 1 (Estruturação & Lógica):</span>
                                 <strong>10.0</strong>
                             </div>
                             <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-                                <span>Avaliação 2 (Middlewares & Sessão):</span>
+                                <span>Avaliação 2 (Implementação & Prática):</span>
                                 <strong>9.5</strong>
                             </div>
                             <div style="display:flex; justify-content:space-between; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 8px;">
@@ -842,7 +655,27 @@
                     break;
 
                 case 'my_profile':
-                    centerTitle.innerText = "Meu Perfil - Sessão Ativa";
+                    centerTitle.innerText = "Meu Perfil";
+                    let teacherCourseSelectHtml = '';
+                    if (user.role === 'Professor') {
+                        teacherCourseSelectHtml = `
+                            <div style="width: 100%; margin-top: 12px; text-align: left;">
+                                <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:4px;">Curso que Leciona:</label>
+                                <select id="teacherCourseSelect" class="admin-select" style="width: 100%;">
+                                    <option value="">-- Selecione seu Curso --</option>
+                                    ${courses.map(c => `<option value="${c.id}" ${user.assignedCourse === c.id ? 'selected' : ''}>${c.title}</option>`).join('')}
+                                </select>
+                                <button id="btnSaveTeacherCourse" class="glass-btn" style="margin-top: 8px; width: 100%; padding: 8px; justify-content: center; font-size: 0.85rem;">Salvar Curso Vinculado</button>
+                            </div>
+                        `;
+                    }
+
+                    let createAccountBtnHtml = user.role === 'Administrador' ? `
+                        <button id="btnOpenCreateAccModal" class="glass-btn" style="margin-top: 14px; width: 100%; justify-content: center;">
+                            ➕ Criar Nova Conta
+                        </button>
+                    ` : '';
+
                     centerContent.innerHTML = `
                         <div class="user-profile-container">
                             <div class="avatar-wrapper has-tooltip" data-tooltip="Clique para alterar foto" id="avatarClickArea">
@@ -864,47 +697,89 @@
 
                                 <div id="userEmail" style="opacity: 0.9; font-size:0.9rem; margin-top:6px;">${user.email}</div>
                                 <span id="userRoleBadge" class="role-badge role-${user.role}">${user.role}</span>
+                                
+                                ${teacherCourseSelectHtml}
+                                ${createAccountBtnHtml}
                                 <div id="profileMsg"></div>
                             </div>
                         </div>
                     `;
-                    setupProfileEvents();
+                    setupProfileEvents(courses);
+                    break;
+
+                case 'admin_accounts':
+                    centerTitle.innerText = "Controle de Contas - Administração";
+                    centerContent.innerHTML = `
+                        <p>Selecione o tipo de conta que deseja procurar e gerenciar:</p>
+                        <div style="display: flex; gap: 12px; align-items: center; margin-top: 10px;">
+                            <select id="searchRoleSelect" class="admin-select" style="flex: 1;">
+                                <option value="">-- Selecione o Tipo de Conta --</option>
+                                <option value="Aluno">Aluno</option>
+                                <option value="Professor">Professor</option>
+                                <option value="Administrador">Administrador</option>
+                            </select>
+                            <button id="btnSearchAccounts" class="glass-btn" style="width: auto; padding: 10px 20px;">🔍 Procurar Contas</button>
+                        </div>
+                        <div id="adminTableResults" class="admin-table-container"></div>
+                    `;
+                    setupAdminAccountsEvents();
+                    break;
+
+                case 'admin_courses':
+                    centerTitle.innerText = "Gerenciamento de Cursos - Administração";
+                    centerContent.innerHTML = `
+                        <p>Cadastre novos cursos na plataforma:</p>
+                        <form id="createCourseForm" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px;">
+                            <div>
+                                <label style="font-size:0.85rem; display:block; margin-bottom:4px;">Título do Curso</label>
+                                <input type="text" id="newCourseTitle" class="admin-input" placeholder="Ex: Inteligência Artificial Aplicada" required>
+                            </div>
+                            <div>
+                                <label style="font-size:0.85rem; display:block; margin-bottom:4px;">Descrição do Curso</label>
+                                <input type="text" id="newCourseDesc" class="admin-input" placeholder="Breve resumo sobre o curso">
+                            </div>
+                            <button type="submit" class="glass-btn" style="width: 100%; justify-content: center; padding: 10px;">Criar Novo Curso</button>
+                        </form>
+                        <h4 style="margin-top: 20px;">Cursos Existentes:</h4>
+                        <div class="courses-grid" style="margin-top: 10px;">
+                            ${courses.map(c => `
+                                <div class="course-card">
+                                    <div class="course-title">📚 ${c.title}</div>
+                                    <div class="course-desc">${c.description || 'Sem descrição'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    setupAdminCoursesEvents();
                     break;
 
                 case 'settings':
-                    centerTitle.innerText = "Configurações da Conta";
+                    centerTitle.innerText = "Configurações da Plataforma";
                     const isDark = document.body.classList.contains('dark-theme');
                     const isLegacy = document.body.classList.contains('legacy-mode');
                     centerContent.innerHTML = `
                         <p>Personalize a aparência e preferências da plataforma:</p>
-                        
                         <div class="theme-switch-wrapper">
                             <div>
                                 <strong>Tema Escuro (Com Fundo Personalizado)</strong>
-                                <div style="font-size:0.8rem; opacity:0.85;">Ativa o visual noturno com degradê e imagem de fundo dedicada.</div>
+                                <div style="font-size:0.8rem; opacity:0.85;">Ativa o visual noturno.</div>
                             </div>
                             <label class="theme-switch has-tooltip" data-tooltip="Alternar Tema Claro/Escuro">
                                 <input type="checkbox" id="themeToggleCheckbox" ${isDark ? 'checked' : ''}>
                                 <span class="slider"></span>
                             </label>
                         </div>
-
                         <div class="theme-switch-wrapper">
                             <div>
                                 <strong>Modo de Desempenho (Máquinas Legadas)</strong>
-                                <div style="font-size:0.8rem; opacity:0.85;">Desativa o efeito pesado de blur para garantir 60 FPS estáveis via CPU.</div>
+                                <div style="font-size:0.8rem; opacity:0.85;">Desativa o efeito blur para otimizar 60 FPS.</div>
                             </div>
                             <label class="theme-switch has-tooltip" data-tooltip="Alternar Modo de Desempenho">
                                 <input type="checkbox" id="legacyToggleCheckbox" ${isLegacy ? 'checked' : ''}>
                                 <span class="slider"></span>
                             </label>
                         </div>
-
-                        <div class="warning-box">
-                            ⚠️ <strong>Aviso sobre o Modo Legado:</strong> Quando ativado, o painel utiliza transparências leves idênticas à versão otimizada padrão sem o desfoque gráfico (blur), aliviando a GPU e mantendo o desempenho ideal em hardwares legados.
-                        </div>
                     `;
-
                     document.getElementById('themeToggleCheckbox').addEventListener('change', (e) => {
                         if (e.target.checked) {
                             document.body.classList.add('dark-theme');
@@ -914,7 +789,6 @@
                             localStorage.setItem('masterclass_theme', 'light');
                         }
                     });
-
                     document.getElementById('legacyToggleCheckbox').addEventListener('change', (e) => {
                         if (e.target.checked) {
                             document.body.classList.add('legacy-mode');
@@ -928,93 +802,265 @@
             }
         }
 
-        function renderProg2Topics() {
-            centerTitle.innerText = "Programação 2 - Tópicos Principais";
+        // Visualização do Curso para o Professor
+        function renderProfessorCourseView(course, isAdminView = false) {
+            centerTitle.innerText = `Curso: ${course.title}`;
             centerContent.innerHTML = `
-                <button class="back-btn" id="backToCourses">⬅ Voltar aos Cursos</button>
-                <p>Selecione abaixo o tópico que deseja estudar para visualizar os módulos didáticos:</p>
-                <div class="topics-grid">
-                    <div class="topic-card" data-topic="html">🌐 HTML</div>
-                    <div class="topic-card" data-topic="css">🎨 CSS</div>
-                    <div class="topic-card" data-topic="js">⚡ JavaScript / Node</div>
-                    <div class="topic-card" data-topic="middleware">🛡️ Middleware</div>
-                    <div class="topic-card" data-topic="crypto">🔒 Criptografia</div>
-                    <div class="topic-card" data-topic="routes">🛣️ Rotas</div>
+                ${isAdminView ? '<button class="back-btn" id="backToAdminCourses">⬅ Voltar</button>' : ''}
+                <p>Selecione um dos 3 módulos abaixo para lançar ou gerenciar conteúdos:</p>
+                <div class="modules-container">
+                    ${course.modules.map(mod => `
+                        <div class="module-box select-module-btn" data-mod-id="${mod.id}">
+                            <div class="module-title">${mod.name}</div>
+                            <div style="font-size: 0.850rem; opacity: 0.8;">${mod.contents.length} conteúdo(s) publicado(s). Clique para adicionar novo arquivo/texto.</div>
+                        </div>
+                    `).join('')}
                 </div>
             `;
 
-            document.getElementById('backToCourses').addEventListener('click', () => {
-                renderPage('my_courses');
-            });
+            if (isAdminView) {
+                document.getElementById('backToAdminCourses').addEventListener('click', () => renderPage('my_courses'));
+            }
 
-            document.querySelectorAll('.topic-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const topicKey = card.getAttribute('data-topic');
-                    renderProg2Modules(topicKey);
+            document.querySelectorAll('.select-module-btn').forEach(box => {
+                box.addEventListener('click', () => {
+                    const modId = box.getAttribute('data-mod-id');
+                    const modObj = course.modules.find(m => m.id === modId);
+                    renderModuleContentEditor(course, modObj, isAdminView);
                 });
             });
         }
 
-        function renderProg2Modules(topicKey) {
-            const topic = prog2Data[topicKey];
-            centerTitle.innerText = topic.title;
+        // Editor de Conteúdo do Professor (Editor de texto rico, upload de imagens por clique e drag-and-drop)
+        function renderModuleContentEditor(course, moduleObj, isAdminView) {
+            centerTitle.innerText = `${course.title} > ${moduleObj.name}`;
             centerContent.innerHTML = `
-                <button class="back-btn" id="backToTopics">⬅ Voltar aos Tópicos</button>
-                <p>Escolha um dos módulos abaixo para aprofundar seu aprendizado de forma didática:</p>
-                <div class="modules-container">
-                    <div class="module-box">
-                        <div class="module-title">${topic.modules.intro.name}</div>
-                        <div class="module-desc">${topic.modules.intro.desc}</div>
+                <button class="back-btn" id="backToModules">⬅ Voltar aos Módulos</button>
+                <div style="background: rgba(0,0,0,0.25); padding: 20px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.3); display: flex; flex-direction: column; gap: 14px;">
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:4px;">Assunto (Obrigatório)*</label>
+                        <input type="text" id="inputSubject" class="admin-input" placeholder="Ex: Introdução ao modelo relacional" required>
                     </div>
-                    <div class="module-box">
-                        <div class="module-title">${topic.modules.intermediate.name}</div>
-                        <div class="module-desc">${topic.modules.intermediate.desc}</div>
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:4px;">Breve Descrição (Opcional)</label>
+                        <input type="text" id="inputDescription" class="admin-input" placeholder="Resumo do material...">
                     </div>
-                    <div class="module-box">
-                        <div class="module-title">${topic.modules.advanced.name}</div>
-                        <div class="module-desc">${topic.modules.advanced.desc}</div>
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:4px;">Editor de Texto Completo (Arraste imagens do dispositivo para cá ou use o botão)</label>
+                        <div class="editor-toolbar">
+                            <button type="button" id="btnBold"><b>Negrito</b></button>
+                            <button type="button" id="btnItalic"><i>Itálico</i></button>
+                            <label for="inputEditorImg">🖼️ Inserir Imagem</label>
+                            <input type="file" id="inputEditorImg" accept="image/*" style="display: none;">
+                        </div>
+                        <div id="richEditor" class="rich-text-editor" contenteditable="true" placeholder="Escreva o conteúdo ou arraste imagens aqui..."></div>
                     </div>
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:4px;">Anexar Arquivo de Documento (.docx) ou PowerPoint (.pptx)</label>
+                        <input type="file" id="inputFileAttachment" accept=".docx,.pptx" class="admin-input" style="padding: 8px;">
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button id="btnFinishContent" class="glass-btn" style="flex:1; justify-content:center; padding:12px;">Finalizar e Publicar</button>
+                    </div>
+                </div>
+
+                <h4 style="margin-top:20px;">Conteúdos já publicados neste módulo:</h4>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                    ${moduleObj.contents.length === 0 ? '<p style="opacity:0.8; font-size:0.85rem;">Nenhum conteúdo publicado ainda.</p>' : ''}
+                    ${moduleObj.contents.map(cnt => `
+                        <div style="background:rgba(255,255,255,0.15); padding:12px; border-radius:8px;">
+                            <strong>📌 ${cnt.subject}</strong>
+                            ${cnt.description ? `<div style="font-size:0.85rem; opacity:0.9;">${cnt.description}</div>` : ''}
+                            <div style="margin-top:6px; font-size:0.9rem;">${cnt.textHtml}</div>
+                            ${cnt.file ? `<div style="margin-top:8px; font-size:0.8rem; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:4px; width:fit-content;">📎 Arquivo: ${cnt.file.name}</div>` : ''}
+                        </div>
+                    `).join('')}
                 </div>
             `;
 
-            document.getElementById('backToTopics').addEventListener('click', () => {
-                renderProg2Topics();
+            document.getElementById('backToModules').addEventListener('click', () => renderProfessorCourseView(course, isAdminView));
+
+            const richEditor = document.getElementById('richEditor');
+
+            // Ferramentas do editor
+            document.getElementById('btnBold').addEventListener('click', () => {
+                richEditor.focus();
+                document.execCommand('bold', false, null);
+            });
+            document.getElementById('btnItalic').addEventListener('click', () => {
+                richEditor.focus();
+                document.execCommand('italic', false, null);
+            });
+
+            // Correção do botão Inserir Imagem (Foco + execCommand / fallback)
+            const inputEditorImg = document.getElementById('inputEditorImg');
+            inputEditorImg.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    richEditor.focus();
+                    const imgHtml = `<img src="${event.target.result}" alt="Imagem do Conteúdo">`;
+                    if (!document.execCommand('insertHTML', false, imgHtml)) {
+                        richEditor.innerHTML += imgHtml;
+                    }
+                };
+                reader.readAsDataURL(file);
+                e.target.value = ''; // Limpa o input para permitir selecionar a mesma imagem novamente
+            });
+
+            // Suporte a Arrastar e Soltar (Drag and Drop) de imagens do dispositivo para o editor
+            richEditor.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            richEditor.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const files = e.dataTransfer.files;
+                if (files && files.length > 0) {
+                    for (let file of files) {
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                                richEditor.focus();
+                                const imgHtml = `<img src="${event.target.result}" alt="Imagem do Conteúdo">`;
+                                if (!document.execCommand('insertHTML', false, imgHtml)) {
+                                    richEditor.innerHTML += imgHtml;
+                                }
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    }
+                }
+            });
+
+            // Finalizar e salvar
+            let attachedFileObj = null;
+            document.getElementById('inputFileAttachment').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    attachedFileObj = { name: file.name, type: file.type, data: event.target.result };
+                };
+                reader.readAsDataURL(file);
+            });
+
+            document.getElementById('btnFinishContent').addEventListener('click', async () => {
+                const subject = document.getElementById('inputSubject').value.trim();
+                const description = document.getElementById('inputDescription').value.trim();
+                const textHtml = richEditor.innerHTML;
+
+                if (!subject) {
+                    showToast('⚠️ O campo Assunto é obrigatório!');
+                    return;
+                }
+
+                const payload = {
+                    subject,
+                    description,
+                    textHtml,
+                    fileName: attachedFileObj ? attachedFileObj.name : null,
+                    fileData: attachedFileObj ? attachedFileObj.data : null,
+                    fileType: attachedFileObj ? attachedFileObj.type : null
+                };
+
+                try {
+                    const res = await fetch(`/api/courses/${course.id}/modules/${moduleObj.id}/content`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast('Conteúdo publicado com sucesso!');
+                        moduleObj.contents.push({
+                            subject, description, textHtml, file: attachedFileObj
+                        });
+                        renderProfessorCourseView(course, isAdminView);
+                    } else {
+                        showToast(data.message || 'Erro ao publicar.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast('Erro de conexão.');
+                }
             });
         }
 
-        function setupProfileEvents() {
+        // Visualização do Curso para o Aluno
+        function renderStudentCourseDetails(course) {
+            centerTitle.innerText = `Curso: ${course.title}`;
+            centerContent.innerHTML = `
+                <button class="back-btn" id="backToStudentCourses">⬅ Voltar aos Cursos</button>
+                <p>${course.description}</p>
+                <div class="modules-container">
+                    ${course.modules.map(mod => `
+                        <div class="module-box" style="cursor: default;">
+                            <div class="module-title">${mod.name}</div>
+                            <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
+                                ${mod.contents.length === 0 ? '<span style="font-size:0.85rem; opacity:0.7;">Nenhum conteúdo postado ainda pelo professor.</span>' : ''}
+                                ${mod.contents.map(cnt => `
+                                    <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px;">
+                                        <strong>📌 ${cnt.subject}</strong>
+                                        ${cnt.description ? `<div style="font-size:0.8rem; opacity:0.9;">${cnt.description}</div>` : ''}
+                                        <div style="font-size:0.85rem; margin-top:4px;">${cnt.textHtml}</div>
+                                        ${cnt.file ? `<a href="${cnt.file.data}" download="${cnt.file.name}" style="display:inline-block; margin-top:4px; font-size:0.8rem; color:#fef3c7; text-decoration:underline;">📥 Baixar Material (${cnt.file.name})</a>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('backToStudentCourses').addEventListener('click', () => renderPage('my_courses'));
+        }
+
+        function setupProfileEvents(courses) {
             const avatarClickArea = document.getElementById('avatarClickArea');
             const avatarFileInput = document.getElementById('avatarFileInput');
-
             avatarClickArea.addEventListener('click', () => avatarFileInput.click());
 
             avatarFileInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
-
                 const reader = new FileReader();
                 reader.onload = async (event) => {
                     const base64Image = event.target.result;
-                    try {
-                        const response = await fetch('/api/profile', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email: user.email, avatar: base64Image })
-                        });
-
-                        if (response.ok) {
-                            user.avatar = base64Image;
-                            localStorage.setItem('masterclass_user', JSON.stringify(user));
-                            document.getElementById('userAvatar').src = base64Image;
-                            updateNavAvatar();
-                            showToast('Foto de perfil atualizada com sucesso!');
-                        }
-                    } catch (err) {
-                        console.error("Erro ao salvar foto:", err);
+                    const res = await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user.email, avatar: base64Image })
+                    });
+                    if (res.ok) {
+                        user.avatar = base64Image;
+                        localStorage.setItem('masterclass_user', JSON.stringify(user));
+                        document.getElementById('userAvatar').src = base64Image;
+                        updateNavAvatar();
+                        showToast('Foto atualizada!');
                     }
                 };
                 reader.readAsDataURL(file);
             });
+
+            if (user.role === 'Professor') {
+                document.getElementById('btnSaveTeacherCourse').addEventListener('click', async () => {
+                    const selectedCourseId = document.getElementById('teacherCourseSelect').value;
+                    const res = await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user.email, assignedCourse: selectedCourseId })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        user.assignedCourse = data.user.assignedCourse;
+                        localStorage.setItem('masterclass_user', JSON.stringify(user));
+                        showToast('Curso vinculado com sucesso!');
+                    }
+                });
+            }
 
             const nameDisplayArea = document.getElementById('nameDisplayArea');
             const nameEditForm = document.getElementById('nameEditForm');
@@ -1031,25 +1077,201 @@
             btnSaveName.addEventListener('click', async () => {
                 const newName = inputNewName.value.trim();
                 if (!newName) return;
+                const res = await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email, name: newName })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    user.name = data.user.name;
+                    localStorage.setItem('masterclass_user', JSON.stringify(user));
+                    document.getElementById('userName').innerText = user.name;
+                    nameEditForm.style.display = 'none';
+                    nameDisplayArea.style.display = 'flex';
+                    showToast('Nome atualizado!');
+                }
+            });
+
+            const btnOpenCreateAccModal = document.getElementById('btnOpenCreateAccModal');
+            if (btnOpenCreateAccModal) {
+                btnOpenCreateAccModal.addEventListener('click', openAdminCreateAccountModal);
+            }
+        }
+
+        function setupAdminCoursesEvents() {
+            document.getElementById('createCourseForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = document.getElementById('newCourseTitle').value;
+                const description = document.getElementById('newCourseDesc').value;
+
+                const res = await fetch('/api/admin/courses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
+                    body: JSON.stringify({ title, description })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message);
+                    renderPage('admin_courses');
+                } else {
+                    showToast(data.message || 'Erro ao criar curso.');
+                }
+            });
+        }
+
+        function openAdminCreateAccountModal() {
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal-overlay';
+            modalDiv.innerHTML = `
+                <div class="modal-card">
+                    <h3 style="margin-bottom: 14px;">Criar Nova Conta</h3>
+                    <form id="adminCreateForm" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div>
+                            <label style="font-size:0.85rem; display:block; margin-bottom:4px;">Nome Completo</label>
+                            <input type="text" id="admNewName" class="admin-input" placeholder="Nome" required>
+                        </div>
+                        <div>
+                            <label style="font-size:0.85rem; display:block; margin-bottom:4px;">E-mail</label>
+                            <input type="email" id="admNewEmail" class="admin-input" placeholder="email@exemplo.com" required>
+                        </div>
+                        <div>
+                            <label style="font-size:0.85rem; display:block; margin-bottom:4px;">Tipo de Conta</label>
+                            <select id="admNewRole" class="admin-select" style="width: 100%;">
+                                <option value="Aluno">Aluno</option>
+                                <option value="Professor">Professor</option>
+                                <option value="Administrador">Administrador</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:0.85rem; display:block; margin-bottom:4px;">Senha</label>
+                            <input type="password" id="admNewPassword" class="admin-input" placeholder="Senha segura" required>
+                        </div>
+                        <div id="admCreateModalMsg" style="font-size: 0.8rem; display:none; padding:8px; border-radius:6px; text-align:center;"></div>
+                        <div style="display: flex; gap: 10px; margin-top: 12px;">
+                            <button type="submit" class="glass-btn" style="flex: 1; padding: 10px; justify-content: center;">Criar</button>
+                            <button type="button" id="btnCloseModal" class="glass-btn btn-logout" style="flex: 1; padding: 10px; justify-content: center;">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modalDiv);
+            modalDiv.querySelector('#btnCloseModal').addEventListener('click', () => modalDiv.remove());
+
+            modalDiv.querySelector('#adminCreateForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('admNewName').value;
+                const email = document.getElementById('admNewEmail').value;
+                const role = document.getElementById('admNewRole').value;
+                const password = document.getElementById('admNewPassword').value;
+                const msgBox = document.getElementById('admCreateModalMsg');
+
+                const res = await fetch('/api/admin/create-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
+                    body: JSON.stringify({ name, email, confirmEmail: email, role, password, confirmPassword: password })
+                });
+                const data = await res.json();
+                msgBox.style.display = 'block';
+                if (res.ok) {
+                    msgBox.style.background = 'rgba(23, 185, 120, 0.4)';
+                    msgBox.style.color = '#d4ffec';
+                    msgBox.innerText = data.message;
+                    setTimeout(() => { modalDiv.remove(); showToast('Conta criada!'); }, 1200);
+                } else {
+                    msgBox.style.background = 'rgba(255, 77, 109, 0.4)';
+                    msgBox.style.color = '#ffd1d6';
+                    msgBox.innerText = data.issues ? data.issues[0].message : (data.message || 'Erro');
+                }
+            });
+        }
+
+        function setupAdminAccountsEvents() {
+            const btnSearch = document.getElementById('btnSearchAccounts');
+            const roleSelect = document.getElementById('searchRoleSelect');
+            const resultsContainer = document.getElementById('adminTableResults');
+
+            btnSearch.addEventListener('click', async () => {
+                const selectedRole = roleSelect.value;
+                if (!selectedRole) { showToast('Selecione um tipo de conta.'); return; }
+                resultsContainer.innerHTML = '<p style="margin-top:10px;">Carregando...</p>';
 
                 try {
-                    const response = await fetch('/api/profile', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: user.email, name: newName })
+                    const res = await fetch(`/api/admin/users?role=${encodeURIComponent(selectedRole)}`, {
+                        headers: { 'x-user-role': user.role }
                     });
+                    const data = await res.json();
+                    if (res.ok) {
+                        const accounts = data.users;
+                        if (!accounts || accounts.length === 0) {
+                            resultsContainer.innerHTML = `<p style="margin-top:10px;">Nenhuma conta encontrada.</p>`;
+                            return;
+                        }
+                        let tableHtml = `
+                            <table class="admin-table">
+                                <thead><tr><th>Nome</th><th>E-mail</th><th>Tipo</th><th>Nova Senha</th><th>Ações</th></tr></thead>
+                                <tbody>
+                        `;
+                        accounts.forEach(acc => {
+                            tableHtml += `
+                                <tr data-original-email="${acc.email}">
+                                    <td><input type="text" class="admin-input edit-name" value="${acc.name}"></td>
+                                    <td><input type="email" class="admin-input edit-email" value="${acc.email}"></td>
+                                    <td>
+                                        <select class="admin-select edit-role">
+                                            <option value="Aluno" ${acc.role === 'Aluno' ? 'selected' : ''}>Aluno</option>
+                                            <option value="Professor" ${acc.role === 'Professor' ? 'selected' : ''}>Professor</option>
+                                            <option value="Administrador" ${acc.role === 'Administrador' ? 'selected' : ''}>Administrador</option>
+                                        </select>
+                                    </td>
+                                    <td><input type="password" class="admin-input edit-pass" placeholder="Manter"></td>
+                                    <td style="white-space: nowrap;">
+                                        <button class="btn-action glass-btn btn-update-acc" style="padding:6px 12px; display:inline-block;" data-email="${acc.email}">Salvar</button>
+                                        <button class="btn-action glass-btn btn-delete-acc" style="padding:6px 12px; display:inline-block; background:linear-gradient(135deg,#dc2626,#7f1d1d);" data-email="${acc.email}">Excluir</button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        tableHtml += `</tbody></table>`;
+                        resultsContainer.innerHTML = tableHtml;
 
-                    const data = await response.json();
-                    if (response.ok) {
-                        user.name = data.user.name;
-                        localStorage.setItem('masterclass_user', JSON.stringify(user));
-                        document.getElementById('userName').innerText = user.name;
-                        nameEditForm.style.display = 'none';
-                        nameDisplayArea.style.display = 'flex';
-                        showToast('Nome atualizado!');
+                        resultsContainer.querySelectorAll('.btn-update-acc').forEach(btn => {
+                            btn.addEventListener('click', async (e) => {
+                                const row = e.target.closest('tr');
+                                const origEmail = row.getAttribute('data-original-email');
+                                const payload = {
+                                    name: row.querySelector('.edit-name').value,
+                                    email: row.querySelector('.edit-email').value,
+                                    role: row.querySelector('.edit-role').value,
+                                    password: row.querySelector('.edit-pass').value
+                                };
+                                const updateRes = await fetch(`/api/admin/users/${encodeURIComponent(origEmail)}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
+                                    body: JSON.stringify(payload)
+                                });
+                                const updateData = await updateRes.json();
+                                showToast(updateData.message || 'Atualizado!');
+                                btnSearch.click();
+                            });
+                        });
+
+                        resultsContainer.querySelectorAll('.btn-delete-acc').forEach(btn => {
+                            btn.addEventListener('click', async (e) => {
+                                const targetEmail = e.target.getAttribute('data-email');
+                                if (!confirm(`Excluir conta ${targetEmail}?`)) return;
+                                const delRes = await fetch(`/api/admin/users/${encodeURIComponent(targetEmail)}`, {
+                                    method: 'DELETE',
+                                    headers: { 'x-user-role': user.role }
+                                });
+                                const delData = await delRes.json();
+                                showToast(delData.message || 'Excluído!');
+                                btnSearch.click();
+                            });
+                        });
                     }
                 } catch (err) {
-                    console.error("Erro ao salvar nome:", err);
+                    console.error(err);
                 }
             });
         }
@@ -1057,13 +1279,10 @@
         mainMenu.addEventListener('click', (e) => {
             const btn = e.target.closest('.glass-btn[data-page]');
             if (!btn) return;
-
             e.preventDefault();
             const pageKey = btn.getAttribute('data-page');
-
             mainMenu.querySelectorAll('.glass-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
             renderPage(pageKey);
         });
 
@@ -1073,14 +1292,8 @@
             window.location.href = 'index.html';
         });
 
-        const savedTheme = localStorage.getItem('masterclass_theme');
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-theme');
-        }
-
-        if (localStorage.getItem('masterclass_legacy') === 'true') {
-            document.body.classList.add('legacy-mode');
-        }
+        if (localStorage.getItem('masterclass_theme') === 'dark') document.body.classList.add('dark-theme');
+        if (localStorage.getItem('masterclass_legacy') === 'true') document.body.classList.add('legacy-mode');
 
         renderPage('my_courses');
     </script>

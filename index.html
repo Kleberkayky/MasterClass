@@ -9,7 +9,7 @@
         :root {
             --bg-color: #0a171e;
             --bg-image: url('imagem2.jpg');
-            --glass-bg: rgba(175, 175, 175, 0.22); /* Opacidade baixa leve estilo vidro */
+            --glass-bg: rgba(175, 175, 175, 0.22);
             --glass-border: rgba(255, 255, 255, 0.25);
             --glass-border-top: rgba(255, 255, 255, 0.5);
             --btn-grad-top: rgba(255, 255, 255, 0.35);
@@ -18,7 +18,6 @@
             --btn-primary-shadow: rgba(234, 88, 12, 0.35);
             --text-main: #ffffff;
             --accent-glow: rgba(245, 158, 11, 0.2);
-            /* Padrão DESATIVADO (Com Blur ativo para placas de vídeo/GPUs modernas) */
             --blur-effect: blur(12px);
         }
 
@@ -33,7 +32,6 @@
             --accent-glow: rgba(99, 102, 241, 0.2);
         }
 
-        /* Quando o Modo Legado está ATIVADO: Remove o blur para rodar leve via CPU a 60 FPS */
         body.legacy-mode {
             --blur-effect: none !important;
         }
@@ -302,6 +300,7 @@
             <button type="submit">Entrar na Plataforma</button>
         </form>
 
+        <!-- Cadastro Público limitado a Aluno e Professor -->
         <form id="registerForm" style="display: none;">
             <div class="input-group">
                 <label for="name">Nome Completo</label>
@@ -326,7 +325,6 @@
                 <select id="role">
                     <option value="Aluno">Aluno</option>
                     <option value="Professor">Professor</option>
-                    <option value="Administrador">Administrador</option>
                 </select>
                 <div id="error-role" class="field-error"></div>
             </div>
@@ -376,7 +374,6 @@
         const savedTheme = localStorage.getItem('masterclass_theme');
         applyTheme(savedTheme === 'dark');
 
-        // Carrega o estado do modo legado configurado na página principal
         if (localStorage.getItem('masterclass_legacy') === 'true') {
             document.body.classList.add('legacy-mode');
         }
