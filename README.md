@@ -1,7 +1,6 @@
-<<<<<<< HEAD
-# BANCO-DE-DADOS-2
+# Programação-2
 
-Este repositório contém o código-fonte da aplicação web desenvolvida para a disciplina de Banco de Dados 2.
+Este repositório contém o código-fonte da aplicação web desenvolvida para a disciplina de Programação 2.
 
 ---
 
@@ -22,7 +21,7 @@ Abra o terminal do **VS Code** (`Ctrl + '` ou `Terminal > New Terminal`) e execu
 ### 1. Clonar o Repositório (se necessário)
 ```bash
 git clone <URL_DO_SEU_REPOSITORIO>
-cd BANCO-DE-DADOS-2
+cd PROGRAMAÇÃO-2
 ```
 
 ### 2. Instalação das Dependências
@@ -77,6 +76,3 @@ node server.js
 - **Lucide React**: Biblioteca de ícones interativos.
 - **Tailwind CSS**: Estilização e layout responsivo.
 - **React Router**: Gerenciamento de rotas e navegação.
-=======
-# BANCO-DE-DADOS-2
->>>>>>> 81a2e70defddca623fd17c03ac1523d319381008
