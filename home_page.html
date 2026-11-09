@@ -362,9 +362,9 @@
         #profileMsg, #toastMsg {
             font-size: 0.85rem; padding: 10px; border-radius: 8px; margin-top: 10px; display: none;
             background: rgba(245, 158, 11, 0.4); color: #fef3c7; border: 1px solid rgba(245, 158, 11, 0.6); text-align: center;
+            outline: none;
         }
 
-        /* Estilos do Editor do Professor e Tabelas Admin */
         .editor-toolbar {
             display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;
         }
@@ -435,32 +435,7 @@
             </div>
 
             <ul class="menu-list" id="mainMenu">
-                <li>
-                    <a class="glass-btn has-tooltip active" data-tooltip="Meu Curso" data-page="my_courses">
-                        <span class="btn-icon">📚</span>
-                        <span class="btn-text">Meu Curso</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="glass-btn has-tooltip" data-tooltip="Minhas Notas" data-page="my_grades">
-                        <span class="btn-icon">📝</span>
-                        <span class="btn-text">Minhas Notas</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="glass-btn has-tooltip" data-tooltip="Meu Perfil" data-page="my_profile">
-                        <span class="btn-icon">
-                            <img src="" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar">
-                        </span>
-                        <span class="btn-text">Meu Perfil</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings">
-                        <span class="btn-icon">⚙️</span>
-                        <span class="btn-text">Configurações</span>
-                    </a>
-                </li>
+                <!-- Estruturação dinâmica via JS -->
             </ul>
 
             <a href="#" id="logoutBtn" class="glass-btn btn-logout has-tooltip" data-tooltip="Sair da Conta">
@@ -474,8 +449,8 @@
                 <h3 id="centerTitle">Meu Curso</h3>
             </div>
             
-            <div class="content-sub-panel">
-                <div id="toastMsg"></div>
+            <div class="content-sub-panel" id="contentSubPanel">
+                <div id="toastMsg" tabindex="-1"></div>
                 <div class="content-body" id="centerContent"></div>
             </div>
         </main>
@@ -488,46 +463,89 @@
 
         let user = JSON.parse(storedUser);
 
-        // Injeção de menus na barra lateral baseada no perfil
+        // Função global para mover a barra de rolagem e focar no elemento de aviso/popup
+        function focusAndScrollTo(el) {
+            if (!el) return;
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (typeof el.focus === 'function') {
+                el.focus({ preventScroll: true });
+            }
+        }
+
+        // Construção dinâmica do menu lateral
         const mainMenu = document.getElementById('mainMenu');
-        const settingsLi = mainMenu.querySelector('[data-page="settings"]').parentElement;
 
         if (user.role === 'Administrador') {
-            // Remover "Minhas Notas" da barra lateral do Administrador
-            const gradesLi = mainMenu.querySelector('[data-page="my_grades"]')?.parentElement;
-            if (gradesLi) gradesLi.remove();
-
-            // Mudar a opção "Meu Curso" para "Painel admin"
-            const myCoursesBtn = mainMenu.querySelector('[data-page="my_courses"]');
-            if (myCoursesBtn) {
-                myCoursesBtn.setAttribute('data-tooltip', 'Painel admin');
-                myCoursesBtn.setAttribute('data-page', 'admin_courses');
-                myCoursesBtn.querySelector('.btn-icon').innerHTML = '🛡️';
-                myCoursesBtn.querySelector('.btn-text').innerText = 'Painel admin';
-            }
-
-            const adminAccLi = document.createElement('li');
-            adminAccLi.innerHTML = `
-                <a class="glass-btn has-tooltip" data-tooltip="Controle de Contas" data-page="admin_accounts">
-                    <span class="btn-icon">🛡️</span>
-                    <span class="btn-text">Controle de Contas</span>
-                </a>
+            // Organização estrita da barra lateral para Administrador:
+            // 1. Controle de contas
+            // 2. Gerenciar Cursos
+            // 3. Meu perfil
+            // 4. Configurações
+            mainMenu.innerHTML = `
+                <li>
+                    <a class="glass-btn has-tooltip active" data-tooltip="Controle de contas" data-page="admin_accounts">
+                        <span class="btn-icon">🛡️</span>
+                        <span class="btn-text">Controle de contas</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Gerenciar Cursos" data-page="admin_courses">
+                        <span class="btn-icon">📂</span>
+                        <span class="btn-text">Gerenciar Cursos</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Meu perfil" data-page="my_profile">
+                        <span class="btn-icon">
+                            <img src="" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar">
+                        </span>
+                        <span class="btn-text">Meu perfil</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings">
+                        <span class="btn-icon">⚙️</span>
+                        <span class="btn-text">Configurações</span>
+                    </a>
+                </li>
             `;
-            mainMenu.insertBefore(adminAccLi, settingsLi);
-
-            const adminCourseLi = document.createElement('li');
-            adminCourseLi.innerHTML = `
-                <a class="glass-btn has-tooltip" data-tooltip="Gerenciar Cursos" data-page="admin_courses">
-                    <span class="btn-icon">📂</span>
-                    <span class="btn-text">Gerenciar Cursos</span>
-                </a>
+        } else {
+            // Menu padrão para Aluno e Professor
+            mainMenu.innerHTML = `
+                <li>
+                    <a class="glass-btn has-tooltip active" data-tooltip="Meu Curso" data-page="my_courses">
+                        <span class="btn-icon">📚</span>
+                        <span class="btn-text">Meu Curso</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Minhas Notas" data-page="my_grades">
+                        <span class="btn-icon">📝</span>
+                        <span class="btn-text">Minhas Notas</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Meu perfil" data-page="my_profile">
+                        <span class="btn-icon">
+                            <img src="" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar">
+                        </span>
+                        <span class="btn-text">Meu perfil</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings">
+                        <span class="btn-icon">⚙️</span>
+                        <span class="btn-text">Configurações</span>
+                    </a>
+                </li>
             `;
-            mainMenu.insertBefore(adminCourseLi, settingsLi);
         }
 
         function updateNavAvatar() {
-            const avatarSrc = user.avatar || 'imagem4.jpeg';
-            document.getElementById('navProfileAvatar').src = avatarSrc;
+            const avatarElem = document.getElementById('navProfileAvatar');
+            if (avatarElem) {
+                avatarElem.src = user.avatar || 'imagem4.jpeg';
+            }
         }
         updateNavAvatar();
 
@@ -557,11 +575,15 @@
         const centerTitle = document.getElementById('centerTitle');
         const centerContent = document.getElementById('centerContent');
 
-        function showToast(txt) {
+        function showToast(txt, targetFocusElem = null) {
             const toast = document.getElementById('toastMsg');
             toast.innerText = txt;
             toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 2500);
+            
+            const elementToFocus = targetFocusElem || toast;
+            focusAndScrollTo(elementToFocus);
+
+            setTimeout(() => { toast.style.display = 'none'; }, 3500);
         }
 
         async function fetchCourses() {
@@ -591,25 +613,6 @@
                             return;
                         }
                         renderProfessorCourseView(assigned);
-                    } else if (user.role === 'Administrador') {
-                        centerContent.innerHTML = `
-                            <p>Painel do Administrador - Visão Geral dos Cursos:</p>
-                            <div class="courses-grid">
-                                ${courses.map(c => `
-                                    <div class="course-card view-course-details" data-id="${c.id}">
-                                        <div class="course-title">💻 ${c.title}</div>
-                                        <div class="course-desc">${c.description}</div>
-                                        <span style="font-size:0.8rem; background: rgba(245, 158, 11, 0.5); padding: 4px 8px; border-radius: 6px; width: fit-content;">Ativo</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `;
-                        document.querySelectorAll('.view-course-details').forEach(card => {
-                            card.addEventListener('click', () => {
-                                const c = courses.find(x => x.id === card.getAttribute('data-id'));
-                                if (c) renderProfessorCourseView(c, true);
-                            });
-                        });
                     } else {
                         // Aluno
                         centerContent.innerHTML = `
@@ -655,7 +658,7 @@
                     break;
 
                 case 'my_profile':
-                    centerTitle.innerText = "Meu Perfil";
+                    centerTitle.innerText = "Meu perfil";
                     let teacherCourseSelectHtml = '';
                     if (user.role === 'Professor') {
                         teacherCourseSelectHtml = `
@@ -700,7 +703,7 @@
                                 
                                 ${teacherCourseSelectHtml}
                                 ${createAccountBtnHtml}
-                                <div id="profileMsg"></div>
+                                <div id="profileMsg" tabindex="-1"></div>
                             </div>
                         </div>
                     `;
@@ -708,7 +711,7 @@
                     break;
 
                 case 'admin_accounts':
-                    centerTitle.innerText = "Controle de Contas - Administração";
+                    centerTitle.innerText = "Controle de contas";
                     centerContent.innerHTML = `
                         <p>Selecione o tipo de conta que deseja procurar e gerenciar:</p>
                         <div style="display: flex; gap: 12px; align-items: center; margin-top: 10px;">
@@ -726,7 +729,7 @@
                     break;
 
                 case 'admin_courses':
-                    centerTitle.innerText = "Gerenciamento de Cursos - Administração";
+                    centerTitle.innerText = "Gerenciar Cursos";
                     centerContent.innerHTML = `
                         <p>Cadastre novos cursos na plataforma:</p>
                         <form id="createCourseForm" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px;">
@@ -743,18 +746,25 @@
                         <h4 style="margin-top: 20px;">Cursos Existentes:</h4>
                         <div class="courses-grid" style="margin-top: 10px;">
                             ${courses.map(c => `
-                                <div class="course-card">
+                                <div class="course-card view-admin-course-details" data-id="${c.id}">
                                     <div class="course-title">📚 ${c.title}</div>
                                     <div class="course-desc">${c.description || 'Sem descrição'}</div>
+                                    <span style="font-size:0.8rem; background: rgba(245, 158, 11, 0.5); padding: 4px 8px; border-radius: 6px; width: fit-content; margin-top:6px;">Gerenciar Módulos</span>
                                 </div>
                             `).join('')}
                         </div>
                     `;
+                    document.querySelectorAll('.view-admin-course-details').forEach(card => {
+                        card.addEventListener('click', () => {
+                            const c = courses.find(x => x.id === card.getAttribute('data-id'));
+                            if (c) renderProfessorCourseView(c, true);
+                        });
+                    });
                     setupAdminCoursesEvents();
                     break;
 
                 case 'settings':
-                    centerTitle.innerText = "Configurações da Plataforma";
+                    centerTitle.innerText = "Configurações";
                     const isDark = document.body.classList.contains('dark-theme');
                     const isLegacy = document.body.classList.contains('legacy-mode');
                     centerContent.innerHTML = `
@@ -802,11 +812,11 @@
             }
         }
 
-        // Visualização do Curso para o Professor
+        // Visualização do Curso para o Professor / Administrador
         function renderProfessorCourseView(course, isAdminView = false) {
             centerTitle.innerText = `Curso: ${course.title}`;
             centerContent.innerHTML = `
-                ${isAdminView ? '<button class="back-btn" id="backToAdminCourses">⬅ Voltar</button>' : ''}
+                ${isAdminView ? '<button class="back-btn" id="backToAdminCourses">⬅ Voltar aos Cursos</button>' : ''}
                 <p>Selecione um dos 3 módulos abaixo para lançar ou gerenciar conteúdos:</p>
                 <div class="modules-container">
                     ${course.modules.map(mod => `
@@ -819,7 +829,7 @@
             `;
 
             if (isAdminView) {
-                document.getElementById('backToAdminCourses').addEventListener('click', () => renderPage('my_courses'));
+                document.getElementById('backToAdminCourses').addEventListener('click', () => renderPage(user.role === 'Administrador' ? 'admin_courses' : 'my_courses'));
             }
 
             document.querySelectorAll('.select-module-btn').forEach(box => {
@@ -831,7 +841,7 @@
             });
         }
 
-        // Editor de Conteúdo do Professor (Editor de texto rico, upload de imagens por clique e drag-and-drop)
+        // Editor de Conteúdo do Professor / Administrador
         function renderModuleContentEditor(course, moduleObj, isAdminView) {
             centerTitle.innerText = `${course.title} > ${moduleObj.name}`;
             centerContent.innerHTML = `
@@ -882,7 +892,6 @@
 
             const richEditor = document.getElementById('richEditor');
 
-            // Ferramentas do editor
             document.getElementById('btnBold').addEventListener('click', () => {
                 richEditor.focus();
                 document.execCommand('bold', false, null);
@@ -892,7 +901,6 @@
                 document.execCommand('italic', false, null);
             });
 
-            // Correção do botão Inserir Imagem (Foco + execCommand / fallback)
             const inputEditorImg = document.getElementById('inputEditorImg');
             inputEditorImg.addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -906,10 +914,9 @@
                     }
                 };
                 reader.readAsDataURL(file);
-                e.target.value = ''; // Limpa o input para permitir selecionar a mesma imagem novamente
+                e.target.value = '';
             });
 
-            // Suporte a Arrastar e Soltar (Drag and Drop) de imagens do dispositivo para o editor
             richEditor.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -936,7 +943,6 @@
                 }
             });
 
-            // Finalizar e salvar
             let attachedFileObj = null;
             document.getElementById('inputFileAttachment').addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -949,14 +955,18 @@
             });
 
             document.getElementById('btnFinishContent').addEventListener('click', async () => {
-                const subject = document.getElementById('inputSubject').value.trim();
+                const inputSubjectElem = document.getElementById('inputSubject');
+                const subject = inputSubjectElem.value.trim();
                 const description = document.getElementById('inputDescription').value.trim();
                 const textHtml = richEditor.innerHTML;
 
+                // Verificação do campo obrigatório com foco e scroll automático
                 if (!subject) {
-                    showToast('⚠️ O campo Assunto é obrigatório!');
+                    inputSubjectElem.classList.add('error-input');
+                    showToast('⚠️ O campo Assunto é obrigatório!', inputSubjectElem);
                     return;
                 }
+                inputSubjectElem.classList.remove('error-input');
 
                 const payload = {
                     subject,
@@ -1072,6 +1082,7 @@
                 inputNewName.value = user.name;
                 nameDisplayArea.style.display = 'none';
                 nameEditForm.style.display = 'flex';
+                focusAndScrollTo(inputNewName);
             });
 
             btnSaveName.addEventListener('click', async () => {
@@ -1124,7 +1135,7 @@
             const modalDiv = document.createElement('div');
             modalDiv.className = 'modal-overlay';
             modalDiv.innerHTML = `
-                <div class="modal-card">
+                <div class="modal-card" id="modalCardElem">
                     <h3 style="margin-bottom: 14px;">Criar Nova Conta</h3>
                     <form id="adminCreateForm" style="display: flex; flex-direction: column; gap: 10px;">
                         <div>
@@ -1147,7 +1158,7 @@
                             <label style="font-size:0.85rem; display:block; margin-bottom:4px;">Senha</label>
                             <input type="password" id="admNewPassword" class="admin-input" placeholder="Senha segura" required>
                         </div>
-                        <div id="admCreateModalMsg" style="font-size: 0.8rem; display:none; padding:8px; border-radius:6px; text-align:center;"></div>
+                        <div id="admCreateModalMsg" tabindex="-1" style="font-size: 0.8rem; display:none; padding:8px; border-radius:6px; text-align:center;"></div>
                         <div style="display: flex; gap: 10px; margin-top: 12px;">
                             <button type="submit" class="glass-btn" style="flex: 1; padding: 10px; justify-content: center;">Criar</button>
                             <button type="button" id="btnCloseModal" class="glass-btn btn-logout" style="flex: 1; padding: 10px; justify-content: center;">Cancelar</button>
@@ -1156,6 +1167,8 @@
                 </div>
             `;
             document.body.appendChild(modalDiv);
+            focusAndScrollTo(document.getElementById('admNewName'));
+
             modalDiv.querySelector('#btnCloseModal').addEventListener('click', () => modalDiv.remove());
 
             modalDiv.querySelector('#adminCreateForm').addEventListener('submit', async (e) => {
@@ -1177,11 +1190,13 @@
                     msgBox.style.background = 'rgba(23, 185, 120, 0.4)';
                     msgBox.style.color = '#d4ffec';
                     msgBox.innerText = data.message;
+                    focusAndScrollTo(msgBox);
                     setTimeout(() => { modalDiv.remove(); showToast('Conta criada!'); }, 1200);
                 } else {
                     msgBox.style.background = 'rgba(255, 77, 109, 0.4)';
                     msgBox.style.color = '#ffd1d6';
                     msgBox.innerText = data.issues ? data.issues[0].message : (data.message || 'Erro');
+                    focusAndScrollTo(msgBox);
                 }
             });
         }
@@ -1193,7 +1208,10 @@
 
             btnSearch.addEventListener('click', async () => {
                 const selectedRole = roleSelect.value;
-                if (!selectedRole) { showToast('Selecione um tipo de conta.'); return; }
+                if (!selectedRole) { 
+                    showToast('Selecione um tipo de conta.', roleSelect); 
+                    return; 
+                }
                 resultsContainer.innerHTML = '<p style="margin-top:10px;">Carregando...</p>';
 
                 try {
@@ -1295,7 +1313,12 @@
         if (localStorage.getItem('masterclass_theme') === 'dark') document.body.classList.add('dark-theme');
         if (localStorage.getItem('masterclass_legacy') === 'true') document.body.classList.add('legacy-mode');
 
-        renderPage('my_courses');
+        // Carrega a tela inicial padrão de acordo com o perfil
+        if (user.role === 'Administrador') {
+            renderPage('admin_accounts');
+        } else {
+            renderPage('my_courses');
+        }
     </script>
 </body>
 </html>

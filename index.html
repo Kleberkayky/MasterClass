@@ -256,6 +256,7 @@
             font-size: 0.85rem;
             text-align: center;
             display: none;
+            outline: none;
         }
 
         .success {
@@ -300,7 +301,6 @@
             <button type="submit">Entrar na Plataforma</button>
         </form>
 
-        <!-- Cadastro Público limitado a Aluno e Professor -->
         <form id="registerForm" style="display: none;">
             <div class="input-group">
                 <label for="name">Nome Completo</label>
@@ -344,7 +344,7 @@
             <button type="submit">Finalizar Cadastro</button>
         </form>
 
-        <div id="globalMessage"></div>
+        <div id="globalMessage" tabindex="-1"></div>
 
         <div class="toggle-mode">
             <span id="toggleText">Você não tem uma conta?</span> 
@@ -392,6 +392,22 @@
         const globalMessage = document.getElementById('globalMessage');
 
         let isLoginMode = true;
+
+        // Função global de foco e scroll automático
+        function focusAndScrollTo(el) {
+            if (!el) return;
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (typeof el.focus === 'function') {
+                el.focus({ preventScroll: true });
+            }
+        }
+
+        function displayGlobalMsg(text, isError = false) {
+            globalMessage.style.display = 'block';
+            globalMessage.className = isError ? 'error' : 'success';
+            globalMessage.innerText = text;
+            focusAndScrollTo(globalMessage);
+        }
 
         const tooltip = document.getElementById('globalTooltip');
         document.addEventListener('mouseover', (e) => {
@@ -458,24 +474,17 @@
 
                 if (response.ok) {
                     localStorage.setItem('masterclass_user', JSON.stringify(data.user));
-                    
-                    globalMessage.style.display = 'block';
-                    globalMessage.className = 'success';
-                    globalMessage.innerText = `Bem-vindo(a), ${data.user.name}! Redirecionando...`;
+                    displayGlobalMsg(`Bem-vindo(a), ${data.user.name}! Redirecionando...`, false);
 
                     setTimeout(() => {
                         window.location.href = 'home_page.html';
                     }, 800);
                 } else {
-                    globalMessage.style.display = 'block';
-                    globalMessage.className = 'error';
-                    globalMessage.innerText = data.message || 'Erro ao realizar login.';
+                    displayGlobalMsg(data.message || 'Erro ao realizar login.', true);
                 }
             } catch (err) {
                 console.error(err);
-                globalMessage.style.display = 'block';
-                globalMessage.className = 'error';
-                globalMessage.innerText = 'Erro ao conectar ao servidor.';
+                displayGlobalMsg('Erro ao conectar ao servidor.', true);
             }
         });
 
@@ -517,9 +526,7 @@
                 submitBtn.disabled = false;
 
                 if (response.ok) {
-                    globalMessage.style.display = 'block';
-                    globalMessage.className = 'success';
-                    globalMessage.innerText = data.message || 'Cadastro realizado com sucesso!';
+                    displayGlobalMsg(data.message || 'Cadastro realizado com sucesso!', false);
                     registerForm.reset();
 
                     setTimeout(() => {
@@ -527,6 +534,7 @@
                     }, 1200);
                 } else {
                     if (data.issues && Array.isArray(data.issues)) {
+                        let firstErrorElem = null;
                         data.issues.forEach(issue => {
                             const fieldName = issue.path[0];
                             const errorDiv = document.getElementById(`error-${fieldName}`);
@@ -538,8 +546,12 @@
                             }
                             if (inputField) {
                                 inputField.classList.add('error-input');
+                                if (!firstErrorElem) firstErrorElem = inputField;
                             }
                         });
+                        if (firstErrorElem) {
+                            focusAndScrollTo(firstErrorElem);
+                        }
                     }
                 }
             } catch (err) {
@@ -547,9 +559,7 @@
                 submitBtn.innerText = 'Finalizar Cadastro';
                 submitBtn.disabled = false;
 
-                globalMessage.style.display = 'block';
-                globalMessage.className = 'error';
-                globalMessage.innerText = 'Erro ao conectar ao servidor.';
+                displayGlobalMsg('Erro ao conectar ao servidor.', true);
             }
         });
     </script>
