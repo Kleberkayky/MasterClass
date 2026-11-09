@@ -387,6 +387,151 @@ app.delete('/api/admin/users/:email', verificarPermissao('Administrador'), (req,
   return res.status(200).json({ message: 'Conta excluída com sucesso!' });
 });
 
+// Esqueci minha senha / Redefinição
+app.post('/forgot-password', async (req, res) => {
+  const { email, newPassword, confirmNewPassword } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'O e-mail é obrigatório.' });
+  }
+
+  const users = loadUsers();
+  const userIndex = users.findIndex(u => u.email.toLowerCase() === email.trim().toLowerCase());
+
+  if (userIndex === -1) {
+    return res.status(404).json({ message: 'Este e-mail não está cadastrado no sistema.' });
+  }
+
+  // Se apenas o e-mail foi enviado, valida se o usuário existe para prosseguir para a etapa de nova senha
+  if (!newPassword) {
+    return res.status(200).json({ exists: true, message: 'E-mail encontrado. Insira sua nova senha.' });
+  }
+
+  // Validação de nova senha se fornecida
+  if (newPassword !== confirmNewPassword) {
+    return res.status(400).json({ message: 'As senhas não coincidem.' });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ message: 'A senha deve conter no mínimo 8 caracteres.' });
+  }
+
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!\%*?&]{8,}$/;
+  if (!passwordRegex.test(newPassword)) {
+    return res.status(400).json({ message: 'A senha deve conter maiúscula, minúscula, número e caractere especial (@$!%*?&).' });
+  }
+
+  users[userIndex].passwordHash = await bcrypt.hash(newPassword, 10);
+  saveUsers(users);
+
+  return res.status(200).json({ message: 'Senha redefinida com sucesso! Faça login com a nova senha.' });
+});
+
+// --- ROTAS DE AVISOS DO MURAL ---
+const AVISOS_FILE = path.join(__dirname, 'avisos.json');
+
+function loadAvisos() {
+  if (!fs.existsSync(AVISOS_FILE)) {
+    const initialAvisos = [
+      {
+        id: 'aviso_1',
+        subject: 'Bem-vindo ao Novo Semestre na Master Class!',
+        description: 'Avisos importantes da diretoria acadêmica.',
+        textHtml: '<p>Olá a todos os alunos e professores! Sejam muito bem-vindos ao novo ciclo de aprendizado. Fiquem atentos aos prazos dos módulos.</p>',
+        file: null,
+        createdAt: new Date().toISOString()
+      }
+    ];
+    fs.writeFileSync(AVISOS_FILE, JSON.stringify(initialAvisos, null, 2), 'utf-8');
+    return initialAvisos;
+  }
+  try {
+    const data = fs.readFileSync(AVISOS_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (err) {
+    console.error("Erro ao ler avisos.json:", err);
+    return [];
+  }
+}
+
+function saveAvisos(avisos) {
+  fs.writeFileSync(AVISOS_FILE, JSON.stringify(avisos, null, 2), 'utf-8');
+}
+
+loadAvisos();
+
+// Listar avisos
+app.get('/api/avisos', (req, res) => {
+  const avisos = loadAvisos();
+  return res.status(200).json({ avisos });
+});
+
+// Criar aviso (Apenas Administrador)
+app.post('/api/admin/avisos', verificarPermissao('Administrador'), (req, res) => {
+  const { subject, description, textHtml, fileName, fileData, fileType } = req.body;
+
+  if (!subject || subject.trim() === '') {
+    return res.status(400).json({ message: 'O assunto do aviso é obrigatório.' });
+  }
+
+  const avisos = loadAvisos();
+  const newAviso = {
+    id: 'aviso_' + Date.now(),
+    subject: subject.trim(),
+    description: description ? description.trim() : '',
+    textHtml: textHtml || '',
+    file: fileName ? { name: fileName, data: fileData, type: fileType } : null,
+    createdAt: new Date().toISOString()
+  };
+
+  avisos.unshift(newAviso); // Adiciona no topo
+  saveAvisos(avisos);
+
+  return res.status(200).json({ message: 'Aviso publicado com sucesso no mural!', aviso: newAviso });
+});
+
+// Rota de Notificações (Busca novos conteúdos de cursos e avisos recentes)
+app.get('/api/notifications', (req, res) => {
+  const role = req.headers['x-user-role'];
+  const courses = loadCourses();
+  const avisos = loadAvisos();
+
+  let notifications = [];
+
+  // Quadro de avisos para Alunos e Professores
+  avisos.forEach(av => {
+    notifications.push({
+      id: av.id,
+      type: 'aviso',
+      title: `Aviso: ${av.subject}`,
+      description: av.description || 'Novo comunicado publicado no mural.',
+      createdAt: av.createdAt
+    });
+  });
+
+  // Se for Aluno, inclui também atualizações de novos assuntos enviados nos cursos
+  if (role && role.toLowerCase() === 'aluno') {
+    courses.forEach(c => {
+      c.modules.forEach(m => {
+        m.contents.forEach(cnt => {
+          notifications.push({
+            id: cnt.id,
+            type: 'conteudo',
+            title: `Nova Matéria (${c.title}) - ${m.name}`,
+            description: `Assunto: ${cnt.subject} ${cnt.description ? '- ' + cnt.description : ''}`,
+            createdAt: cnt.createdAt || new Date().toISOString()
+          });
+        });
+      });
+    });
+  }
+
+  // Ordena por mais recente
+  notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  return res.status(200).json({ notifications });
+});
+
 app.listen(3000, () => {
   console.log('Servidor Master Class rodando em http://localhost:3000');
 });

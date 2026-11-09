@@ -267,6 +267,19 @@
             transform: translateY(-1px);
         }
 
+        .forgot-password-link {
+            text-align: right;
+            margin-top: -8px;
+            margin-bottom: 12px;
+        }
+
+        .forgot-password-link a {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.8rem;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
         .toggle-mode {
             margin-top: 18px;
             text-align: center;
@@ -319,6 +332,7 @@
         <h2 id="formTitle">Master Class</h2>
         <div class="subtitle" id="formSubtitle">Acesse sua conta educacional</div>
 
+        <!-- Formulário de Login -->
         <form id="loginForm">
             <div class="input-group">
                 <label for="loginEmail">E-mail</label>
@@ -330,9 +344,37 @@
                 <input type="password" id="loginPassword" placeholder="Sua senha" required>
             </div>
 
+            <div class="forgot-password-link">
+                <a id="forgotPassBtn">Esqueceu sua senha?</a>
+            </div>
+
             <button type="submit">Entrar na Plataforma</button>
         </form>
 
+        <!-- Formulário de Esqueci Minha Senha / Redefinição -->
+        <form id="forgotForm" style="display: none;">
+            <div id="forgotStep1">
+                <div class="input-group">
+                    <label for="forgotEmail">E-mail da Conta</label>
+                    <input type="email" id="forgotEmail" placeholder="Digite seu e-mail cadastrado" required>
+                </div>
+                <button type="button" id="btnVerifyForgotEmail">Verificar E-mail</button>
+            </div>
+
+            <div id="forgotStep2" style="display: none;">
+                <div class="input-group">
+                    <label for="newPassword">Nova Senha</label>
+                    <input type="password" id="newPassword" placeholder="Mín. 8 caracteres, maiúscula, minúscula, número e símbolo">
+                </div>
+                <div class="input-group">
+                    <label for="confirmNewPassword">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmNewPassword" placeholder="Repita a nova senha">
+                </div>
+                <button type="submit">Salvar Nova Senha</button>
+            </div>
+        </form>
+
+        <!-- Formulário de Cadastro -->
         <form id="registerForm" style="display: none;">
             <div class="input-group">
                 <label for="name">Nome Completo</label>
@@ -378,7 +420,7 @@
 
         <div id="globalMessage" tabindex="-1"></div>
 
-        <div class="toggle-mode">
+        <div class="toggle-mode" id="toggleModeContainer">
             <span id="toggleText">Você não tem uma conta?</span> 
             <a id="toggleBtn">Cadastre-se</a>
         </div>
@@ -420,13 +462,17 @@
 
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
+        const forgotForm = document.getElementById('forgotForm');
         const formTitle = document.getElementById('formTitle');
         const formSubtitle = document.getElementById('formSubtitle');
         const toggleBtn = document.getElementById('toggleBtn');
         const toggleText = document.getElementById('toggleText');
+        const toggleModeContainer = document.getElementById('toggleModeContainer');
         const globalMessage = document.getElementById('globalMessage');
+        const forgotPassBtn = document.getElementById('forgotPassBtn');
 
-        let isLoginMode = true;
+        let currentMode = 'login'; // 'login', 'register', 'forgot'
+        let verifiedForgotEmail = '';
 
         function focusAndScrollTo(el) {
             if (!el) return;
@@ -469,24 +515,113 @@
             }
         });
 
+        // Alternar para tela de "Esqueci minha senha"
+        forgotPassBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentMode = 'forgot';
+            globalMessage.style.display = 'none';
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'none';
+            forgotForm.style.display = 'block';
+            document.getElementById('forgotStep1').style.display = 'block';
+            document.getElementById('forgotStep2').style.display = 'none';
+
+            formTitle.innerText = 'Recuperar Senha';
+            formSubtitle.innerText = 'Informe seu e-mail cadastrado';
+            toggleText.innerText = 'Lembrou sua senha?';
+            toggleBtn.innerText = 'Fazer Login';
+        });
+
         toggleBtn.addEventListener('click', () => {
-            isLoginMode = !isLoginMode;
             globalMessage.style.display = 'none';
 
-            if (isLoginMode) {
-                loginForm.style.display = 'block';
-                registerForm.style.display = 'none';
-                formTitle.innerText = 'Master Class';
-                formSubtitle.innerText = 'Acesse sua conta educacional';
-                toggleText.innerText = 'Você não tem uma conta?';
-                toggleBtn.innerText = 'Cadastre-se';
-            } else {
+            if (currentMode === 'login') {
+                // Ir para Cadastro
+                currentMode = 'register';
                 loginForm.style.display = 'none';
+                forgotForm.style.display = 'none';
                 registerForm.style.display = 'block';
                 formTitle.innerText = 'Criar Conta';
                 formSubtitle.innerText = 'Junte-se à Master Class';
                 toggleText.innerText = 'Já possui uma conta?';
                 toggleBtn.innerText = 'Fazer Login';
+            } else {
+                // Ir para Login (vindo de Cadastro ou Esqueci a Senha)
+                currentMode = 'login';
+                registerForm.style.display = 'none';
+                forgotForm.style.display = 'none';
+                loginForm.style.display = 'block';
+                formTitle.innerText = 'Master Class';
+                formSubtitle.innerText = 'Acesse sua conta educacional';
+                toggleText.innerText = 'Você não tem uma conta?';
+                toggleBtn.innerText = 'Cadastre-se';
+            }
+        });
+
+        // Passo 1: Verificar se o e-mail existe
+        document.getElementById('btnVerifyForgotEmail').addEventListener('click', async () => {
+            globalMessage.style.display = 'none';
+            const emailInput = document.getElementById('forgotEmail');
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                displayGlobalMsg('Por favor, informe o e-mail.', true);
+                return;
+            }
+
+            try {
+                const response = await fetch('/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    verifiedForgotEmail = email;
+                    displayGlobalMsg(data.message, false);
+                    document.getElementById('forgotStep1').style.display = 'none';
+                    document.getElementById('forgotStep2').style.display = 'block';
+                    formSubtitle.innerText = 'Insira e confirme sua nova senha';
+                } else {
+                    displayGlobalMsg(data.message || 'E-mail não encontrado.', true);
+                }
+            } catch (err) {
+                console.error(err);
+                displayGlobalMsg('Erro ao conectar ao servidor.', true);
+            }
+        });
+
+        // Passo 2: Enviar nova senha
+        forgotForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            globalMessage.style.display = 'none';
+
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+            try {
+                const response = await fetch('/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: verifiedForgotEmail, newPassword, confirmNewPassword })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayGlobalMsg(data.message, false);
+                    setTimeout(() => {
+                        // Retorna para o login após sucesso
+                        toggleBtn.click();
+                    }, 1500);
+                } else {
+                    displayGlobalMsg(data.message || 'Erro ao redefinir senha.', true);
+                }
+            } catch (err) {
+                console.error(err);
+                displayGlobalMsg('Erro ao conectar ao servidor.', true);
             }
         });
 

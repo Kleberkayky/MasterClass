@@ -42,14 +42,8 @@
         }
 
         @keyframes osPanelEntrance {
-            0% {
-                opacity: 0;
-                transform: translateY(10px) scale(0.99);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            0% { opacity: 0; transform: translateY(10px) scale(0.99); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         * {
@@ -151,9 +145,7 @@
             flex-shrink: 0;
             transition: transform 0.3s ease;
         }
-        .school-logo:hover {
-            transform: scale(1.06);
-        }
+        .school-logo:hover { transform: scale(1.06); }
 
         .sidebar-brand-title {
             font-size: 1.15rem;
@@ -203,9 +195,7 @@
             box-shadow: 0 8px 20px var(--btn-primary-shadow);
         }
 
-        .glass-btn:active {
-            transform: translateY(-1px);
-        }
+        .glass-btn:active { transform: translateY(-1px); }
 
         .glass-btn .btn-icon {
             font-size: 1.2rem;
@@ -251,6 +241,72 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             padding-bottom: 12px;
         }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .top-icon-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #fff;
+            font-size: 1.1rem;
+            transition: transform 0.2s ease, background 0.2s ease;
+            position: relative;
+        }
+        .top-icon-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .notif-badge {
+            position: absolute;
+            top: -2px; right: -2px;
+            background: #ef4444; color: #fff;
+            font-size: 0.65rem; font-weight: bold;
+            padding: 2px 6px; border-radius: 10px;
+            display: none;
+        }
+
+        /* Barra de Pesquisa flutuante */
+        .search-bar-container {
+            display: none;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+            flex-direction: column;
+            gap: 8px;
+            backdrop-filter: var(--blur-effect);
+        }
+        .search-input-wrapper {
+            display: flex; gap: 8px; align-items: center;
+        }
+        .search-input {
+            width: 100%; padding: 10px 14px; border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: var(--input-bg); color: #fff; outline: none; font-size: 0.9rem;
+        }
+        .recent-suggestions {
+            display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+            font-size: 0.8rem;
+        }
+        .suggestion-chip {
+            background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 4px 10px; border-radius: 20px; cursor: pointer; color: #fef3c7;
+            transition: background 0.15s ease;
+        }
+        .suggestion-chip:hover { background: rgba(255, 255, 255, 0.35); }
 
         h3 { color: #ffffff; font-size: 1.25rem; font-weight: 700; }
 
@@ -490,7 +546,26 @@
 
         <main class="glass-panel panel-center">
             <div class="panel-center-header">
-                <h3 id="centerTitle">Meu Curso</h3>
+                <h3 id="centerTitle">Quadro de Avisos</h3>
+                <div class="header-actions">
+                    <button class="top-icon-btn has-tooltip" data-tooltip="Pesquisar opções" id="searchToggleBtn">🔍</button>
+                    <button class="top-icon-btn has-tooltip" data-tooltip="Notificações" id="notifToggleBtn" style="display:none;">
+                        🔔<span class="notif-badge" id="notifBadge">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Barra de Pesquisa Flutuante -->
+            <div class="search-bar-container" id="searchBarContainer">
+                <div class="search-input-wrapper">
+                    <input type="text" id="globalSearchInput" class="search-input" placeholder="Digite para pesquisar nas suas opções (ex: Avisos, Cursos, Perfil)...">
+                    <button id="btnCloseSearch" class="glass-btn" style="width: auto; padding: 8px 14px; margin: 0;">✕</button>
+                </div>
+                <div class="recent-suggestions" id="recentSuggestionsArea">
+                    <span style="opacity:0.8;">Buscas recentes:</span>
+                    <!-- Preenchido via JS -->
+                </div>
+                <div id="searchResultsDropdown" style="display:none; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px; margin-top: 4px;"></div>
             </div>
             
             <div class="content-sub-panel" id="contentSubPanel">
@@ -527,7 +602,13 @@
         if (user.role === 'Administrador') {
             mainMenu.innerHTML = `
                 <li>
-                    <a class="glass-btn has-tooltip active" data-tooltip="Controle de contas" data-page="admin_accounts">
+                    <a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos">
+                        <span class="btn-icon">📢</span>
+                        <span class="btn-text">Quadro de Avisos</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Controle de contas" data-page="admin_accounts">
                         <span class="btn-icon">🛡️</span>
                         <span class="btn-text">Controle de contas</span>
                     </a>
@@ -553,10 +634,52 @@
                     </a>
                 </li>
             `;
-        } else {
+        } else if (user.role === 'Aluno') {
             mainMenu.innerHTML = `
                 <li>
-                    <a class="glass-btn has-tooltip active" data-tooltip="Meu Curso" data-page="my_courses">
+                    <a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos">
+                        <span class="btn-icon">📢</span>
+                        <span class="btn-text">Quadro de Avisos</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Meus Cursos" data-page="my_courses">
+                        <span class="btn-icon">📚</span>
+                        <span class="btn-text">Meus Cursos</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Minhas Notas" data-page="my_grades">
+                        <span class="btn-icon">📝</span>
+                        <span class="btn-text">Minhas Notas</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Meu perfil" data-page="my_profile">
+                        <span class="btn-icon">
+                            <img src="" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar">
+                        </span>
+                        <span class="btn-text">Meu perfil</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings">
+                        <span class="btn-icon">⚙️</span>
+                        <span class="btn-text">Configurações</span>
+                    </a>
+                </li>
+            `;
+        } else {
+            // Professor
+            mainMenu.innerHTML = `
+                <li>
+                    <a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos">
+                        <span class="btn-icon">📢</span>
+                        <span class="btn-text">Quadro de Avisos</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="glass-btn has-tooltip" data-tooltip="Meu Curso" data-page="my_courses">
                         <span class="btn-icon">📚</span>
                         <span class="btn-text">Meu Curso</span>
                     </a>
@@ -583,6 +706,15 @@
                 </li>
             `;
         }
+
+        // Ativa o ícone de notificações para Aluno e Professor
+        if (user.role === 'Aluno' || user.role === 'Professor') {
+            const notifBtn = document.getElementById('notifToggleBtn');
+            notifBtn.style.display = 'flex';
+            setupNotifications(notifBtn);
+        }
+
+        setupGlobalSearch();
 
         function updateNavAvatar() {
             const avatarElem = document.getElementById('navProfileAvatar');
@@ -640,12 +772,243 @@
             }
         }
 
+        async function fetchAvisos() {
+            try {
+                const res = await fetch('/api/avisos');
+                const data = await res.json();
+                return res.ok ? data.avisos : [];
+            } catch (err) {
+                console.error(err);
+                return [];
+            }
+        }
+
+        // --- SISTEMA DE PESQUISA GLOBAL ---
+        function setupGlobalSearch() {
+            const searchToggleBtn = document.getElementById('searchToggleBtn');
+            const searchBarContainer = document.getElementById('searchBarContainer');
+            const btnCloseSearch = document.getElementById('btnCloseSearch');
+            const globalSearchInput = document.getElementById('globalSearchInput');
+            const recentSuggestionsArea = document.getElementById('recentSuggestionsArea');
+            const searchResultsDropdown = document.getElementById('searchResultsDropdown');
+
+            searchToggleBtn.addEventListener('click', () => {
+                const isVisible = searchBarContainer.style.display === 'flex';
+                searchBarContainer.style.display = isVisible ? 'none' : 'flex';
+                if (!isVisible) {
+                    globalSearchInput.focus();
+                    renderRecentSearches();
+                }
+            });
+
+            btnCloseSearch.addEventListener('click', () => {
+                searchBarContainer.style.display = 'none';
+            });
+
+            const availablePages = [
+                { name: 'Quadro de Avisos', pageKey: 'avisos' },
+                { name: 'Meus Cursos / Meu Curso', pageKey: 'my_courses' },
+                { name: 'Minhas Notas', pageKey: 'my_grades' },
+                { name: 'Meu Perfil', pageKey: 'my_profile' },
+                { name: 'Configurações', pageKey: 'settings' }
+            ];
+
+            if (user.role === 'Administrador') {
+                availablePages.push({ name: 'Controle de Contas', pageKey: 'admin_accounts' });
+                availablePages.push({ name: 'Gerenciar Cursos', pageKey: 'admin_courses' });
+            }
+
+            globalSearchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                if (!query) {
+                    searchResultsDropdown.style.display = 'none';
+                    return;
+                }
+
+                const matches = availablePages.filter(p => p.name.toLowerCase().includes(query));
+                if (matches.length === 0) {
+                    searchResultsDropdown.style.display = 'block';
+                    searchResultsDropdown.innerHTML = '<div style="font-size:0.85rem; padding:4px;">Nenhuma opção encontrada.</div>';
+                    return;
+                }
+
+                searchResultsDropdown.style.display = 'block';
+                searchResultsDropdown.innerHTML = matches.map(m => `
+                    <div class="search-result-item" data-page="${m.pageKey}" style="padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.88rem; background: rgba(255,255,255,0.1); margin-bottom: 4px;">
+                        📄 ${m.name}
+                    </div>
+                `).join('');
+
+                searchResultsDropdown.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const pageKey = item.getAttribute('data-page');
+                        saveRecentSearch(item.innerText.replace('📄 ', ''));
+                        triggerPageNavigation(pageKey);
+                        searchBarContainer.style.display = 'none';
+                        globalSearchInput.value = '';
+                        searchResultsDropdown.style.display = 'none';
+                    });
+                });
+            });
+
+            globalSearchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && globalSearchInput.value.trim()) {
+                    saveRecentSearch(globalSearchInput.value.trim());
+                }
+            });
+        }
+
+        function getRecentSearches() {
+            try {
+                return JSON.parse(localStorage.getItem('masterclass_recent_searches') || '[]');
+            } catch { return []; }
+        }
+
+        function saveRecentSearch(term) {
+            let recent = getRecentSearches();
+            recent = recent.filter(r => r.toLowerCase() !== term.toLowerCase());
+            recent.unshift(term);
+            if (recent.length > 5) recent.pop();
+            localStorage.setItem('masterclass_recent_searches', JSON.stringify(recent));
+            renderRecentSearches();
+        }
+
+        function renderRecentSearches() {
+            const area = document.getElementById('recentSuggestionsArea');
+            const recent = getRecentSearches();
+            if (recent.length === 0) {
+                area.innerHTML = '<span style="opacity:0.7; font-size:0.78rem;">Nenhuma busca recente.</span>';
+                return;
+            }
+            area.innerHTML = '<span style="opacity:0.8; font-size:0.78rem;">Recentes:</span>' + recent.map(r => `
+                <span class="suggestion-chip" onclick="document.getElementById('globalSearchInput').value='${r}'; document.getElementById('globalSearchInput').dispatchEvent(new Event('input'));">${r}</span>
+            `).join('');
+        }
+
+        function triggerPageNavigation(pageKey) {
+            const btn = mainMenu.querySelector(`.glass-btn[data-page="${pageKey}"]`);
+            if (btn) {
+                mainMenu.querySelectorAll('.glass-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderPage(pageKey);
+            }
+        }
+
+        // --- SISTEMA DE NOTIFICAÇÕES ---
+        async function setupNotifications(notifBtn) {
+            const badge = document.getElementById('notifBadge');
+            try {
+                const res = await fetch('/api/notifications', {
+                    headers: { 'x-user-role': user.role }
+                });
+                const data = await res.json();
+                if (res.ok && data.notifications.length > 0) {
+                    badge.innerText = data.notifications.length;
+                    badge.style.display = 'inline-block';
+                }
+
+                notifBtn.addEventListener('click', () => {
+                    renderNotificationsModal(data.notifications || []);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderNotificationsModal(notifications) {
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal-overlay';
+            
+            let contentHtml = notifications.length === 0 ? '<p style="opacity:0.8;">Nenhuma notificação no momento.</p>' : notifications.map(n => `
+                <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; opacity:0.85; margin-bottom:4px;">
+                        <span>${n.type === 'aviso' ? '📢 Quadro de Avisos' : '📚 Matéria / Conteúdo'}</span>
+                        <span>${new Date(n.createdAt).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <strong style="font-size:0.95rem; color:#fef3c7;">${n.title}</strong>
+                    <div style="font-size:0.85rem; opacity:0.9; margin-top:4px;">${n.description}</div>
+                </div>
+            `).join('');
+
+            modalDiv.innerHTML = `
+                <div class="modal-card" style="max-width: 500px; max-height: 80vh; display: flex; flex-direction: column;">
+                    <h3 style="margin-bottom: 12px;">🔔 Central de Notificações</h3>
+                    <div style="overflow-y: auto; flex-grow: 1; max-height: 400px; display:flex; flex-direction:column; gap:8px;">
+                        ${contentHtml}
+                    </div>
+                    <button type="button" id="btnCloseNotifModal" class="glass-btn btn-logout" style="margin-top: 14px; padding: 10px; justify-content: center;">Fechar</button>
+                </div>
+            `;
+            document.body.appendChild(modalDiv);
+            modalDiv.querySelector('#btnCloseNotifModal').addEventListener('click', () => modalDiv.remove());
+        }
+
         async function renderPage(pageKey) {
             const courses = await fetchCourses();
 
             switch(pageKey) {
+                case 'avisos':
+                    centerTitle.innerText = "Quadro de Avisos";
+                    const avisos = await fetchAvisos();
+                    
+                    let adminPostBoxHtml = '';
+                    if (user.role === 'Administrador') {
+                        adminPostBoxHtml = `
+                            <div style="background: rgba(0,0,0,0.25); padding: 20px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.3); margin-bottom: 20px; display: flex; flex-direction: column; gap: 14px;">
+                                <h4 style="color: #fef3c7;">📢 Publicar Novo Aviso Geral</h4>
+                                <div>
+                                    <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:4px;">Assunto (Obrigatório)*</label>
+                                    <input type="text" id="inputAvisoSubject" class="admin-input" placeholder="Ex: Manutenção na plataforma ou Comunicado Importante" required>
+                                </div>
+                                <div>
+                                    <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:4px;">Breve Descrição (Opcional)</label>
+                                    <input type="text" id="inputAvisoDescription" class="admin-input" placeholder="Resumo do aviso...">
+                                </div>
+                                <div>
+                                    <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:4px;">Conteúdo Completo (Formatado)</label>
+                                    <div class="editor-toolbar">
+                                        <button type="button" id="btnAvisoBold"><b>Negrito</b></button>
+                                        <button type="button" id="btnAvisoItalic"><i>Itálico</i></button>
+                                        <label for="inputAvisoImg">🖼️ Inserir Imagem</label>
+                                        <input type="file" id="inputAvisoImg" accept="image/*" style="display: none;">
+                                    </div>
+                                    <div id="richAvisoEditor" class="rich-text-editor" contenteditable="true" placeholder="Escreva o comunicado ou arraste imagens aqui..."></div>
+                                </div>
+                                <div>
+                                    <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:4px;">Anexar Arquivo (.docx, .pptx)</label>
+                                    <input type="file" id="inputAvisoFile" accept=".docx,.pptx" class="admin-input" style="padding: 8px;">
+                                </div>
+                                <button id="btnPublishAviso" class="glass-btn" style="justify-content:center; padding:12px;">Publicar Aviso</button>
+                            </div>
+                        `;
+                    }
+
+                    centerContent.innerHTML = `
+                        ${adminPostBoxHtml}
+                        <h4 style="margin-bottom: 10px;">Comunicados Recentes:</h4>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            ${avisos.length === 0 ? '<p style="opacity:0.8; font-size:0.9rem;">Nenhum aviso publicado no momento.</p>' : ''}
+                            ${avisos.map(av => `
+                                <div style="background:rgba(255,255,255,0.15); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.3);">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                        <strong style="font-size: 1.1rem; color: #fef3c7;">📢 ${av.subject}</strong>
+                                        <span style="font-size: 0.75rem; opacity: 0.8;">${new Date(av.createdAt).toLocaleDateString('pt-BR')}</span>
+                                    </div>
+                                    ${av.description ? `<div style="font-size:0.85rem; opacity:0.9; margin-bottom:8px;">${av.description}</div>` : ''}
+                                    <div style="font-size:0.9rem; margin-top:6px;">${av.textHtml}</div>
+                                    ${av.file ? `<div style="margin-top:10px;"><a href="${av.file.data}" download="${av.file.name}" style="display:inline-block; font-size:0.85rem; color:#fef3c7; text-decoration:underline;">📥 Baixar Anexo (${av.file.name})</a></div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+
+                    if (user.role === 'Administrador') {
+                        setupAvisosEditorEvents();
+                    }
+                    break;
+
                 case 'my_courses':
-                    centerTitle.innerText = "Meu Curso";
+                    centerTitle.innerText = user.role === 'Aluno' ? "Meus Cursos" : "Meu Curso";
                     if (user.role === 'Professor') {
                         const assigned = courses.find(c => c.id === user.assignedCourse);
                         if (!assigned) {
@@ -657,6 +1020,7 @@
                         }
                         renderProfessorCourseView(assigned);
                     } else {
+                        // Aluno
                         centerContent.innerHTML = `
                             <p>Abaixo estão os cursos disponíveis em sua grade acadêmica:</p>
                             <div class="courses-grid">
@@ -856,6 +1220,88 @@
             }
         }
 
+        function setupAvisosEditorEvents() {
+            const richEditor = document.getElementById('richAvisoEditor');
+            if (!richEditor) return;
+
+            document.getElementById('btnAvisoBold').addEventListener('click', () => {
+                richEditor.focus();
+                document.execCommand('bold', false, null);
+            });
+            document.getElementById('btnAvisoItalic').addEventListener('click', () => {
+                richEditor.focus();
+                document.execCommand('italic', false, null);
+            });
+
+            const inputAvisoImg = document.getElementById('inputAvisoImg');
+            inputAvisoImg.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    richEditor.focus();
+                    const imgHtml = `<img src="${event.target.result}" alt="Imagem do Aviso">`;
+                    if (!document.execCommand('insertHTML', false, imgHtml)) {
+                        richEditor.innerHTML += imgHtml;
+                    }
+                };
+                reader.readAsDataURL(file);
+                e.target.value = '';
+            });
+
+            let attachedFileObj = null;
+            document.getElementById('inputAvisoFile').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    attachedFileObj = { name: file.name, type: file.type, data: event.target.result };
+                };
+                reader.readAsDataURL(file);
+            });
+
+            document.getElementById('btnPublishAviso').addEventListener('click', async () => {
+                const subjectElem = document.getElementById('inputAvisoSubject');
+                const subject = subjectElem.value.trim();
+                const description = document.getElementById('inputAvisoDescription').value.trim();
+                const textHtml = richEditor.innerHTML;
+
+                if (!subject) {
+                    subjectElem.classList.add('error-input');
+                    showToast('⚠️ O campo Assunto é obrigatório!', subjectElem);
+                    return;
+                }
+                subjectElem.classList.remove('error-input');
+
+                const payload = {
+                    subject,
+                    description,
+                    textHtml,
+                    fileName: attachedFileObj ? attachedFileObj.name : null,
+                    fileData: attachedFileObj ? attachedFileObj.data : null,
+                    fileType: attachedFileObj ? attachedFileObj.type : null
+                };
+
+                try {
+                    const res = await fetch('/api/admin/avisos', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast('Aviso publicado com sucesso!');
+                        renderPage('avisos');
+                    } else {
+                        showToast(data.message || 'Erro ao publicar aviso.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast('Erro de conexão.');
+                }
+            });
+        }
+
         function renderProfessorCourseView(course, isAdminView = false) {
             centerTitle.innerText = `Curso: ${course.title}`;
             centerContent.innerHTML = `
@@ -957,32 +1403,6 @@
                 };
                 reader.readAsDataURL(file);
                 e.target.value = '';
-            });
-
-            richEditor.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            });
-
-            richEditor.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const files = e.dataTransfer.files;
-                if (files && files.length > 0) {
-                    for (let file of files) {
-                        if (file.type.startsWith('image/')) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                                richEditor.focus();
-                                const imgHtml = `<img src="${event.target.result}" alt="Imagem do Conteúdo">`;
-                                if (!document.execCommand('insertHTML', false, imgHtml)) {
-                                    richEditor.innerHTML += imgHtml;
-                                }
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    }
-                }
             });
 
             let attachedFileObj = null;
@@ -1318,7 +1738,7 @@
                             btn.addEventListener('click', async (e) => {
                                 const targetEmail = e.target.getAttribute('data-email');
                                 if (!confirm(`Excluir conta ${targetEmail}?`)) return;
-                                const delRes = await fetch(`/api/admin/users/${encodeURIComponent(targetEmail)}`, {
+                                const delRes = await fetch(`/api/admin/users/${encodeURIComponent(targetEMAIL)}`, {
                                     method: 'DELETE',
                                     headers: { 'x-user-role': user.role }
                                 });
@@ -1356,11 +1776,7 @@
         }
         if (localStorage.getItem('masterclass_legacy') === 'true') document.body.classList.add('legacy-mode');
 
-        if (user.role === 'Administrador') {
-            renderPage('admin_accounts');
-        } else {
-            renderPage('my_courses');
-        }
+        renderPage('avisos');
     </script>
 </body>
 </html>
