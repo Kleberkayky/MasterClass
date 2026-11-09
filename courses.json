@@ -107,5 +107,36 @@
         "contents": []
       }
     ]
+  },
+  {
+    "id": "course_1794225342754",
+    "title": "Jogos Digitais",
+    "description": "ashdfakj",
+    "modules": [
+      {
+        "id": "mod1",
+        "name": "Módulo 1: Fundamentos",
+        "contents": [
+          {
+            "id": "content_1794225387660",
+            "subject": "introdução ao jogo",
+            "description": "",
+            "textHtml": "teste",
+            "file": null,
+            "createdAt": "2026-11-09T11:56:27.660Z"
+          }
+        ]
+      },
+      {
+        "id": "mod2",
+        "name": "Módulo 2: Intermediário",
+        "contents": []
+      },
+      {
+        "id": "mod3",
+        "name": "Módulo 3: Avançado",
+        "contents": []
+      }
+    ]
   }
 ]

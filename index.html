@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Class - Acesso e Cadastro</title>
     <link rel="icon" type="image/png" href="imagem8.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #0a171e;
@@ -19,6 +22,7 @@
             --text-main: #ffffff;
             --accent-glow: rgba(245, 158, 11, 0.2);
             --blur-effect: blur(12px);
+            --school-img-src: url('imagem5.jpeg');
         }
 
         body.dark-theme {
@@ -40,7 +44,19 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+        }
+
+        @keyframes osWindowFadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(12px) scale(0.98);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         body {
@@ -88,6 +104,11 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.25);
             backdrop-filter: var(--blur-effect);
             -webkit-backdrop-filter: var(--blur-effect);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+        }
+
+        .theme-toggle-top:hover {
+            transform: translateY(-3px);
         }
 
         .theme-toggle-top span {
@@ -100,7 +121,7 @@
             border: 1px solid var(--glass-border);
             border-top: 1px solid var(--glass-border-top);
             border-radius: 28px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             padding: 32px 40px;
             width: 100%;
             max-width: 440px;
@@ -108,6 +129,7 @@
             z-index: 10;
             backdrop-filter: var(--blur-effect);
             -webkit-backdrop-filter: var(--blur-effect);
+            animation: osWindowFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         .tooltip-glass {
@@ -143,6 +165,10 @@
             border: 2px solid rgba(255, 255, 255, 0.8);
             background: rgba(255, 255, 255, 0.2);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        .school-photo:hover {
+            transform: scale(1.05);
         }
 
         h2 {
@@ -171,7 +197,6 @@
             color: rgba(255, 255, 255, 0.95);
             font-size: 0.85rem;
             font-weight: 600;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
         }
 
         input, select {
@@ -183,7 +208,7 @@
             font-size: 0.95rem;
             color: #ffffff;
             outline: none;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+            transition: all 0.2s ease;
         }
 
         select option {
@@ -198,6 +223,7 @@
         input:focus, select:focus {
             background: rgba(255, 255, 255, 0.3);
             border-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
         }
 
         .field-error {
@@ -228,11 +254,17 @@
             font-weight: 600;
             cursor: pointer;
             box-shadow: 0 4px 12px var(--btn-primary-shadow);
-            transition: filter 0.1s ease;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.15s ease, box-shadow 0.25s ease;
         }
 
         button:hover {
+            transform: translateY(-3px);
             filter: brightness(1.1);
+            box-shadow: 0 8px 20px var(--btn-primary-shadow);
+        }
+
+        button:active {
+            transform: translateY(-1px);
         }
 
         .toggle-mode {
@@ -356,17 +388,20 @@
         const themeToggleBtn = document.getElementById('themeToggleBtn');
         const themeIcon = document.getElementById('themeIcon');
         const themeLabel = document.getElementById('themeLabel');
+        const schoolImg = document.getElementById('schoolImg');
 
         function applyTheme(isDark) {
             if (isDark) {
                 document.body.classList.add('dark-theme');
                 themeIcon.innerText = '☀️';
                 themeLabel.innerText = 'Modo Claro';
+                schoolImg.src = 'Imagem9.png';
                 localStorage.setItem('masterclass_theme', 'dark');
             } else {
                 document.body.classList.remove('dark-theme');
                 themeIcon.innerText = '🌙';
                 themeLabel.innerText = 'Modo Escuro';
+                schoolImg.src = 'imagem5.jpeg';
                 localStorage.setItem('masterclass_theme', 'light');
             }
         }
@@ -393,7 +428,6 @@
 
         let isLoginMode = true;
 
-        // Função global de foco e scroll automático
         function focusAndScrollTo(el) {
             if (!el) return;
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
