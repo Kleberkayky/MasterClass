@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const app = express();
 const USERS_FILE = path.join(__dirname, 'users.json');
 const COURSES_FILE = path.join(__dirname, 'courses.json');
+const SUBMISSIONS_FILE = path.join(__dirname, 'submissions.json');
 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(__dirname));
@@ -94,8 +95,25 @@ function saveCourses(courses) {
   fs.writeFileSync(COURSES_FILE, JSON.stringify(courses, null, 2), 'utf-8');
 }
 
+function loadSubmissions() {
+  if (!fs.existsSync(SUBMISSIONS_FILE)) {
+    fs.writeFileSync(SUBMISSIONS_FILE, JSON.stringify([], null, 2), 'utf-8');
+    return [];
+  }
+  try {
+    return JSON.parse(fs.readFileSync(SUBMISSIONS_FILE, 'utf-8'));
+  } catch (err) {
+    return [];
+  }
+}
+
+function saveSubmissions(subs) {
+  fs.writeFileSync(SUBMISSIONS_FILE, JSON.stringify(subs, null, 2), 'utf-8');
+}
+
 loadUsers();
 loadCourses();
+loadSubmissions();
 
 function verificarPermissao(...perfisPermitidos) {
   return (req, res, next) => {
@@ -164,13 +182,17 @@ app.post('/api/admin/courses', verificarPermissao('Administrador'), (req, res) =
   return res.status(200).json({ message: 'Curso criado com sucesso!', course: newCourse });
 });
 
-// Adicionar conteúdo ao módulo (Professor ou Administrador)
+// Adicionar conteúdo ou atividade ao módulo
 app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao('Professor', 'Administrador'), (req, res) => {
   const { courseId, moduleId } = req.params;
-  const { subject, description, textHtml, fileName, fileData, fileType } = req.body;
+  const { subject, description, textHtml, fileName, fileData, fileType, isAssignment, startDate, endDate } = req.body;
 
   if (!subject || subject.trim() === '') {
     return res.status(400).json({ message: 'O assunto é obrigatório.' });
+  }
+
+  if (isAssignment && (!startDate || !endDate)) {
+    return res.status(400).json({ message: 'Data de início e fim são obrigatórias para atividades.' });
   }
 
   const courses = loadCourses();
@@ -184,19 +206,117 @@ app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao(
     return res.status(404).json({ message: 'Módulo não encontrado.' });
   }
 
-  const newContent = {
-    id: 'content_' + Date.now(),
+  const newItem = {
+    id: 'item_' + Date.now(),
     subject: subject.trim(),
     description: description ? description.trim() : '',
     textHtml: textHtml || '',
     file: fileName ? { name: fileName, data: fileData, type: fileType } : null,
+    isAssignment: !!isAssignment,
+    startDate: startDate || null,
+    endDate: endDate || null,
     createdAt: new Date().toISOString()
   };
 
-  moduleObj.contents.push(newContent);
+  moduleObj.contents.push(newItem);
   saveCourses(courses);
 
-  return res.status(200).json({ message: 'Conteúdo publicado com sucesso!' });
+  return res.status(200).json({ message: isAssignment ? 'Atividade publicada com sucesso!' : 'Conteúdo publicado com sucesso!', item: newItem });
+});
+
+// Atualizar conteúdo/atividade (Professor)
+app.put('/api/courses/:courseId/modules/:moduleId/content/:contentId', verificarPermissao('Professor', 'Administrador'), (req, res) => {
+  const { courseId, moduleId, contentId } = req.params;
+  const { subject, description, textHtml, startDate, endDate } = req.body;
+
+  const courses = loadCourses();
+  const course = courses.find(c => c.id === courseId);
+  if (!course) return res.status(404).json({ message: 'Curso não encontrado.' });
+
+  const moduleObj = course.modules.find(m => m.id === moduleId);
+  if (!moduleObj) return res.status(404).json({ message: 'Módulo não encontrado.' });
+
+  const item = moduleObj.contents.find(i => i.id === contentId);
+  if (!item) return res.status(404).json({ message: 'Item não encontrado.' });
+
+  if (subject) item.subject = subject.trim();
+  if (description !== undefined) item.description = description.trim();
+  if (textHtml !== undefined) item.textHtml = textHtml;
+  if (startDate !== undefined) item.startDate = startDate;
+  if (endDate !== undefined) item.endDate = endDate;
+
+  saveCourses(courses);
+  return res.status(200).json({ message: 'Atualizado com sucesso!' });
+});
+
+// Excluir conteúdo/atividade (Professor)
+app.delete('/api/courses/:courseId/modules/:moduleId/content/:contentId', verificarPermissao('Professor', 'Administrador'), (req, res) => {
+  const { courseId, moduleId, contentId } = req.params;
+  const courses = loadCourses();
+  const course = courses.find(c => c.id === courseId);
+  if (!course) return res.status(404).json({ message: 'Curso não encontrado.' });
+
+  const moduleObj = course.modules.find(m => m.id === moduleId);
+  if (!moduleObj) return res.status(404).json({ message: 'Módulo não encontrado.' });
+
+  moduleObj.contents = moduleObj.contents.filter(i => i.id !== contentId);
+  saveCourses(courses);
+  return res.status(200).json({ message: 'Excluído com sucesso!' });
+});
+
+// Enviar resposta de Atividade (Aluno)
+app.post('/api/submissions', verificarPermissao('Aluno'), (req, res) => {
+  const { courseId, moduleId, contentId, studentEmail, studentName, submissionHtml } = req.body;
+  if (!contentId || !studentEmail) {
+    return res.status(400).json({ message: 'Dados incompletos.' });
+  }
+
+  let subs = loadSubmissions();
+  let existing = subs.find(s => s.contentId === contentId && s.studentEmail.toLowerCase() === studentEmail.toLowerCase());
+  
+  if (existing) {
+    existing.submissionHtml = submissionHtml;
+    existing.status = 'Sob análise';
+    existing.updatedAt = new Date().toISOString();
+  } else {
+    subs.push({
+      id: 'sub_' + Date.now(),
+      courseId,
+      moduleId,
+      contentId,
+      studentEmail: studentEmail.toLowerCase(),
+      studentName: studentName || 'Aluno',
+      submissionHtml: submissionHtml || '',
+      status: 'Sob análise',
+      grade: null,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  saveSubmissions(subs);
+  return res.status(200).json({ message: 'Atividade enviada com sucesso e sob análise!' });
+});
+
+// Obter submissões de atividades
+app.get('/api/submissions', (req, res) => {
+  const subs = loadSubmissions();
+  return res.status(200).json({ submissions: subs });
+});
+
+// Lançar ou atualizar nota de uma submissão (Professor)
+app.put('/api/submissions/:subId/grade', verificarPermissao('Professor', 'Administrador'), (req, res) => {
+  const { subId } = req.params;
+  const { grade } = req.body;
+
+  let subs = loadSubmissions();
+  const sub = subs.find(s => s.id === subId);
+  if (!sub) return res.status(404).json({ message: 'Submissão não encontrada.' });
+
+  sub.grade = grade;
+  sub.status = 'Avaliado';
+  saveSubmissions(subs);
+
+  return res.status(200).json({ message: 'Nota lançada com sucesso!' });
 });
 
 // Registro público
@@ -301,7 +421,7 @@ app.post('/login', async (req, res) => {
   });
 });
 
-// Atualizar perfil (Nome, Avatar e Curso Atribuído ao Professor)
+// Atualizar perfil
 app.put('/api/profile', (req, res) => {
   const { email, name, avatar, assignedCourse } = req.body;
   if (!email) {
@@ -387,7 +507,7 @@ app.delete('/api/admin/users/:email', verificarPermissao('Administrador'), (req,
   return res.status(200).json({ message: 'Conta excluída com sucesso!' });
 });
 
-// Esqueci minha senha / Redefinição
+// Esqueci minha senha
 app.post('/forgot-password', async (req, res) => {
   const { email, newPassword, confirmNewPassword } = req.body;
 
@@ -402,12 +522,10 @@ app.post('/forgot-password', async (req, res) => {
     return res.status(404).json({ message: 'Este e-mail não está cadastrado no sistema.' });
   }
 
-  // Se apenas o e-mail foi enviado, valida se o usuário existe para prosseguir para a etapa de nova senha
   if (!newPassword) {
     return res.status(200).json({ exists: true, message: 'E-mail encontrado. Insira sua nova senha.' });
   }
 
-  // Validação de nova senha se fornecida
   if (newPassword !== confirmNewPassword) {
     return res.status(400).json({ message: 'As senhas não coincidem.' });
   }
@@ -424,10 +542,10 @@ app.post('/forgot-password', async (req, res) => {
   users[userIndex].passwordHash = await bcrypt.hash(newPassword, 10);
   saveUsers(users);
 
-  return res.status(200).json({ message: 'Senha redefinida com sucesso! Faça login com a nova senha.' });
+  return res.status(200).json({ message: 'Senha redefinida com sucesso!' });
 });
 
-// --- ROTAS DE AVISOS DO MURAL ---
+// Avisos
 const AVISOS_FILE = path.join(__dirname, 'avisos.json');
 
 function loadAvisos() {
@@ -437,7 +555,7 @@ function loadAvisos() {
         id: 'aviso_1',
         subject: 'Bem-vindo ao Novo Semestre na Master Class!',
         description: 'Avisos importantes da diretoria acadêmica.',
-        textHtml: '<p>Olá a todos os alunos e professores! Sejam muito bem-vindos ao novo ciclo de aprendizado. Fiquem atentos aos prazos dos módulos.</p>',
+        textHtml: '<p>Olá a todos os alunos e professores! Sejam muito bem-vindos.</p>',
         file: null,
         createdAt: new Date().toISOString()
       }
@@ -446,10 +564,8 @@ function loadAvisos() {
     return initialAvisos;
   }
   try {
-    const data = fs.readFileSync(AVISOS_FILE, 'utf-8');
-    return JSON.parse(data);
+    return JSON.parse(fs.readFileSync(AVISOS_FILE, 'utf-8'));
   } catch (err) {
-    console.error("Erro ao ler avisos.json:", err);
     return [];
   }
 }
@@ -460,19 +576,13 @@ function saveAvisos(avisos) {
 
 loadAvisos();
 
-// Listar avisos
 app.get('/api/avisos', (req, res) => {
-  const avisos = loadAvisos();
-  return res.status(200).json({ avisos });
+  return res.status(200).json({ avisos: loadAvisos() });
 });
 
-// Criar aviso (Apenas Administrador)
 app.post('/api/admin/avisos', verificarPermissao('Administrador'), (req, res) => {
   const { subject, description, textHtml, fileName, fileData, fileType } = req.body;
-
-  if (!subject || subject.trim() === '') {
-    return res.status(400).json({ message: 'O assunto do aviso é obrigatório.' });
-  }
+  if (!subject) return res.status(400).json({ message: 'Assunto obrigatório.' });
 
   const avisos = loadAvisos();
   const newAviso = {
@@ -484,41 +594,51 @@ app.post('/api/admin/avisos', verificarPermissao('Administrador'), (req, res) =>
     createdAt: new Date().toISOString()
   };
 
-  avisos.unshift(newAviso); // Adiciona no topo
+  avisos.unshift(newAviso);
   saveAvisos(avisos);
-
-  return res.status(200).json({ message: 'Aviso publicado com sucesso no mural!', aviso: newAviso });
+  return res.status(200).json({ message: 'Aviso publicado com sucesso!' });
 });
 
-// Rota de Notificações (Busca novos conteúdos de cursos e avisos recentes)
+app.delete('/api/admin/avisos/:id', verificarPermissao('Administrador'), (req, res) => {
+  const avisoId = req.params.id;
+  let avisos = loadAvisos();
+  const initialLength = avisos.length;
+  avisos = avisos.filter(av => av.id !== avisoId);
+
+  if (avisos.length === initialLength) {
+    return res.status(404).json({ message: 'Aviso não encontrado.' });
+  }
+
+  saveAvisos(avisos);
+  return res.status(200).json({ message: 'Aviso excluído com sucesso!' });
+});
+
+// Notificações
 app.get('/api/notifications', (req, res) => {
   const role = req.headers['x-user-role'];
   const courses = loadCourses();
   const avisos = loadAvisos();
-
   let notifications = [];
 
-  // Quadro de avisos para Alunos e Professores
   avisos.forEach(av => {
     notifications.push({
       id: av.id,
       type: 'aviso',
       title: `Aviso: ${av.subject}`,
-      description: av.description || 'Novo comunicado publicado no mural.',
+      description: av.description || 'Novo comunicado.',
       createdAt: av.createdAt
     });
   });
 
-  // Se for Aluno, inclui também atualizações de novos assuntos enviados nos cursos
   if (role && role.toLowerCase() === 'aluno') {
     courses.forEach(c => {
       c.modules.forEach(m => {
         m.contents.forEach(cnt => {
           notifications.push({
             id: cnt.id,
-            type: 'conteudo',
-            title: `Nova Matéria (${c.title}) - ${m.name}`,
-            description: `Assunto: ${cnt.subject} ${cnt.description ? '- ' + cnt.description : ''}`,
+            type: cnt.isAssignment ? 'atividade' : 'conteudo',
+            title: `${cnt.isAssignment ? 'Nova Atividade' : 'Nova Matéria'} (${c.title}) - ${m.name}`,
+            description: `Assunto: ${cnt.subject}`,
             createdAt: cnt.createdAt || new Date().toISOString()
           });
         });
@@ -526,12 +646,10 @@ app.get('/api/notifications', (req, res) => {
     });
   }
 
-  // Ordena por mais recente
   notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
   return res.status(200).json({ notifications });
 });
 
 app.listen(3000, () => {
-  console.log('Servidor Master Class rodando em http://localhost:3000');
+  console.log('Servidor rodando em http://localhost:3000');
 });

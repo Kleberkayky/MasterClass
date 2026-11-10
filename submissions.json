@@ -1,0 +1,14 @@
+[
+  {
+    "id": "sub_1794264310259",
+    "courseId": "course_1794225342754",
+    "moduleId": "mod1",
+    "contentId": "item_1794263844040",
+    "studentEmail": "kayky@email.com",
+    "studentName": "Kleber kayky",
+    "submissionHtml": "teste <b>teste</b> <i>teste</i> <i><b>teste</b></i>",
+    "status": "Avaliado",
+    "grade": "10",
+    "createdAt": "2026-11-09T22:45:10.259Z"
+  }
+]

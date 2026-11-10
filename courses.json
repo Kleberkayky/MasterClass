@@ -124,6 +124,28 @@
             "textHtml": "teste",
             "file": null,
             "createdAt": "2026-11-09T11:56:27.660Z"
+          },
+          {
+            "id": "item_1794236209972",
+            "subject": "Teste atividade",
+            "description": "teste",
+            "textHtml": "teste de atividade 1",
+            "file": null,
+            "isAssignment": true,
+            "startDate": "2026-11-09T17:00",
+            "endDate": "2026-11-10T11:55",
+            "createdAt": "2026-11-09T14:56:49.972Z"
+          },
+          {
+            "id": "item_1794263844040",
+            "subject": "teste 3",
+            "description": "teste teste",
+            "textHtml": "<b>tfbflajhgçehgçjbgçjbdjsbjasdnbvjaod</b>",
+            "file": null,
+            "isAssignment": true,
+            "startDate": "2026-11-11T19:36",
+            "endDate": "2026-11-19T19:36",
+            "createdAt": "2026-11-09T22:37:24.040Z"
           }
         ]
       },
