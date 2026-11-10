@@ -114,7 +114,8 @@
             transition: width 0.3s ease, padding 0.3s ease;
             flex-shrink: 0;
             will-change: width;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         .sidebar:not(.collapsed) {
@@ -132,6 +133,7 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             cursor: pointer;
             user-select: none;
+            white-space: nowrap;
         }
 
         .sidebar:not(.collapsed) .sidebar-brand { justify-content: flex-start; }
@@ -162,6 +164,7 @@
             flex-direction: column;
             gap: 10px;
             overflow-y: auto;
+            overflow-x: hidden;
             max-height: calc(100vh - 180px);
             padding-right: 2px;
         }
@@ -212,12 +215,15 @@
         }
 
         .profile-btn-avatar {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1.5px solid #fff;
-            display: block;
+            width: 24px !important;
+            height: 24px !important;
+            min-width: 24px !important;
+            min-height: 24px !important;
+            border-radius: 50% !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            border: 1.5px solid #fff !important;
+            display: block !important;
         }
 
         .glass-btn .btn-text { display: none; }
@@ -325,15 +331,50 @@
             animation: osPanelEntrance 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Imagens inseridas nas aulas e avisos não extrapolam o painel */
-        .content-body img,
-        .rich-text-editor img {
+        /* Garantia rigorosa para que imagens nos editores e exibições nunca passem da margem máxima (estilo Word/Google Docs) */
+        .content-body img:not(.user-avatar-custom),
+        .rich-text-editor img,
+        .rendered-content img {
             max-width: 100% !important;
-            max-height: 400px;
-            height: auto;
+            height: auto !important;
             object-fit: contain;
+            border-radius: 6px;
+            margin: 6px 0;
+            display: block;
+            cursor: pointer;
+            transition: outline 0.15s ease;
+        }
+
+        /* Estilo da barra flutuante de redimensionamento de imagem estilo Word/Docs */
+        .image-resize-toolbar {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             border-radius: 8px;
-            margin: 8px 0;
+            padding: 4px 8px;
+            display: flex;
+            gap: 6px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            backdrop-filter: blur(8px);
+            align-items: center;
+        }
+        .image-resize-toolbar button {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .image-resize-toolbar button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .image-selected-outline {
+            outline: 2px solid #f59e0b !important;
+            outline-offset: 2px;
         }
 
         .content-body {
@@ -387,25 +428,33 @@
             padding: 10px;
         }
 
-        /* Estrutura da foto de perfil com hover "Alterar Foto" */
         .avatar-wrapper {
             position: relative;
-            width: 105px;
-            height: 105px;
-            border-radius: 50%;
-            overflow: hidden;
+            width: 105px !important;
+            height: 105px !important;
+            min-width: 105px !important;
+            min-height: 105px !important;
+            border-radius: 50% !important;
+            overflow: hidden !important;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
             border: 4px solid rgba(255, 255, 255, 0.85);
             flex-shrink: 0;
+            background-color: #111;
         }
 
         .user-avatar-custom {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            min-width: 100% !important;
+            min-height: 100% !important;
+            border-radius: 50% !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            display: block !important;
+            max-width: none !important;
+            max-height: none !important;
+            margin: 0 !important;
         }
 
         .avatar-hover-overlay {
@@ -556,6 +605,7 @@
             background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.4);
             border-radius: 8px; padding: 12px; color: #fff; outline: none;
             word-break: break-word;
+            position: relative;
         }
 
         .back-btn {
@@ -571,7 +621,6 @@
         .module-box:hover { background: rgba(0, 0, 0, 0.4); }
         .module-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; color: #fef3c7; }
 
-        /* Tabelas responsivas com rolagem horizontal interna se necessário */
         .admin-table-container {
             width: 100%;
             overflow-x: auto;
@@ -584,7 +633,7 @@
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center;
             z-index: 1000; backdrop-filter: var(--blur-effect); -webkit-backdrop-filter: var(--blur-effect);
             padding: 15px;
         }
@@ -596,7 +645,34 @@
             animation: osPanelEntrance 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Responsividade geral para telas menores */
+        .cropper-preview-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 14px auto;
+            background: #111;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.3);
+            cursor: grab;
+            touch-action: none;
+        }
+        .cropper-preview-container:active { cursor: grabbing; }
+        .cropper-image {
+            position: absolute;
+            user-select: none;
+            max-width: none;
+            max-height: none;
+        }
+        .cropper-overlay-mask {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+            border-radius: 50%;
+            pointer-events: none;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+        }
+
         @media (max-width: 850px) {
             body { height: auto; overflow-y: auto; padding: 10px; }
             .dashboard-container { flex-direction: column; height: auto; max-width: 100%; }
@@ -623,9 +699,7 @@
                 <span class="sidebar-brand-title">Master Class</span>
             </div>
 
-            <ul class="menu-list" id="mainMenu">
-                <!-- Dinâmico via JS -->
-            </ul>
+            <ul class="menu-list" id="mainMenu"></ul>
 
             <a href="#" id="logoutBtn" class="glass-btn btn-logout has-tooltip" data-tooltip="Sair da Conta">
                 <span class="btn-icon">🚪</span>
@@ -645,7 +719,6 @@
                 </div>
             </div>
 
-            <!-- Barra de Pesquisa Flutuante -->
             <div class="search-bar-container" id="searchBarContainer">
                 <div class="search-input-wrapper">
                     <input type="text" id="globalSearchInput" class="search-input" placeholder="Digite para pesquisar nas suas opções...">
@@ -799,6 +872,99 @@
             } catch (err) { return []; }
         }
 
+        /* Sistema unificado estilo Word/Google Docs para redimensionamento de imagens em editores de texto */
+        function enableImageResizingInEditor(editorElement) {
+            let activeToolbar = null;
+            let selectedImage = null;
+
+            function removeToolbar() {
+                if (activeToolbar) {
+                    activeToolbar.remove();
+                    activeToolbar = null;
+                }
+                if (selectedImage) {
+                    selectedImage.classList.remove('image-selected-outline');
+                    selectedImage = null;
+                }
+            }
+
+            editorElement.addEventListener('click', (e) => {
+                const img = e.target.closest('img');
+                if (img && editorElement.contains(img)) {
+                    e.stopPropagation();
+                    if (selectedImage !== img) {
+                        removeToolbar();
+                        selectedImage = img;
+                        selectedImage.classList.add('image-selected-outline');
+                        showToolbarForImage(selectedImage);
+                    }
+                    return;
+                }
+                if (!e.target.closest('.image-resize-toolbar')) {
+                    removeToolbar();
+                }
+            });
+
+            function showToolbarForImage(img) {
+                activeToolbar = document.createElement('div');
+                activeToolbar.className = 'image-resize-toolbar';
+                activeToolbar.innerHTML = `
+                    <span style="font-size:0.75rem; color:#fef3c7; font-weight:700; margin-right:4px;">Tamanho:</span>
+                    <button type="button" data-size="25">Pequena (25%)</button>
+                    <button type="button" data-size="50">Média (50%)</button>
+                    <button type="button" data-size="75">Grande (75%)</button>
+                    <button type="button" data-size="100">Máximo (100%)</button>
+                    <button type="button" data-size="custom">Outro...</button>
+                    <button type="button" data-action="delete" style="background: rgba(220,38,38,0.4); border-color: rgba(220,38,38,0.6);">🗑️</button>
+                `;
+
+                document.body.appendChild(activeToolbar);
+                positionToolbar();
+
+                activeToolbar.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        const size = btn.getAttribute('data-size');
+                        const action = btn.getAttribute('data-action');
+
+                        if (action === 'delete') {
+                            img.remove();
+                            removeToolbar();
+                            return;
+                        }
+
+                        if (size === 'custom') {
+                            const currentPct = Math.round(parseFloat(img.style.width) || 100);
+                            const val = prompt('Digite a largura desejada em % (máx 100%):', currentPct);
+                            if (val !== null) {
+                                let num = parseInt(val, 10);
+                                if (isNaN(num) || num < 10) num = 10;
+                                if (num > 100) num = 100; // Respeita a margem máxima até onde o texto vai
+                                img.style.width = num + '%';
+                                img.style.maxWidth = '100%';
+                                img.style.height = 'auto';
+                            }
+                        } else if (size) {
+                            img.style.width = size + '%';
+                            img.style.maxWidth = '100%';
+                            img.style.height = 'auto';
+                        }
+                        positionToolbar();
+                    });
+                });
+            }
+
+            function positionToolbar() {
+                if (!activeToolbar || !selectedImage) return;
+                const rect = selectedImage.getBoundingClientRect();
+                activeToolbar.style.top = `${window.scrollY + rect.top - 42}px`;
+                activeToolbar.style.left = `${window.scrollX + rect.left + (rect.width / 2) - 130}px`;
+            }
+
+            window.addEventListener('scroll', positionToolbar);
+            window.addEventListener('resize', positionToolbar);
+        }
+
         function setupGlobalSearch() {
             const searchToggleBtn = document.getElementById('searchToggleBtn');
             const searchBarContainer = document.getElementById('searchBarContainer');
@@ -926,7 +1092,7 @@
                                 <div style="background:rgba(255,255,255,0.15); padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.3); position: relative;">
                                     <strong style="font-size: 1.05rem; color: #fef3c7; display:block; padding-right:60px;">📢 ${av.subject}</strong>
                                     <div style="font-size:0.85rem; opacity:0.9; margin:4px 0;">${av.description}</div>
-                                    <div style="font-size:0.9rem; margin-top: 8px; word-break: break-word;">${av.textHtml}</div>
+                                    <div class="rendered-content" style="font-size:0.9rem; margin-top: 8px; word-break: break-word;">${av.textHtml}</div>
                                     ${av.file ? `<div style="margin-top:8px; font-size:0.85rem;"><a href="${av.file.data}" download="${av.file.name}" style="color:#fef3c7; text-decoration:underline;">📎 ${av.file.name}</a></div>` : ''}
                                     ${user.role === 'Administrador' ? `<button class="glass-btn btn-del-aviso" data-id="${av.id}" style="position: absolute; top: 14px; right: 14px; width: auto; padding: 4px 8px; font-size: 0.7rem; background: linear-gradient(135deg,#dc2626,#7f1d1d);">Excluir</button>` : ''}
                                 </div>
@@ -1414,6 +1580,8 @@
             document.body.appendChild(modalDiv);
 
             const ed = modalDiv.querySelector('#richAvisoEditor');
+            enableImageResizingInEditor(ed);
+
             modalDiv.querySelector('#btnAvisoBold').addEventListener('click', () => { ed.focus(); document.execCommand('bold'); });
             modalDiv.querySelector('#btnAvisoItalic').addEventListener('click', () => { ed.focus(); document.execCommand('italic'); });
             modalDiv.querySelector('#btnCloseAvisoModal').addEventListener('click', () => modalDiv.remove());
@@ -1425,7 +1593,7 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     ed.focus();
-                    const imgHtml = `<img src="${event.target.result}" alt="Imagem">`;
+                    const imgHtml = `<img src="${event.target.result}" alt="Imagem" style="width: 75%; max-width: 100%; height: auto;">`;
                     if (!document.execCommand('insertHTML', false, imgHtml)) {
                         ed.innerHTML += imgHtml;
                     }
@@ -1522,7 +1690,7 @@
                                             <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                                 <div style="flex: 1; min-width: 180px;">
                                                     <span style="font-weight:600; font-size:0.85rem;">${sub.studentName} (${sub.studentEmail})</span>
-                                                    <div style="font-size:0.8rem; opacity:0.9; margin-top:2px; word-break:break-word;">Resposta: ${sub.submissionHtml}</div>
+                                                    <div class="rendered-content" style="font-size:0.8rem; opacity:0.9; margin-top:2px; word-break:break-word;">Resposta: ${sub.submissionHtml}</div>
                                                 </div>
                                                 <div style="display:flex; gap:6px; align-items:center;">
                                                     <input type="text" class="admin-input grade-input" data-sub-id="${sub.id}" value="${sub.grade !== null ? sub.grade : ''}" placeholder="Nota" style="width: 60px; padding: 6px; font-size:0.85rem;">
@@ -1591,6 +1759,8 @@
                     <div class="editor-toolbar">
                         <button type="button" id="btnAstBold"><b>Negrito</b></button>
                         <button type="button" id="btnAstItalic"><i>Itálico</i></button>
+                        <label for="inputAstImg">🖼️ Inserir Imagem</label>
+                        <input type="file" id="inputAstImg" accept="image/*" style="display: none;">
                     </div>
                     <div id="richAssignmentEditor" class="rich-text-editor" contenteditable="true" style="min-height: 150px;"></div>
                     <div style="display: flex; gap: 8px; margin-top: 12px;">
@@ -1602,9 +1772,27 @@
             document.body.appendChild(modalDiv);
 
             const ed = modalDiv.querySelector('#richAssignmentEditor');
+            enableImageResizingInEditor(ed);
+
             modalDiv.querySelector('#btnAstBold').addEventListener('click', () => { ed.focus(); document.execCommand('bold'); });
             modalDiv.querySelector('#btnAstItalic').addEventListener('click', () => { ed.focus(); document.execCommand('italic'); });
             modalDiv.querySelector('#btnCloseAstModal').addEventListener('click', () => modalDiv.remove());
+
+            const imgInput = modalDiv.querySelector('#inputAstImg');
+            imgInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    ed.focus();
+                    const imgHtml = `<img src="${event.target.result}" alt="Imagem" style="width: 75%; max-width: 100%; height: auto;">`;
+                    if (!document.execCommand('insertHTML', false, imgHtml)) {
+                        ed.innerHTML += imgHtml;
+                    }
+                };
+                reader.readAsDataURL(file);
+                e.target.value = '';
+            });
 
             modalDiv.querySelector('#btnSubmitAssignment').addEventListener('click', async () => {
                 const res = await fetch('/api/submissions', {
@@ -1687,7 +1875,7 @@
                                         <div style="flex: 1; min-width: 180px;">
                                             <strong>📌 ${cnt.subject}</strong>
                                             <div style="font-size:0.8rem; opacity:0.9; margin-top:2px;">${cnt.description || 'Sem descrição'}</div>
-                                            <div style="font-size:0.85rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
+                                            <div class="rendered-content" style="font-size:0.85rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
                                         </div>
                                         <button class="glass-btn btn-edit-content-item" data-course="${course.id}" data-mod="${mod.id}" data-id="${cnt.id}" style="width: auto; padding: 6px 10px; font-size: 0.75rem;">Editar</button>
                                     </div>
@@ -1747,6 +1935,8 @@
                             <div class="editor-toolbar">
                                 <button type="button" id="btnAstSimpleBold"><b>Negrito</b></button>
                                 <button type="button" id="btnAstSimpleItalic"><i>Itálico</i></button>
+                                <label for="inputAstSimpleImg">🖼️ Inserir Imagem</label>
+                                <input type="file" id="inputAstSimpleImg" accept="image/*" style="display: none;">
                             </div>
                             <div id="richAssignmentEditor" class="rich-text-editor" contenteditable="true">${editItem && editItem.isAssignment ? editItem.textHtml : ''}</div>
                         </div>
@@ -1778,6 +1968,12 @@
             const simpleEditorBox = document.getElementById('simpleEditorBox');
             const fullEditorBox = document.getElementById('fullEditorBox');
 
+            const richAstEd = document.getElementById('richAssignmentEditor');
+            const richFullEd = document.getElementById('richFullEditor');
+
+            if (richAstEd) enableImageResizingInEditor(richAstEd);
+            if (richFullEd) enableImageResizingInEditor(richFullEd);
+
             checkAssign.addEventListener('change', () => {
                 const isAct = checkAssign.checked;
                 datesWrapper.style.display = isAct ? 'flex' : 'none';
@@ -1785,27 +1981,39 @@
                 fullEditorBox.style.display = isAct ? 'none' : 'block';
             });
 
-            const richAstEd = document.getElementById('richAssignmentEditor');
             if (richAstEd) {
                 document.getElementById('btnAstSimpleBold').addEventListener('click', () => { richAstEd.focus(); document.execCommand('bold'); });
                 document.getElementById('btnAstSimpleItalic').addEventListener('click', () => { richAstEd.focus(); document.execCommand('italic'); });
+                
+                const inputAstSimpleImg = document.getElementById('inputAstSimpleImg');
+                inputAstSimpleImg.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        richAstEd.focus();
+                        const imgHtml = `<img src="${event.target.result}" alt="Imagem" style="width: 75%; max-width: 100%; height: auto;">`;
+                        if (!document.execCommand('insertHTML', false, imgHtml)) {
+                            richAstEd.innerHTML += imgHtml;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                    e.target.value = '';
+                });
             }
 
-            const richFullEd = document.getElementById('richFullEditor');
             if (richFullEd) {
                 document.getElementById('btnFullBold').addEventListener('click', () => { richFullEd.focus(); document.execCommand('bold'); });
                 document.getElementById('btnFullItalic').addEventListener('click', () => { richFullEd.focus(); document.execCommand('italic'); });
-            }
 
-            const inputEditorImg = document.getElementById('inputEditorImg');
-            if (inputEditorImg) {
+                const inputEditorImg = document.getElementById('inputEditorImg');
                 inputEditorImg.addEventListener('change', (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
                     const reader = new FileReader();
                     reader.onload = (event) => {
                         richFullEd.focus();
-                        const imgHtml = `<img src="${event.target.result}" alt="Imagem">`;
+                        const imgHtml = `<img src="${event.target.result}" alt="Imagem" style="width: 75%; max-width: 100%; height: auto;">`;
                         if (!document.execCommand('insertHTML', false, imgHtml)) {
                             richFullEd.innerHTML += imgHtml;
                         }
@@ -1883,7 +2091,7 @@
                                 ${mod.contents.map(cnt => `
                                     <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px;">
                                         <strong>${cnt.isAssignment ? '📋 Atividade' : '📌 Matéria'}: ${cnt.subject}</strong>
-                                        <div style="font-size:0.82rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
+                                        <div class="rendered-content" style="font-size:0.82rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -1903,22 +2111,11 @@
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = async (event) => {
-                    const base64Image = event.target.result;
-                    const res = await fetch('/api/profile', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: user.email, avatar: base64Image })
-                    });
-                    if (res.ok) {
-                        user.avatar = base64Image;
-                        localStorage.setItem('masterclass_user', JSON.stringify(user));
-                        document.getElementById('userAvatar').src = base64Image;
-                        updateNavAvatar();
-                        showToast('Foto atualizada!');
-                    }
+                reader.onload = (event) => {
+                    openAvatarCropperModal(event.target.result);
                 };
                 reader.readAsDataURL(file);
+                e.target.value = '';
             });
 
             if (user.role === 'Professor') {
@@ -1976,6 +2173,119 @@
             if (btnOpenCreateAccModal) {
                 btnOpenCreateAccModal.addEventListener('click', openAdminCreateAccountModal);
             }
+        }
+
+        function openAvatarCropperModal(imageSrc) {
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal-overlay';
+            modalDiv.innerHTML = `
+                <div class="modal-card" style="text-align: center; max-width: 360px;">
+                    <h3 style="margin-bottom: 10px;">Ajustar Foto de Perfil</h3>
+                    <p style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 12px;">Arraste a imagem para enquadrar no círculo</p>
+                    
+                    <div class="cropper-preview-container" id="cropperContainer">
+                        <img src="${imageSrc}" class="cropper-image" id="cropperImg" alt="Crop">
+                        <div class="cropper-overlay-mask"></div>
+                    </div>
+
+                    <div style="margin-bottom: 14px;">
+                        <label style="font-size: 0.78rem; display:block; margin-bottom:4px;">Zoom</label>
+                        <input type="range" id="zoomRange" min="0.5" max="3" step="0.05" value="1" style="width: 100%; cursor: pointer;">
+                    </div>
+
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" id="btnConfirmCrop" class="glass-btn" style="flex: 1; padding: 10px; justify-content: center;">Concluir</button>
+                        <button type="button" id="btnCloseCropModal" class="glass-btn btn-logout" style="flex: 1; padding: 10px; justify-content: center;">Cancelar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalDiv);
+
+            const container = modalDiv.querySelector('#cropperContainer');
+            const img = modalDiv.querySelector('#cropperImg');
+            const zoomRange = modalDiv.querySelector('#zoomRange');
+
+            let scale = 1;
+            let posX = 0;
+            let posY = 0;
+            let isDragging = false;
+            let startX = 0;
+            let startY = 0;
+
+            img.onload = () => {
+                const minDim = Math.min(img.naturalWidth, img.naturalHeight);
+                scale = 280 / minDim;
+                zoomRange.value = scale;
+                posX = (280 - img.naturalWidth * scale) / 2;
+                posY = (280 - img.naturalHeight * scale) / 2;
+                updateTransform();
+            };
+
+            function updateTransform() {
+                img.style.width = (img.naturalWidth * scale) + 'px';
+                img.style.height = (img.naturalHeight * scale) + 'px';
+                img.style.left = posX + 'px';
+                img.style.top = posY + 'px';
+            }
+
+            container.addEventListener('pointerdown', (e) => {
+                isDragging = true;
+                startX = e.clientX - posX;
+                startY = e.clientY - posY;
+                container.setPointerCapture(e.pointerId);
+            });
+
+            container.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                posX = e.clientX - startX;
+                posY = e.clientY - startY;
+                updateTransform();
+            });
+
+            container.addEventListener('pointerup', (e) => {
+                isDragging = false;
+                try { container.releasePointerCapture(e.pointerId); } catch(err){}
+            });
+
+            zoomRange.addEventListener('input', (e) => {
+                const oldScale = scale;
+                scale = parseFloat(e.target.value);
+                const centerCoord = 140;
+                posX = centerCoord - (centerCoord - posX) * (scale / oldScale);
+                posY = centerCoord - (centerCoord - posY) * (scale / oldScale);
+                updateTransform();
+            });
+
+            modalDiv.querySelector('#btnCloseCropModal').addEventListener('click', () => modalDiv.remove());
+
+            modalDiv.querySelector('#btnConfirmCrop').addEventListener('click', async () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 280;
+                canvas.height = 280;
+                const ctx = canvas.getContext('2d');
+
+                const renderImg = new Image();
+                renderImg.src = imageSrc;
+                renderImg.onload = async () => {
+                    ctx.drawImage(renderImg, posX, posY, renderImg.naturalWidth * scale, renderImg.naturalHeight * scale);
+                    const croppedBase64 = canvas.toDataURL('image/jpeg', 0.9);
+
+                    const res = await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user.email, avatar: croppedBase64 })
+                    });
+                    if (res.ok) {
+                        user.avatar = croppedBase64;
+                        localStorage.setItem('masterclass_user', JSON.stringify(user));
+                        const profileAvatarElem = document.getElementById('userAvatar');
+                        if (profileAvatarElem) profileAvatarElem.src = croppedBase64;
+                        updateNavAvatar();
+                        showToast('Foto de perfil atualizada com sucesso!');
+                    }
+                    modalDiv.remove();
+                };
+            });
         }
 
         function updateNavAvatar() {
@@ -2042,7 +2352,7 @@
                 const data = await res.json();
                 msgBox.style.display = 'block';
                 if (res.ok) {
-                    msgBox.style.background = 'rgba(23, 185, 120, 0.4)';
+                    msgBox.style.background = 'rgba(23, 185, 120,0.4)';
                     msgBox.style.color = '#d4ffec';
                     msgBox.innerText = data.message;
                     focusAndScrollTo(msgBox);
