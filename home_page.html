@@ -979,20 +979,32 @@
             });
             btnCloseSearch.addEventListener('click', () => { searchBarContainer.style.display = 'none'; });
 
-            const availablePages = [
-                { name: 'Quadro de Avisos', pageKey: 'avisos' },
-                { name: 'Controle de Contas', pageKey: 'admin_accounts' },
-                { name: 'Gerenciar Cursos', pageKey: 'admin_courses' },
-                { name: 'Meus Cursos / Meu Curso', pageKey: 'my_courses' },
-                { name: 'Minhas Notas', pageKey: 'my_grades' },
-                { name: 'Meu Perfil', pageKey: 'my_profile' },
-                { name: 'Configurações', pageKey: 'settings' }
+            // Lista de páginas mapeadas com os perfis autorizados a acessá-las
+            const allPages = [
+                { name: 'Quadro de Avisos', pageKey: 'avisos', roles: ['Administrador', 'Aluno', 'Professor'] },
+                { name: 'Controle de Contas', pageKey: 'admin_accounts', roles: ['Administrador'] },
+                { name: 'Gerenciar Cursos', pageKey: 'admin_courses', roles: ['Administrador'] },
+                { name: 'Meus Cursos / Meu Curso', pageKey: 'my_courses', roles: ['Aluno', 'Professor'] },
+                { name: 'Minhas Notas', pageKey: 'my_grades', roles: ['Aluno', 'Professor'] },
+                { name: 'Meu Perfil', pageKey: 'my_profile', roles: ['Administrador', 'Aluno', 'Professor'] },
+                { name: 'Configurações', pageKey: 'settings', roles: ['Administrador', 'Aluno', 'Professor'] }
             ];
+
+            // Filtra dinamicamente as páginas com base estrita no cargo/role do usuário logado
+            const availablePages = allPages.filter(p => p.roles.includes(user.role));
 
             globalSearchInput.addEventListener('input', (e) => {
                 const query = e.target.value.toLowerCase().trim();
                 if (!query) { searchResultsDropdown.style.display = 'none'; return; }
+                
                 const matches = availablePages.filter(p => p.name.toLowerCase().includes(query));
+                
+                if (matches.length === 0) {
+                    searchResultsDropdown.style.display = 'block';
+                    searchResultsDropdown.innerHTML = `<div style="padding: 6px 10px; font-size: 0.85rem; opacity: 0.8; text-align: center;">Nenhum resultado encontrado.</div>`;
+                    return;
+                }
+
                 searchResultsDropdown.style.display = 'block';
                 searchResultsDropdown.innerHTML = matches.map(m => `
                     <div class="search-result-item" data-page="${m.pageKey}" style="padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.88rem; background: rgba(255,255,255,0.1); margin-bottom: 4px;">
@@ -1004,6 +1016,8 @@
                     item.addEventListener('click', () => {
                         triggerPageNavigation(item.getAttribute('data-page'));
                         searchBarContainer.style.display = 'none';
+                        globalSearchInput.value = '';
+                        searchResultsDropdown.style.display = 'none';
                     });
                 });
             });
@@ -1027,45 +1041,127 @@
             }
         }
 
+        // Chave única para salvar notificações lidas por usuário no localStorage
+        function getReadNotificationsKey() {
+            return `masterclass_read_notifs_${user.email.toLowerCase()}`;
+        }
+
+        function getReadNotifications() {
+            try {
+                return JSON.parse(localStorage.getItem(getReadNotificationsKey()) || '[]');
+            } catch {
+                return [];
+            }
+        }
+
+        function markNotificationAsRead(notifId) {
+            let readList = getReadNotifications();
+            if (!readList.includes(notifId)) {
+                readList.push(notifId);
+                localStorage.setItem(getReadNotificationsKey(), JSON.stringify(readList));
+            }
+        }
+
         async function setupNotifications(notifBtn) {
             const badge = document.getElementById('notifBadge');
             try {
                 const res = await fetch('/api/notifications', { headers: { 'x-user-role': user.role } });
                 const data = await res.json();
-                if (res.ok && data.notifications.length > 0) {
-                    badge.innerText = data.notifications.length;
-                    badge.style.display = 'inline-block';
+                if (res.ok) {
+                    const allNotifs = data.notifications || [];
+                    const readList = getReadNotifications();
+                    
+                    // Filtra apenas as não lidas para o badge
+                    const unreadCount = allNotifs.filter(n => !readList.includes(n.id)).length;
+
+                    if (unreadCount > 0) {
+                        badge.innerText = unreadCount;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+
+                    notifBtn.addEventListener('click', () => { renderNotificationsModal(allNotifs); });
                 }
-                notifBtn.addEventListener('click', () => { renderNotificationsModal(data.notifications || []); });
             } catch (err) {}
         }
 
         function renderNotificationsModal(notifications) {
+            const readList = getReadNotifications();
+            
             const modalDiv = document.createElement('div');
             modalDiv.className = 'modal-overlay';
             modalDiv.innerHTML = `
                 <div class="modal-card">
-                    <h3 style="margin-bottom: 12px;">🔔 Central de Notificações</h3>
-                    <div style="overflow-y: auto; max-height: 350px; display:flex; flex-direction:column; gap:8px;">
-                        ${notifications.map(n => `
-                            <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px;">
-                                <strong style="font-size:0.9rem; color:#fef3c7;">${n.title}</strong>
-                                <div style="font-size:0.8rem; opacity:0.9; margin-top:4px;">${n.description}</div>
-                            </div>
-                        `).join('')}
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="margin: 0;">🔔 Central de Notificações</h3>
+                        <button type="button" id="btnMarkAllRead" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; cursor: pointer;">Marcar todas como lidas</button>
+                    </div>
+                    <div style="overflow-y: auto; max-height: 350px; display:flex; flex-direction:column; gap:8px;" id="notifListContainer">
+                        ${notifications.map(n => {
+                            const isRead = readList.includes(n.id);
+                            return `
+                                <div class="notif-item ${isRead ? 'read' : 'unread'}" data-id="${n.id}" style="background: ${isRead ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.2)'}; padding: 10px; border-radius: 8px; border-left: 4px solid ${isRead ? 'transparent' : '#f59e0b'}; cursor: pointer; transition: background 0.2s;">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                        <strong style="font-size:0.9rem; color:#fef3c7;">${n.title}</strong>
+                                        ${!isRead ? '<span style="font-size:0.65rem; background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px;">Nova</span>' : ''}
+                                    </div>
+                                    <div style="font-size:0.8rem; opacity:0.9; margin-top:4px;">${n.description}</div>
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
                     <button type="button" id="btnCloseNotifModal" class="glass-btn btn-logout" style="margin-top: 14px; padding: 10px; justify-content: center;">Fechar</button>
                 </div>
             `;
             document.body.appendChild(modalDiv);
+
+            // Marcar individualmente ao clicar em uma notificação
+            modalDiv.querySelectorAll('.notif-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const id = item.getAttribute('data-id');
+                    markNotificationAsRead(id);
+                    item.style.background = 'rgba(255,255,255,0.07)';
+                    item.style.borderLeftColor = 'transparent';
+                    const badgeTag = item.querySelector('span');
+                    if (badgeTag) badgeTag.remove();
+                    
+                    // Atualiza o badge principal em tempo real
+                    updateBadgeCount(notifications);
+                });
+            });
+
+            // Marcar todas como lidas
+            modalDiv.querySelector('#btnMarkAllRead').addEventListener('click', () => {
+                notifications.forEach(n => markNotificationAsRead(n.id));
+                modalDiv.querySelectorAll('.notif-item').forEach(item => {
+                    item.style.background = 'rgba(255,255,255,0.07)';
+                    item.style.borderLeftColor = 'transparent';
+                    const badgeTag = item.querySelector('span');
+                    if (badgeTag) badgeTag.remove();
+                });
+                updateBadgeCount(notifications);
+            });
+
             modalDiv.querySelector('#btnCloseNotifModal').addEventListener('click', () => {
-                const badge = document.getElementById('notifBadge');
-                if (badge) {
+                modalDiv.remove();
+            });
+        }
+
+        function updateBadgeCount(notifications) {
+            const badge = document.getElementById('notifBadge');
+            const readList = getReadNotifications();
+            const unreadCount = notifications.filter(n => !readList.includes(n.id)).length;
+            
+            if (badge) {
+                if (unreadCount > 0) {
+                    badge.innerText = unreadCount;
+                    badge.style.display = 'inline-block';
+                } else {
                     badge.innerText = '0';
                     badge.style.display = 'none';
                 }
-                modalDiv.remove();
-            });
+            }
         }
 
         async function renderPage(pageKey) {
