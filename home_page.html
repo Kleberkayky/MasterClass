@@ -169,6 +169,21 @@
             padding-right: 2px;
         }
 
+        /* Padronização de Animação de Botões idêntica ao index.html */
+        button, .glass-btn {
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.15s ease, box-shadow 0.25s ease;
+        }
+
+        button:hover, .glass-btn:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.1);
+            box-shadow: 0 8px 20px var(--btn-primary-shadow);
+        }
+
+        button:active, .glass-btn:active {
+            transform: translateY(-1px);
+        }
+
         .glass-btn {
             width: 100%;
             padding: 12px 0;
@@ -187,17 +202,11 @@
             gap: 12px;
             text-decoration: none;
             white-space: nowrap;
-            transition: transform 0.2s ease, filter 0.15s ease;
         }
 
         .sidebar:not(.collapsed) .glass-btn {
             padding: 12px 16px;
             justify-content: flex-start;
-        }
-
-        .glass-btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
         }
 
         .glass-btn.active {
@@ -272,7 +281,6 @@
             cursor: pointer;
             color: #fff;
             font-size: 1rem;
-            transition: background 0.2s ease;
             position: relative;
             flex-shrink: 0;
         }
@@ -331,7 +339,6 @@
             animation: osPanelEntrance 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Garantia rigorosa para que imagens nos editores e exibições nunca passem da margem máxima (estilo Word/Google Docs) */
         .content-body img:not(.user-avatar-custom),
         .rich-text-editor img,
         .rendered-content img {
@@ -345,7 +352,6 @@
             transition: outline 0.15s ease;
         }
 
-        /* Estilo da barra flutuante de redimensionamento de imagem estilo Word/Docs */
         .image-resize-toolbar {
             position: absolute;
             background: rgba(15, 23, 42, 0.92);
@@ -872,7 +878,6 @@
             } catch (err) { return []; }
         }
 
-        /* Sistema unificado estilo Word/Google Docs para redimensionamento de imagens em editores de texto */
         function enableImageResizingInEditor(editorElement) {
             let activeToolbar = null;
             let selectedImage = null;
@@ -939,7 +944,7 @@
                             if (val !== null) {
                                 let num = parseInt(val, 10);
                                 if (isNaN(num) || num < 10) num = 10;
-                                if (num > 100) num = 100; // Respeita a margem máxima até onde o texto vai
+                                if (num > 100) num = 100;
                                 img.style.width = num + '%';
                                 img.style.maxWidth = '100%';
                                 img.style.height = 'auto';
@@ -979,7 +984,6 @@
             });
             btnCloseSearch.addEventListener('click', () => { searchBarContainer.style.display = 'none'; });
 
-            // Lista de páginas mapeadas com os perfis autorizados a acessá-las
             const allPages = [
                 { name: 'Quadro de Avisos', pageKey: 'avisos', roles: ['Administrador', 'Aluno', 'Professor'] },
                 { name: 'Controle de Contas', pageKey: 'admin_accounts', roles: ['Administrador'] },
@@ -990,7 +994,6 @@
                 { name: 'Configurações', pageKey: 'settings', roles: ['Administrador', 'Aluno', 'Professor'] }
             ];
 
-            // Filtra dinamicamente as páginas com base estrita no cargo/role do usuário logado
             const availablePages = allPages.filter(p => p.roles.includes(user.role));
 
             globalSearchInput.addEventListener('input', (e) => {
@@ -1041,7 +1044,6 @@
             }
         }
 
-        // Chave única para salvar notificações lidas por usuário no localStorage
         function getReadNotificationsKey() {
             return `masterclass_read_notifs_${user.email.toLowerCase()}`;
         }
@@ -1070,8 +1072,6 @@
                 if (res.ok) {
                     const allNotifs = data.notifications || [];
                     const readList = getReadNotifications();
-                    
-                    // Filtra apenas as não lidas para o badge
                     const unreadCount = allNotifs.filter(n => !readList.includes(n.id)).length;
 
                     if (unreadCount > 0) {
@@ -1116,7 +1116,6 @@
             `;
             document.body.appendChild(modalDiv);
 
-            // Marcar individualmente ao clicar em uma notificação
             modalDiv.querySelectorAll('.notif-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const id = item.getAttribute('data-id');
@@ -1125,13 +1124,10 @@
                     item.style.borderLeftColor = 'transparent';
                     const badgeTag = item.querySelector('span');
                     if (badgeTag) badgeTag.remove();
-                    
-                    // Atualiza o badge principal em tempo real
                     updateBadgeCount(notifications);
                 });
             });
 
-            // Marcar todas como lidas
             modalDiv.querySelector('#btnMarkAllRead').addEventListener('click', () => {
                 notifications.forEach(n => markNotificationAsRead(n.id));
                 modalDiv.querySelectorAll('.notif-item').forEach(item => {
