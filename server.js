@@ -650,6 +650,25 @@ app.get('/api/notifications', (req, res) => {
   return res.status(200).json({ notifications });
 });
 
+// Lançar ou atualizar nota de uma submissão (Professor)
+app.put('/api/submissions/:subId/grade', verificarPermissao('Professor', 'Administrador'), (req, res) => {
+  const { subId } = req.params;
+  const { grade } = req.body;
+
+  let subs = loadSubmissions();
+  const sub = subs.find(s => s.id === subId);
+  if (!sub) return res.status(404).json({ message: 'Submissão não encontrada.' });
+
+  const hasValidGrade = grade !== undefined && grade !== null && String(grade).trim() !== '';
+  
+  sub.grade = hasValidGrade ? grade : null;
+  sub.isEvaluated = hasValidGrade; // Armazena booleano V/F para avaliada/não avaliada
+  sub.status = hasValidGrade ? 'Avaliado' : 'Sob análise';
+  saveSubmissions(subs);
+
+  return res.status(200).json({ message: 'Nota lançada com sucesso!' });
+});
+
 app.listen(3000, () => {
   console.log('Servidor rodando em http://localhost:3000');
 });

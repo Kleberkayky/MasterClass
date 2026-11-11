@@ -169,7 +169,6 @@
             padding-right: 2px;
         }
 
-        /* Padronização de Animação de Botões idêntica ao index.html */
         button, .glass-btn {
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.15s ease, box-shadow 0.25s ease;
         }
@@ -791,15 +790,15 @@
                     <li><a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos"><span class="btn-icon">📢</span><span class="btn-text">Quadro de Avisos</span></a></li>
                     <li><a class="glass-btn has-tooltip" data-tooltip="Meus Cursos" data-page="my_courses"><span class="btn-icon">📚</span><span class="btn-text">Meus Cursos</span></a></li>
                     <li><a class="glass-btn has-tooltip" data-tooltip="Minhas Notas" data-page="my_grades"><span class="btn-icon">📝</span><span class="btn-text">Minhas Notas</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Meu perfil" data-page="my_profile"><span class="btn-icon"><img src="${user.avatar || 'imagem4.jpeg'}" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar"></span><span class="btn-text">Meu perfil</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Meu Perfil" data-page="my_profile"><span class="btn-icon"><img src="${user.avatar || 'imagem4.jpeg'}" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar"></span><span class="btn-text">Meu Perfil</span></a></li>
                     <li><a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings"><span class="btn-icon">⚙️</span><span class="btn-text">Configurações</span></a></li>
                 `;
             } else {
                 mainMenu.innerHTML = `
                     <li><a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos"><span class="btn-icon">📢</span><span class="btn-text">Quadro de Avisos</span></a></li>
                     <li><a class="glass-btn has-tooltip" data-tooltip="Meu Curso" data-page="my_courses"><span class="btn-icon">📚</span><span class="btn-text">Meu Curso</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Minhas Notas" data-page="my_grades"><span class="btn-icon">📝</span><span class="btn-text">Minhas Notas</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Meu perfil" data-page="my_profile"><span class="btn-icon"><img src="${user.avatar || 'imagem4.jpeg'}" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar"></span><span class="btn-text">Meu perfil</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Lançar Notas" data-page="my_grades"><span class="btn-icon">📝</span><span class="btn-text">Lançar Notas</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Meu Perfil" data-page="my_profile"><span class="btn-icon"><img src="${user.avatar || 'imagem4.jpeg'}" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar"></span><span class="btn-text">Meu Perfil</span></a></li>
                     <li><a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings"><span class="btn-icon">⚙️</span><span class="btn-text">Configurações</span></a></li>
                 `;
             }
@@ -989,7 +988,7 @@
                 { name: 'Controle de Contas', pageKey: 'admin_accounts', roles: ['Administrador'] },
                 { name: 'Gerenciar Cursos', pageKey: 'admin_courses', roles: ['Administrador'] },
                 { name: 'Meus Cursos / Meu Curso', pageKey: 'my_courses', roles: ['Aluno', 'Professor'] },
-                { name: 'Minhas Notas', pageKey: 'my_grades', roles: ['Aluno', 'Professor'] },
+                { name: 'Minhas Notas / Lançar Notas', pageKey: 'my_grades', roles: ['Aluno', 'Professor'] },
                 { name: 'Meu Perfil', pageKey: 'my_profile', roles: ['Administrador', 'Aluno', 'Professor'] },
                 { name: 'Configurações', pageKey: 'settings', roles: ['Administrador', 'Aluno', 'Professor'] }
             ];
@@ -1504,7 +1503,7 @@
                     break;
 
                 case 'my_grades':
-                    centerTitle.innerText = "Minhas Notas";
+                    centerTitle.innerText = user.role === 'Aluno' ? "Minhas Notas" : "Lançar Notas";
                     if (user.role === 'Aluno') {
                         const subs = await fetchSubmissions();
                         const mySubs = subs.filter(s => s.studentEmail.toLowerCase() === user.email.toLowerCase() && s.grade !== null);
@@ -1526,7 +1525,13 @@
                             </div>
                         `;
                     } else {
-                        renderProfessorActivitiesHistory();
+                        // Fluxo Professor: Lançar Notas (Escolher Módulo primeiro)
+                        const assigned = courses.find(c => c.id === user.assignedCourse);
+                        if (!assigned) {
+                            centerContent.innerHTML = `<p>⚠️ Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
+                            return;
+                        }
+                        renderProfessorGradeModules(assigned);
                     }
                     break;
 
@@ -1631,6 +1636,136 @@
                     });
                     break;
             }
+        }
+
+        // Funções específicas do Professor para Lançar Notas (Módulos -> Opções -> Listagem)
+        function renderProfessorGradeModules(course) {
+            centerTitle.innerText = `Lançar Notas: ${course.title}`;
+            centerContent.innerHTML = `
+                <p>Selecione o módulo desejado para gerenciar e lançar notas:</p>
+                <div class="modules-container">
+                    ${course.modules.map(mod => `
+                        <div class="module-box select-grade-module-btn" data-mod-id="${mod.id}">
+                            <div class="module-title">${mod.name}</div>
+                            <div style="font-size: 0.82rem; opacity: 0.8;">${mod.contents.length} item(ns) cadastrado(s).</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.querySelectorAll('.select-grade-module-btn').forEach(box => {
+                box.addEventListener('click', () => {
+                    const modId = box.getAttribute('data-mod-id');
+                    const modObj = course.modules.find(m => m.id === modId);
+                    renderProfessorGradeOptions(course, modObj);
+                });
+            });
+        }
+
+        function renderProfessorGradeOptions(course, moduleObj) {
+            centerTitle.innerText = `${course.title} > ${moduleObj.name}`;
+            centerContent.innerHTML = `
+                <button class="back-btn" id="backToGradeModules">⬅ Voltar aos Módulos</button>
+                <p>Escolha uma das opções abaixo para visualizar e lançar notas:</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 12px;">
+                    <div class="course-card" id="btnOptEvaluated" style="background: rgba(245, 158, 11, 0.25); border: 1px solid rgba(245, 158, 11, 0.6);">
+                        <div class="course-title">📋 Atividades Avaliadas</div>
+                        <div class="course-desc">Gerenciar submissões de atividades que exigem notas e avaliações.</div>
+                    </div>
+                    <div class="course-card" id="btnOptUnevaluated" style="background: rgba(59, 130, 246, 0.25); border: 1px solid rgba(59, 130, 246, 0.6);">
+                        <div class="course-title">📌 Atividades Não Avaliadas</div>
+                        <div class="course-desc">Visualizar conteúdos teóricos e materiais de aula sem atribuição de nota.</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('backToGradeModules').addEventListener('click', () => renderProfessorGradeModules(course));
+
+            document.getElementById('btnOptEvaluated').addEventListener('click', () => {
+                renderProfessorActivitiesList(course, moduleObj, true);
+            });
+
+            document.getElementById('btnOptUnevaluated').addEventListener('click', () => {
+                renderProfessorActivitiesList(course, moduleObj, false);
+            });
+        }
+
+        async function renderProfessorActivitiesList(course, moduleObj, isEvaluated) {
+            centerTitle.innerText = `${moduleObj.name} > ${isEvaluated ? 'Atividades Avaliadas' : 'Atividades Não Avaliadas'}`;
+            const subs = await fetchSubmissions();
+
+            // Filtra estritamente apenas itens que SÃO atividades (isAssignment === true), 
+            // excluindo conteúdos teóricos da aba de não avaliadas.
+            const filteredContents = moduleObj.contents.filter(cnt => {
+                if (!cnt.isAssignment) return false; // Ignora conteúdos teóricos
+
+                // Verifica se há submissões para esta atividade com nota lançada (número preenchido)
+                const actSubs = subs.filter(s => s.contentId === cnt.id);
+                const hasAnyEvaluatedSub = actSubs.some(s => s.grade !== null && s.grade !== undefined && String(s.grade).trim() !== '');
+
+                if (isEvaluated) {
+                    return hasAnyEvaluatedSub; // V (Possui nota lançada)
+                } else {
+                    return !hasAnyEvaluatedSub; // F (Não possui nota / vazio)
+                }
+            });
+
+            centerContent.innerHTML = `
+                <button class="back-btn" id="backToGradeOptions">⬅ Voltar às Opções</button>
+                <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
+                    ${filteredContents.length === 0 ? `<p style="opacity:0.8;">Nenhuma ${isEvaluated ? 'atividade avaliada' : 'atividade não avaliada'} encontrada neste módulo.</p>` : ''}
+                    ${filteredContents.map(act => {
+                        const actSubs = subs.filter(s => s.contentId === act.id);
+                        return `
+                            <div style="background: rgba(255,255,255,0.15); padding: 14px; border-radius: 12px; display:flex; flex-direction:column; gap:10px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                    <div>
+                                        <strong style="color: #fef3c7; font-size:1rem;">📌 ${act.subject}</strong>
+                                        <div style="font-size:0.85rem; opacity:0.9; margin-top:2px;">${act.description || 'Sem descrição'}</div>
+                                    </div>
+                                </div>
+                                <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                                    <strong style="font-size:0.85rem; color:#fef3c7;">Respostas dos Alunos:</strong>
+                                    ${actSubs.length === 0 ? '<div style="font-size:0.8rem; opacity:0.7; margin-top:4px;">Nenhum aluno enviou resposta ainda.</div>' : ''}
+                                    <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
+                                        ${actSubs.map(sub => `
+                                            <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                                <div style="flex: 1; min-width: 180px;">
+                                                    <span style="font-weight:600; font-size:0.85rem;">${sub.studentName} (${sub.studentEmail})</span>
+                                                    <div class="rendered-content" style="font-size:0.8rem; opacity:0.9; margin-top:2px; word-break:break-word;">Resposta: ${sub.submissionHtml}</div>
+                                                </div>
+                                                <div style="display:flex; gap:6px; align-items:center;">
+                                                    <input type="text" class="admin-input grade-input" data-sub-id="${sub.id}" value="${sub.grade !== null && sub.grade !== undefined ? sub.grade : ''}" placeholder="Nota" style="width: 60px; padding: 6px; font-size:0.85rem;">
+                                                    <button class="glass-btn btn-save-grade" data-sub-id="${sub.id}" style="width: auto; padding: 6px 10px; font-size: 0.78rem;">Salvar</button>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            document.getElementById('backToGradeOptions').addEventListener('click', () => renderProfessorGradeOptions(course, moduleObj));
+
+            centerContent.querySelectorAll('.btn-save-grade').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const subId = btn.getAttribute('data-sub-id');
+                    const row = btn.closest('div');
+                    const gradeVal = row.querySelector('.grade-input').value.trim();
+                    
+                    const res = await fetch(`/api/submissions/${subId}/grade`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
+                        body: JSON.stringify({ grade: gradeVal })
+                    });
+                    const data = await res.json();
+                    showToast(data.message || 'Nota salva!');
+                    renderProfessorActivitiesList(course, moduleObj, isEvaluated);
+                });
+            });
         }
 
         function renderAdminCreateAvisoModal() {
@@ -1747,98 +1882,7 @@
                 return;
             }
 
-            centerTitle.innerText = "Histórico de Atividades e Respostas";
-            const subs = await fetchSubmissions();
-            let activitiesList = [];
-            assigned.modules.forEach(m => {
-                m.contents.filter(cnt => cnt.isAssignment).forEach(cnt => {
-                    activitiesList.push({ ...cnt, moduleName: m.name, courseTitle: assigned.title, moduleId: m.id });
-                });
-            });
-
-            centerContent.innerHTML = `
-                <p>Gerencie as atividades lançadas e avalie as respostas enviadas pelos alunos:</p>
-                <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
-                    ${activitiesList.length === 0 ? '<p style="opacity:0.8;">Nenhuma atividade cadastrada no histórico.</p>' : ''}
-                    ${activitiesList.map(act => {
-                        const actSubs = subs.filter(s => s.contentId === act.id);
-                        return `
-                            <div style="background: rgba(255,255,255,0.15); padding: 14px; border-radius: 12px; display:flex; flex-direction:column; gap:10px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                                    <div>
-                                        <strong style="color: #fef3c7; font-size:1rem;">${act.courseTitle} - ${act.moduleName} - ${act.subject}</strong>
-                                        <div style="font-size:0.85rem; opacity:0.9; margin-top:2px;">${act.description || 'Sem descrição'}</div>
-                                    </div>
-                                    <div style="display:flex; gap:6px;">
-                                        <button class="glass-btn btn-edit-act" data-course="${assigned.id}" data-mod="${act.moduleId}" data-id="${act.id}" style="width:auto; padding:6px 10px; font-size:0.78rem;">Editar</button>
-                                        <button class="glass-btn btn-del-act" data-course="${assigned.id}" data-mod="${act.moduleId}" data-id="${act.id}" style="width:auto; padding:6px 10px; font-size:0.78rem; background:linear-gradient(135deg,#dc2626,#7f1d1d);">Excluir</button>
-                                    </div>
-                                </div>
-                                <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
-                                    <strong style="font-size:0.85rem; color:#fef3c7;">Respostas dos Alunos:</strong>
-                                    ${actSubs.length === 0 ? '<div style="font-size:0.8rem; opacity:0.7; margin-top:4px;">Nenhum aluno enviou resposta ainda.</div>' : ''}
-                                    <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
-                                        ${actSubs.map(sub => `
-                                            <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                                                <div style="flex: 1; min-width: 180px;">
-                                                    <span style="font-weight:600; font-size:0.85rem;">${sub.studentName} (${sub.studentEmail})</span>
-                                                    <div class="rendered-content" style="font-size:0.8rem; opacity:0.9; margin-top:2px; word-break:break-word;">Resposta: ${sub.submissionHtml}</div>
-                                                </div>
-                                                <div style="display:flex; gap:6px; align-items:center;">
-                                                    <input type="text" class="admin-input grade-input" data-sub-id="${sub.id}" value="${sub.grade !== null ? sub.grade : ''}" placeholder="Nota" style="width: 60px; padding: 6px; font-size:0.85rem;">
-                                                    <button class="glass-btn btn-save-grade" data-sub-id="${sub.id}" style="width: auto; padding: 6px 10px; font-size: 0.78rem;">Salvar</button>
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-
-            centerContent.querySelectorAll('.btn-save-grade').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const subId = btn.getAttribute('data-sub-id');
-                    const row = btn.closest('div');
-                    const gradeVal = row.querySelector('.grade-input').value.trim();
-                    const res = await fetch(`/api/submissions/${subId}/grade`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
-                        body: JSON.stringify({ grade: gradeVal })
-                    });
-                    const data = await res.json();
-                    showToast(data.message || 'Nota salva!');
-                    renderProfessorActivitiesHistory();
-                });
-            });
-
-            centerContent.querySelectorAll('.btn-del-act').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    if (!confirm('Deseja excluir esta atividade permanentemente?')) return;
-                    const cId = btn.getAttribute('data-course');
-                    const mId = btn.getAttribute('data-mod');
-                    const aId = btn.getAttribute('data-id');
-                    const res = await fetch(`/api/courses/${cId}/modules/${mId}/content/${aId}`, {
-                        method: 'DELETE',
-                        headers: { 'x-user-role': user.role }
-                    });
-                    if (res.ok) { showToast('Excluído!'); renderProfessorActivitiesHistory(); }
-                });
-            });
-
-            centerContent.querySelectorAll('.btn-edit-act').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const cId = btn.getAttribute('data-course');
-                    const mId = btn.getAttribute('data-mod');
-                    const aId = btn.getAttribute('data-id');
-                    const cObj = courses.find(x => x.id === cId);
-                    const mObj = cObj.modules.find(x => x.id === mId);
-                    const actObj = mObj.contents.find(x => x.id === aId);
-                    renderModuleContentEditor(cObj, mObj, false, actObj);
-                });
-            });
+            renderProfessorGradeModules(assigned);
         }
 
         function renderStudentAssignmentModal(course, moduleObj, assignment) {
