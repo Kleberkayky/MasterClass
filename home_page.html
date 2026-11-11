@@ -1875,14 +1875,74 @@
         }
 
         async function renderProfessorActivitiesHistory() {
+            centerTitle.innerText = "Histórico de Atividades Lançadas";
             const courses = await fetchCourses();
             const assigned = courses.find(c => c.id === user.assignedCourse);
             if (!assigned) {
-                showToast('Você precisa selecionar um curso vinculado em Meu Perfil.');
+                centerContent.innerHTML = `<p>⚠️ Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
                 return;
             }
 
-            renderProfessorGradeModules(assigned);
+            let launchedActivities = [];
+            assigned.modules.forEach(mod => {
+                mod.contents.filter(cnt => cnt.isAssignment).forEach(cnt => {
+                    launchedActivities.push({ ...cnt, moduleName: mod.name, moduleId: mod.id });
+                });
+            });
+
+            launchedActivities.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+            centerContent.innerHTML = `
+                <p style="margin-bottom: 10px;">Atividades lançadas recentemente para a sua turma:</p>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    ${launchedActivities.length === 0 ? '<p style="opacity:0.8;">Nenhuma atividade foi lançada por você até o momento.</p>' : ''}
+                    ${launchedActivities.map(act => `
+                        <div style="background: rgba(255,255,255,0.15); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3); display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+                            <div style="flex: 1; min-width: 220px;">
+                                <div style="font-size: 0.8rem; background: rgba(245, 158, 11, 0.4); padding: 2px 8px; border-radius: 6px; width: fit-content; margin-bottom: 6px;">📂 Módulo: ${act.moduleName}</div>
+                                <strong style="color: #fef3c7; font-size:1.05rem; display:block;">📌 ${act.subject}</strong>
+                                <div style="font-size:0.85rem; opacity:0.9; margin-top:2px;">${act.description || 'Sem descrição'}</div>
+                                <div style="font-size:0.78rem; opacity:0.8; margin-top:6px;">Período: ${act.startDate ? new Date(act.startDate).toLocaleString('pt-BR') : '-'} até ${act.endDate ? new Date(act.endDate).toLocaleString('pt-BR') : '-'}</div>
+                                <div class="rendered-content" style="font-size:0.85rem; margin-top:8px; background: rgba(0,0,0,0.2); padding:8px; border-radius:6px; word-break:break-word;">${act.textHtml}</div>
+                            </div>
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <button class="glass-btn btn-edit-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">✏️ Editar</button>
+                                <button class="glass-btn btn-del-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem; background: linear-gradient(135deg,#dc2626,#7f1d1d);">🗑️ Excluir</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            centerContent.querySelectorAll('.btn-edit-hist-act').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const modId = btn.getAttribute('data-mod-id');
+                    const actId = btn.getAttribute('data-act-id');
+                    const modObj = assigned.modules.find(m => m.id === modId);
+                    const actObj = modObj.contents.find(c => c.id === actId);
+                    renderModuleContentEditor(assigned, modObj, false, actObj);
+                });
+            });
+
+            centerContent.querySelectorAll('.btn-del-hist-act').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const modId = btn.getAttribute('data-mod-id');
+                    const actId = btn.getAttribute('data-act-id');
+                    if (!confirm('Deseja realmente excluir esta atividade lançada?')) return;
+
+                    const res = await fetch(`/api/courses/${assigned.id}/modules/${modId}/content/${actId}`, {
+                        method: 'DELETE',
+                        headers: { 'x-user-role': user.role }
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast(data.message || 'Atividade excluída.');
+                        renderProfessorActivitiesHistory();
+                    } else {
+                        showToast(data.message || 'Erro ao excluir atividade.');
+                    }
+                });
+            });
         }
 
         function renderStudentAssignmentModal(course, moduleObj, assignment) {
