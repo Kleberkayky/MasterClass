@@ -1462,7 +1462,7 @@
                                         return `
                                             <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                                                 <div style="flex: 1; min-width: 200px;">
-                                                    <strong style="color: #fef3c7; font-size:0.95rem;">${ast.courseTitle} - ${ast.subject}</strong>
+                                                    <strong style="color: #fef3c7; font-size:0.95rem;">${ast.courseTitle} - ${ast.e_prova === 'V' ? '📝 [PROVA]' : '📋 [ATIVIDADE]'} ${ast.subject}</strong>
                                                     <div style="font-size:0.8rem; opacity:0.9;">${ast.description || 'Sem descrição'}</div>
                                                     <div style="font-size:0.75rem; opacity:0.8; margin-top:2px;">Entrega: de ${ast.startDate || '-'} até ${ast.endDate || '-'} | <strong>${statusText}</strong></div>
                                                 </div>
@@ -1723,7 +1723,7 @@
                             <div style="background: rgba(255,255,255,0.15); padding: 14px; border-radius: 12px; display:flex; flex-direction:column; gap:10px;">
                                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                     <div>
-                                        <strong style="color: #fef3c7; font-size:1rem;">📌 ${act.subject}</strong>
+                                        <strong style="color: #fef3c7; font-size:1rem;">${act.e_prova === 'V' ? '📝 [PROVA]' : '📋 [ATIVIDADE]'} ${act.subject}</strong>
                                         <div style="font-size:0.85rem; opacity:0.9; margin-top:2px;">${act.description || 'Sem descrição'}</div>
                                     </div>
                                 </div>
@@ -1903,7 +1903,7 @@
                         <div style="background: rgba(255,255,255,0.15); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3); display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
                             <div style="flex: 1; min-width: 220px;">
                                 <div style="font-size: 0.8rem; background: rgba(245, 158, 11, 0.4); padding: 2px 8px; border-radius: 6px; width: fit-content; margin-bottom: 6px;">📂 Módulo: ${act.moduleName}</div>
-                                <strong style="color: #fef3c7; font-size:1.05rem; display:block;">📌 ${act.subject}</strong>
+                                <strong style="color: #fef3c7; font-size:1.05rem; display:block;">${act.e_prova === 'V' ? '📝 [PROVA]' : '📋 [ATIVIDADE]'} ${act.subject}</strong>
                                 <div style="font-size:0.85rem; opacity:0.9; margin-top:2px;">${act.description || 'Sem descrição'}</div>
                                 <div style="font-size:0.78rem; opacity:0.8; margin-top:6px;">Período: ${act.startDate ? new Date(act.startDate).toLocaleString('pt-BR') : '-'} até ${act.endDate ? new Date(act.endDate).toLocaleString('pt-BR') : '-'}</div>
                                 <div class="rendered-content" style="font-size:0.85rem; margin-top:8px; background: rgba(0,0,0,0.2); padding:8px; border-radius:6px; word-break:break-word;">${act.textHtml}</div>
@@ -2136,6 +2136,13 @@
                         <label for="checkIsAssignment" style="font-size: 0.85rem; font-weight: 600; cursor: pointer;">Este lançamento é uma atividade</label>
                     </div>
                     <div id="assignmentDatesWrapper" style="display: ${editItem && editItem.isAssignment ? 'flex' : 'none'}; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 160px;">
+                            <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Tipo de Avaliação</label>
+                            <select id="selectEProva" class="admin-select">
+                                <option value="F" ${!editItem || editItem.e_prova !== 'V' ? 'selected' : ''}>Atividade Avaliativa</option>
+                                <option value="V" ${editItem && editItem.e_prova === 'V' ? 'selected' : ''}>Prova</option>
+                            </select>
+                        </div>
                         <div style="flex: 1; min-width: 140px;">
                             <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Data Início</label>
                             <input type="datetime-local" id="inputStartDate" class="admin-input" value="${editItem ? editItem.startDate || '' : ''}">
@@ -2258,6 +2265,7 @@
                 const subject = document.getElementById('inputSubject').value.trim();
                 const description = document.getElementById('inputDescription').value.trim();
                 const isAssignment = checkAssign.checked;
+                const e_prova = isAssignment ? document.getElementById('selectEProva').value : null;
                 const startDate = document.getElementById('inputStartDate').value;
                 const endDate = document.getElementById('inputEndDate').value;
                 const textHtml = isAssignment ? richAstEd.innerHTML : richFullEd.innerHTML;
@@ -2270,6 +2278,7 @@
                     description,
                     textHtml,
                     isAssignment,
+                    e_prova,
                     startDate,
                     endDate,
                     fileName: attachedFileObj ? attachedFileObj.name : null,

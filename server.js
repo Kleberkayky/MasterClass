@@ -185,7 +185,7 @@ app.post('/api/admin/courses', verificarPermissao('Administrador'), (req, res) =
 // Adicionar conteúdo ou atividade ao módulo
 app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao('Professor', 'Administrador'), (req, res) => {
   const { courseId, moduleId } = req.params;
-  const { subject, description, textHtml, fileName, fileData, fileType, isAssignment, startDate, endDate } = req.body;
+  const { subject, description, textHtml, fileName, fileData, fileType, isAssignment, e_prova, startDate, endDate } = req.body;
 
   if (!subject || subject.trim() === '') {
     return res.status(400).json({ message: 'O assunto é obrigatório.' });
@@ -213,6 +213,7 @@ app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao(
     textHtml: textHtml || '',
     file: fileName ? { name: fileName, data: fileData, type: fileType } : null,
     isAssignment: !!isAssignment,
+    e_prova: isAssignment ? (e_prova === 'V' ? 'V' : 'F') : null,
     startDate: startDate || null,
     endDate: endDate || null,
     createdAt: new Date().toISOString()
@@ -227,7 +228,7 @@ app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao(
 // Atualizar conteúdo/atividade (Professor)
 app.put('/api/courses/:courseId/modules/:moduleId/content/:contentId', verificarPermissao('Professor', 'Administrador'), (req, res) => {
   const { courseId, moduleId, contentId } = req.params;
-  const { subject, description, textHtml, startDate, endDate } = req.body;
+  const { subject, description, textHtml, isAssignment, e_prova, startDate, endDate } = req.body;
 
   const courses = loadCourses();
   const course = courses.find(c => c.id === courseId);
@@ -242,6 +243,12 @@ app.put('/api/courses/:courseId/modules/:moduleId/content/:contentId', verificar
   if (subject) item.subject = subject.trim();
   if (description !== undefined) item.description = description.trim();
   if (textHtml !== undefined) item.textHtml = textHtml;
+  if (isAssignment !== undefined) item.isAssignment = !!isAssignment;
+  if (item.isAssignment) {
+    if (e_prova !== undefined) item.e_prova = e_prova === 'V' ? 'V' : 'F';
+  } else {
+    item.e_prova = null;
+  }
   if (startDate !== undefined) item.startDate = startDate;
   if (endDate !== undefined) item.endDate = endDate;
 
