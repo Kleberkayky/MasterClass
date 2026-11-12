@@ -1088,6 +1088,9 @@
         function renderNotificationsModal(notifications) {
             const readList = getReadNotifications();
             
+            // Filtra para exibir apenas notificações NÃO lidas
+            const unreadNotifications = notifications.filter(n => !readList.includes(n.id));
+
             const modalDiv = document.createElement('div');
             modalDiv.className = 'modal-overlay';
             modalDiv.innerHTML = `
@@ -1097,44 +1100,44 @@
                         <button type="button" id="btnMarkAllRead" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; cursor: pointer;">Marcar todas como lidas</button>
                     </div>
                     <div style="overflow-y: auto; max-height: 350px; display:flex; flex-direction:column; gap:8px;" id="notifListContainer">
-                        ${notifications.map(n => {
-                            const isRead = readList.includes(n.id);
-                            return `
-                                <div class="notif-item ${isRead ? 'read' : 'unread'}" data-id="${n.id}" style="background: ${isRead ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.2)'}; padding: 10px; border-radius: 8px; border-left: 4px solid ${isRead ? 'transparent' : '#f59e0b'}; cursor: pointer; transition: background 0.2s;">
-                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                        <strong style="font-size:0.9rem; color:#fef3c7;">${n.title}</strong>
-                                        ${!isRead ? '<span style="font-size:0.65rem; background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px;">Nova</span>' : ''}
-                                    </div>
-                                    <div style="font-size:0.8rem; opacity:0.9; margin-top:4px;">${n.description}</div>
+                        ${unreadNotifications.length === 0 ? '<p style="text-align: center; opacity: 0.8; font-size: 0.9rem; padding: 20px 0;">Nenhuma notificação nova no momento.</p>' : ''}
+                        ${unreadNotifications.map(n => `
+                            <div class="notif-item unread" data-id="${n.id}" style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; border-left: 4px solid #f59e0b; cursor: pointer; transition: background 0.2s;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                    <strong style="font-size:0.9rem; color:#fef3c7;">${n.title}</strong>
+                                    <span style="font-size:0.65rem; background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px;">Nova</span>
                                 </div>
-                            `;
-                        }).join('')}
+                                <div style="font-size:0.8rem; opacity:0.9; margin-top:4px;">${n.description}</div>
+                            </div>
+                        `).join('')}
                     </div>
                     <button type="button" id="btnCloseNotifModal" class="glass-btn btn-logout" style="margin-top: 14px; padding: 10px; justify-content: center;">Fechar</button>
                 </div>
             `;
             document.body.appendChild(modalDiv);
 
+            // Ao clicar em uma notificação individual, ela é marcada como lida e removida da lista instantaneamente da modal
             modalDiv.querySelectorAll('.notif-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const id = item.getAttribute('data-id');
                     markNotificationAsRead(id);
-                    item.style.background = 'rgba(255,255,255,0.07)';
-                    item.style.borderLeftColor = 'transparent';
-                    const badgeTag = item.querySelector('span');
-                    if (badgeTag) badgeTag.remove();
+                    item.remove(); // Remove o item visualmente da lista modal
+                    
+                    // Se não restarem mais notificações, exibe o aviso de lista vazia
+                    const container = modalDiv.querySelector('#notifListContainer');
+                    if (container.querySelectorAll('.notif-item').length === 0) {
+                        container.innerHTML = '<p style="text-align: center; opacity: 0.8; font-size: 0.9rem; padding: 20px 0;">Nenhuma notificação nova no momento.</p>';
+                    }
+
                     updateBadgeCount(notifications);
                 });
             });
 
+            // Ao clicar em "Marcar todas como lidas", todas ganham status de lidas e a modal se limpa
             modalDiv.querySelector('#btnMarkAllRead').addEventListener('click', () => {
                 notifications.forEach(n => markNotificationAsRead(n.id));
-                modalDiv.querySelectorAll('.notif-item').forEach(item => {
-                    item.style.background = 'rgba(255,255,255,0.07)';
-                    item.style.borderLeftColor = 'transparent';
-                    const badgeTag = item.querySelector('span');
-                    if (badgeTag) badgeTag.remove();
-                });
+                const container = modalDiv.querySelector('#notifListContainer');
+                container.innerHTML = '<p style="text-align: center; opacity: 0.8; font-size: 0.9rem; padding: 20px 0;">Nenhuma notificação nova no momento.</p>';
                 updateBadgeCount(notifications);
             });
 
@@ -2017,8 +2020,7 @@
             centerContent.innerHTML = `
                 ${isAdminView ? '<button class="back-btn" id="backToAdminCourses">⬅ Voltar aos Cursos</button>' : ''}
                 <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                    <button id="btnViewOnlyContents" class="glass-btn" style="width: auto; padding: 8px 14px; font-size: 0.8rem;">📚 Ver Somente Conteúdos (Sem Atividades)</button>
-                    <button id="btnViewAllCourseModules" class="glass-btn" style="width: auto; padding: 8px 14px; font-size: 0.8rem; background: rgba(255,255,255,0.2);">Ver Todos os Módulos</button>
+                    <button id="btnViewOnlyContents" class="glass-btn" style="width: auto; padding: 8px 14px; font-size: 0.8rem;">📚 Ver Somente Conteúdos (Histórico)</button>
                 </div>
                 <p>Selecione um dos módulos para lançar novos conteúdos ou gerenciar:</p>
                 <div class="modules-container">
@@ -2039,11 +2041,7 @@
             }
 
             document.getElementById('btnViewOnlyContents').addEventListener('click', () => {
-                renderProfessorOnlyContentsView(course, isAdminView);
-            });
-
-            document.getElementById('btnViewAllCourseModules').addEventListener('click', () => {
-                renderProfessorCourseView(course, isAdminView);
+                renderProfessorSelectModuleForContents(course, isAdminView);
             });
 
             document.querySelectorAll('.select-module-btn').forEach(box => {
@@ -2055,34 +2053,57 @@
             });
         }
 
-        function renderProfessorOnlyContentsView(course, isAdminView) {
-            centerTitle.innerText = `Conteúdos Passados: ${course.title}`;
+        function renderProfessorSelectModuleForContents(course, isAdminView) {
+            centerTitle.innerText = `Selecionar Módulo: ${course.title}`;
             centerContent.innerHTML = `
-                <button class="back-btn" id="backToModView">⬅ Voltar aos Módulos</button>
-                <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
-                    ${course.modules.map(mod => {
-                        const onlyContents = mod.contents.filter(cnt => !cnt.isAssignment);
-                        return `
-                            <div style="background: rgba(0,0,0,0.25); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3);">
-                                <h4 style="color: #fef3c7; margin-bottom: 6px;">📂 ${mod.name}</h4>
-                                ${onlyContents.length === 0 ? '<p style="font-size:0.85rem; opacity:0.8;">Nenhum conteúdo teórico lançado neste módulo.</p>' : ''}
-                                ${onlyContents.map(cnt => `
-                                    <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; margin-top: 6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                                        <div style="flex: 1; min-width: 180px;">
-                                            <strong>📌 ${cnt.subject}</strong>
-                                            <div style="font-size:0.8rem; opacity:0.9; margin-top:2px;">${cnt.description || 'Sem descrição'}</div>
-                                            <div class="rendered-content" style="font-size:0.85rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
-                                        </div>
-                                        <button class="glass-btn btn-edit-content-item" data-course="${course.id}" data-mod="${mod.id}" data-id="${cnt.id}" style="width: auto; padding: 6px 10px; font-size: 0.75rem;">Editar</button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `;
-                    }).join('')}
+                <button class="back-btn" id="backToCourseMain">⬅ Voltar</button>
+                <p>Escolha qual dos módulos deseja visitar para ver o histórico de matérias:</p>
+                <div class="modules-container">
+                    ${course.modules.map(mod => `
+                        <div class="module-box select-contents-module-btn" data-mod-id="${mod.id}">
+                            <div class="module-title">${mod.name}</div>
+                            <div style="font-size: 0.82rem; opacity: 0.8;">${mod.contents.filter(c => !c.isAssignment).length} conteúdo(s) cadastrado(s).</div>
+                        </div>
+                    `).join('')}
                 </div>
             `;
 
-            document.getElementById('backToModView').addEventListener('click', () => renderProfessorCourseView(course, isAdminView));
+            document.getElementById('backToCourseMain').addEventListener('click', () => renderProfessorCourseView(course, isAdminView));
+
+            document.querySelectorAll('.select-contents-module-btn').forEach(box => {
+                box.addEventListener('click', () => {
+                    const modId = box.getAttribute('data-mod-id');
+                    const modObj = course.modules.find(m => m.id === modId);
+                    renderProfessorOnlyContentsView(course, modObj, isAdminView);
+                });
+            });
+        }
+
+        function renderProfessorOnlyContentsView(course, moduleObj, isAdminView) {
+            centerTitle.innerText = `Conteúdos: ${moduleObj.name}`;
+            const onlyContents = moduleObj.contents.filter(cnt => !cnt.isAssignment);
+
+            centerContent.innerHTML = `
+                <button class="back-btn" id="backToModSelect">⬅ Voltar aos Módulos</button>
+                <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
+                    <div style="background: rgba(0,0,0,0.25); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3);">
+                        <h4 style="color: #fef3c7; margin-bottom: 6px;">📂 ${moduleObj.name}</h4>
+                        ${onlyContents.length === 0 ? '<p style="font-size:0.85rem; opacity:0.8;">Nenhum conteúdo teórico lançado neste módulo.</p>' : ''}
+                        ${onlyContents.map(cnt => `
+                            <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; margin-top: 6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                <div style="flex: 1; min-width: 180px;">
+                                    <strong>📌 ${cnt.subject}</strong>
+                                    <div style="font-size:0.8rem; opacity:0.9; margin-top:2px;">${cnt.description || 'Sem descrição'}</div>
+                                    <div class="rendered-content" style="font-size:0.85rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
+                                </div>
+                                <button class="glass-btn btn-edit-content-item" data-course="${course.id}" data-mod="${moduleObj.id}" data-id="${cnt.id}" style="width: auto; padding: 6px 10px; font-size: 0.75rem;">Editar</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('backToModSelect').addEventListener('click', () => renderProfessorSelectModuleForContents(course, isAdminView));
 
             centerContent.querySelectorAll('.btn-edit-content-item').forEach(btn => {
                 btn.addEventListener('click', () => {
