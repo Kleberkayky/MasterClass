@@ -774,6 +774,27 @@
             }
         }
 
+        function evaluateDeadlineClient(item) {
+            if (!item || !item.endDate) {
+                return { fora_do_prazo: 'F', isClosed: false, inTolerance: false, limitDate: null };
+            }
+            const now = new Date();
+            const end = new Date(item.endDate);
+            const isProva = item.e_prova === 'V';
+            const toleranceMs = isProva ? 0 : (2 * 24 * 60 * 60 * 1000);
+            const limit = new Date(end.getTime() + toleranceMs);
+
+            const isPastEnd = now > end;
+            const isClosed = now > limit;
+
+            return {
+                fora_do_prazo: isPastEnd ? 'V' : 'F',
+                isClosed: isClosed,
+                inTolerance: !isProva && isPastEnd && !isClosed,
+                limitDate: limit
+            };
+        }
+
         const mainMenu = document.getElementById('mainMenu');
 
         function renderMenu() {
@@ -1087,8 +1108,6 @@
 
         function renderNotificationsModal(notifications) {
             const readList = getReadNotifications();
-            
-            // Filtra para exibir apenas notificações NÃO lidas
             const unreadNotifications = notifications.filter(n => !readList.includes(n.id));
 
             const modalDiv = document.createElement('div');
@@ -1116,14 +1135,12 @@
             `;
             document.body.appendChild(modalDiv);
 
-            // Ao clicar em uma notificação individual, ela é marcada como lida e removida da lista instantaneamente da modal
             modalDiv.querySelectorAll('.notif-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const id = item.getAttribute('data-id');
                     markNotificationAsRead(id);
-                    item.remove(); // Remove o item visualmente da lista modal
+                    item.remove();
                     
-                    // Se não restarem mais notificações, exibe o aviso de lista vazia
                     const container = modalDiv.querySelector('#notifListContainer');
                     if (container.querySelectorAll('.notif-item').length === 0) {
                         container.innerHTML = '<p style="text-align: center; opacity: 0.8; font-size: 0.9rem; padding: 20px 0;">Nenhuma notificação nova no momento.</p>';
@@ -1133,7 +1150,6 @@
                 });
             });
 
-            // Ao clicar em "Marcar todas como lidas", todas ganham status de lidas e a modal se limpa
             modalDiv.querySelector('#btnMarkAllRead').addEventListener('click', () => {
                 notifications.forEach(n => markNotificationAsRead(n.id));
                 const container = modalDiv.querySelector('#notifListContainer');
@@ -1453,20 +1469,54 @@
 
                         centerContent.innerHTML = `
                             <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3); margin-bottom: 16px;">
-                                <h4 style="color: #fef3c7; margin-bottom: 8px;">📋 Atividades Recentes</h4>
+                                <h4 style="color: #fef3c7; margin-bottom: 8px;">📋 Atividades e Provas Recentes</h4>
                                 <div style="display:flex; flex-direction:column; gap:10px;">
                                     ${allAssignments.length === 0 ? '<p style="font-size:0.85rem; opacity:0.8;">Nenhuma atividade pendente.</p>' : ''}
                                     ${allAssignments.map(ast => {
                                         const mySub = subs.find(s => s.contentId === ast.id && s.studentEmail.toLowerCase() === user.email.toLowerCase());
-                                        const statusText = mySub ? `Status: ${mySub.status} ${mySub.grade !== null ? '(Nota: ' + mySub.grade + ')' : ''}` : 'Pendente de Envio';
+                                        const deadlineInfo = evaluateDeadlineClient(ast);
+                                        const isProva = ast.e_prova === 'V';
+
+                                        // Determina status de entrega e nota
+                                        let effectiveGrade = mySub ? mySub.grade : null;
+                                        let effectiveStatus = mySub ? mySub.status : 'Pendente de Envio';
+                                        let foraPrazoBadge = deadlineInfo.fora_do_prazo; // 'V' ou 'F'
+
+                                        // Se o aluno já respondeu dentro do prazo/tolerância, preserva o fluxo normal (não é penalizado)
+                                        if (mySub) {
+                                            foraPrazoBadge = mySub.fora_do_prazo || deadlineInfo.fora_do_prazo;
+                                        } else if (deadlineInfo.isClosed) {
+                                            // Nunca respondeu e prazo+tolerância encerrados: fechada e nota zero automática
+                                            effectiveGrade = 0;
+                                            effectiveStatus = 'Encerrada sem envio (Nota 0)';
+                                        }
+
+                                        const badgeColor = foraPrazoBadge === 'V' ? 'rgba(220, 38, 38, 0.7)' : 'rgba(16, 185, 129, 0.6)';
+                                        const toleranceNote = isProva
+                                            ? '<span style="color:#fca5a5;">Sem tolerância</span>'
+                                            : (deadlineInfo.inTolerance && !mySub ? '<span style="color:#fde047;">Em período de tolerância (2 dias)</span>' : 'Tolerância: 2 dias');
+
+                                        const isLocked = deadlineInfo.isClosed && (!mySub || mySub.isClosed);
+
                                         return `
                                             <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                                <div style="flex: 1; min-width: 200px;">
-                                                    <strong style="color: #fef3c7; font-size:0.95rem;">${ast.courseTitle} - ${ast.e_prova === 'V' ? '📝 [PROVA]' : '📋 [ATIVIDADE]'} ${ast.subject}</strong>
+                                                <div style="flex: 1; min-width: 220px;">
+                                                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:4px;">
+                                                        <strong style="color: #fef3c7; font-size:0.95rem;">${ast.courseTitle} - ${isProva ? `📝 [PROVA${ast.evaluationCode ? ' - ' + ast.evaluationCode : ''}]` : `📋 [ATIVIDADE${ast.evaluationCode ? ' - ' + ast.evaluationCode : ''}]`} ${ast.subject}</strong>
+                                                        <span style="font-size:0.7rem; font-weight:700; padding:2px 7px; border-radius:6px; background:${badgeColor};">Fora do prazo: ${foraPrazoBadge}</span>
+                                                    </div>
                                                     <div style="font-size:0.8rem; opacity:0.9;">${ast.description || 'Sem descrição'}</div>
-                                                    <div style="font-size:0.75rem; opacity:0.8; margin-top:2px;">Entrega: de ${ast.startDate || '-'} até ${ast.endDate || '-'} | <strong>${statusText}</strong></div>
+                                                    <div style="font-size:0.75rem; opacity:0.85; margin-top:4px;">
+                                                        Entrega: de ${ast.startDate ? new Date(ast.startDate).toLocaleString('pt-BR') : '-'} até ${ast.endDate ? new Date(ast.endDate).toLocaleString('pt-BR') : '-'} (${toleranceNote})
+                                                    </div>
+                                                    <div style="font-size:0.78rem; margin-top:3px;">
+                                                        <strong>${effectiveStatus}${effectiveGrade !== null && effectiveGrade !== undefined ? ' | Nota: ' + effectiveGrade : ''}</strong>
+                                                    </div>
                                                 </div>
-                                                <button class="glass-btn btn-open-assignment" data-id="${ast.id}" data-course="${ast.courseId}" data-module="${ast.moduleId}" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">Responder</button>
+                                                ${isLocked
+                                                    ? `<button class="glass-btn" disabled style="width: auto; padding: 6px 12px; font-size: 0.8rem; opacity: 0.55; cursor: not-allowed; background: rgba(127, 29, 29, 0.7);">🔒 Encerrada</button>`
+                                                    : `<button class="glass-btn btn-open-assignment" data-id="${ast.id}" data-course="${ast.courseId}" data-module="${ast.moduleId}" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">${mySub ? 'Ver / Editar Resposta' : 'Responder'}</button>`
+                                                }
                                             </div>
                                         `;
                                     }).join('')}
@@ -1499,7 +1549,8 @@
                                 const courseObj = courses.find(x => x.id === cId);
                                 const modObj = courseObj.modules.find(x => x.id === mId);
                                 const astObj = modObj.contents.find(x => x.id === aId);
-                                renderStudentAssignmentModal(courseObj, modObj, astObj);
+                                const existingSub = subs.find(s => s.contentId === aId && s.studentEmail.toLowerCase() === user.email.toLowerCase());
+                                renderStudentAssignmentModal(courseObj, modObj, astObj, existingSub);
                             });
                         });
                     }
@@ -1508,27 +1559,60 @@
                 case 'my_grades':
                     centerTitle.innerText = user.role === 'Aluno' ? "Minhas Notas" : "Lançar Notas";
                     if (user.role === 'Aluno') {
-                        const subs = await fetchSubmissions();
-                        const mySubs = subs.filter(s => s.studentEmail.toLowerCase() === user.email.toLowerCase() && s.grade !== null);
+                        const resBoletim = await fetch(`/api/boletim/${encodeURIComponent(user.email)}`);
+                        const dataBoletim = resBoletim.ok ? await resBoletim.json() : { boletim: [] };
+
                         centerContent.innerHTML = `
-                            <p>Notas e avaliações recebidas:</p>
-                            <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
-                                ${mySubs.length === 0 ? '<p style="font-size:0.9rem; opacity:0.8;">Nenhuma atividade avaliada ainda.</p>' : ''}
-                                ${mySubs.map(s => `
-                                    <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 10px; display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 8px;">
-                                        <div>
-                                            <strong style="color: #fef3c7; font-size:0.95rem;">Submissão avaliada em ${new Date(s.createdAt).toLocaleDateString('pt-BR')}</strong>
-                                            <div style="font-size:0.85rem; opacity:0.9; margin-top:2px;">Status: <strong>${s.status}</strong></div>
-                                        </div>
-                                        <div style="font-size: 1.1rem; font-weight: bold; color: #fef3c7; background: rgba(0,0,0,0.3); padding: 6px 14px; border-radius: 8px;">
-                                            ${s.grade}
+                            <p style="margin-bottom: 10px;">Boletim de Desempenho por Curso e Módulo:</p>
+                            <div style="display:flex; flex-direction:column; gap:16px;">
+                                ${dataBoletim.boletim.map(c => `
+                                    <div style="background: rgba(0,0,0,0.25); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3);">
+                                        <h4 style="color: #fef3c7; margin-bottom: 8px;">📘 ${c.courseTitle}</h4>
+                                        <div class="admin-table-container">
+                                            <table class="admin-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Módulo</th>
+                                                        <th>At1</th>
+                                                        <th>At2</th>
+                                                        <th>At3</th>
+                                                        <th>Av1</th>
+                                                        <th>Av2</th>
+                                                        <th>Av3</th>
+                                                        <th>Média</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${c.modules.map(m => {
+                                                        const fmt = (code) => {
+                                                            const item = m.avaliacoes[code];
+                                                            if (!item) return '<span style="opacity:0.4;">-</span>';
+                                                            const prazoTag = item.fora_do_prazo ? ` <span style="font-size:0.65rem; opacity:0.85;">[${item.fora_do_prazo}]</span>` : '';
+                                                            return item.grade !== null
+                                                                ? `<strong style="color:${item.grade === 0 && item.fora_do_prazo === 'V' ? '#fca5a5' : '#fef3c7'};">${item.grade}</strong>${prazoTag}`
+                                                                : `<span style="font-size:0.75rem; opacity:0.8;">${item.status}</span>${prazoTag}`;
+                                                        };
+                                                        return `
+                                                            <tr>
+                                                                <td><strong>${m.moduleName}</strong></td>
+                                                                <td>${fmt('At1')}</td>
+                                                                <td>${fmt('At2')}</td>
+                                                                <td>${fmt('At3')}</td>
+                                                                <td>${fmt('Av1')}</td>
+                                                                <td>${fmt('Av2')}</td>
+                                                                <td>${fmt('Av3')}</td>
+                                                                <td><strong>${m.mediaModulo !== null ? m.mediaModulo : '-'}</strong></td>
+                                                            </tr>
+                                                        `;
+                                                    }).join('')}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 `).join('')}
                             </div>
                         `;
                     } else {
-                        // Fluxo Professor: Lançar Notas (Escolher Módulo primeiro)
                         const assigned = courses.find(c => c.id === user.assignedCourse);
                         if (!assigned) {
                             centerContent.innerHTML = `<p>⚠️ Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
@@ -1641,7 +1725,6 @@
             }
         }
 
-        // Funções específicas do Professor para Lançar Notas (Módulos -> Opções -> Listagem)
         function renderProfessorGradeModules(course) {
             centerTitle.innerText = `Lançar Notas: ${course.title}`;
             centerContent.innerHTML = `
@@ -1677,7 +1760,7 @@
                     </div>
                     <div class="course-card" id="btnOptUnevaluated" style="background: rgba(59, 130, 246, 0.25); border: 1px solid rgba(59, 130, 246, 0.6);">
                         <div class="course-title">📌 Atividades Não Avaliadas</div>
-                        <div class="course-desc">Visualizar conteúdos teóricos e materiais de aula sem atribuição de nota.</div>
+                        <div class="course-desc">Visualizar atividades e provas ainda pendentes de atribuição de nota.</div>
                     </div>
                 </div>
             `;
@@ -1697,19 +1780,16 @@
             centerTitle.innerText = `${moduleObj.name} > ${isEvaluated ? 'Atividades Avaliadas' : 'Atividades Não Avaliadas'}`;
             const subs = await fetchSubmissions();
 
-            // Filtra estritamente apenas itens que SÃO atividades (isAssignment === true), 
-            // excluindo conteúdos teóricos da aba de não avaliadas.
             const filteredContents = moduleObj.contents.filter(cnt => {
-                if (!cnt.isAssignment) return false; // Ignora conteúdos teóricos
+                if (!cnt.isAssignment) return false;
 
-                // Verifica se há submissões para esta atividade com nota lançada (número preenchido)
                 const actSubs = subs.filter(s => s.contentId === cnt.id);
                 const hasAnyEvaluatedSub = actSubs.some(s => s.grade !== null && s.grade !== undefined && String(s.grade).trim() !== '');
 
                 if (isEvaluated) {
-                    return hasAnyEvaluatedSub; // V (Possui nota lançada)
+                    return hasAnyEvaluatedSub;
                 } else {
-                    return !hasAnyEvaluatedSub; // F (Não possui nota / vazio)
+                    return !hasAnyEvaluatedSub;
                 }
             });
 
@@ -1719,30 +1799,46 @@
                     ${filteredContents.length === 0 ? `<p style="opacity:0.8;">Nenhuma ${isEvaluated ? 'atividade avaliada' : 'atividade não avaliada'} encontrada neste módulo.</p>` : ''}
                     ${filteredContents.map(act => {
                         const actSubs = subs.filter(s => s.contentId === act.id);
+                        const deadlineInfo = evaluateDeadlineClient(act);
+                        const actForaPrazo = act.fora_do_prazo || deadlineInfo.fora_do_prazo;
+                        const badgeColor = actForaPrazo === 'V' ? 'rgba(220, 38, 38, 0.7)' : 'rgba(16, 185, 129, 0.6)';
+
                         return `
                             <div style="background: rgba(255,255,255,0.15); padding: 14px; border-radius: 12px; display:flex; flex-direction:column; gap:10px;">
                                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                     <div>
-                                        <strong style="color: #fef3c7; font-size:1rem;">${act.e_prova === 'V' ? '📝 [PROVA]' : '📋 [ATIVIDADE]'} ${act.subject}</strong>
+                                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                            <strong style="color: #fef3c7; font-size:1rem;">${act.e_prova === 'V' ? `📝 [PROVA${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]` : `📋 [ATIVIDADE${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]`} ${act.subject}</strong>
+                                            <span style="font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:6px; background:${badgeColor};">Fora do prazo: ${actForaPrazo}</span>
+                                        </div>
                                         <div style="font-size:0.85rem; opacity:0.9; margin-top:2px;">${act.description || 'Sem descrição'}</div>
+                                        <div style="font-size:0.75rem; opacity:0.8; margin-top:2px;">Entrega final: ${act.endDate ? new Date(act.endDate).toLocaleString('pt-BR') : '-'} | ${act.e_prova === 'V' ? 'Sem tolerância' : 'Tolerância: 2 dias'}</div>
                                     </div>
                                 </div>
                                 <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
                                     <strong style="font-size:0.85rem; color:#fef3c7;">Respostas dos Alunos:</strong>
                                     ${actSubs.length === 0 ? '<div style="font-size:0.8rem; opacity:0.7; margin-top:4px;">Nenhum aluno enviou resposta ainda.</div>' : ''}
                                     <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
-                                        ${actSubs.map(sub => `
-                                            <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                                                <div style="flex: 1; min-width: 180px;">
-                                                    <span style="font-weight:600; font-size:0.85rem;">${sub.studentName} (${sub.studentEmail})</span>
-                                                    <div class="rendered-content" style="font-size:0.8rem; opacity:0.9; margin-top:2px; word-break:break-word;">Resposta: ${sub.submissionHtml}</div>
+                                        ${actSubs.map(sub => {
+                                            const subPrazo = sub.fora_do_prazo || actForaPrazo;
+                                            const subBadgeBg = subPrazo === 'V' ? 'rgba(220, 38, 38, 0.65)' : 'rgba(16, 185, 129, 0.55)';
+                                            return `
+                                                <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                                    <div style="flex: 1; min-width: 180px;">
+                                                        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                                            <span style="font-weight:600; font-size:0.85rem;">${sub.studentName} (${sub.studentEmail})</span>
+                                                            <span style="font-size:0.68rem; font-weight:700; padding:1px 6px; border-radius:4px; background:${subBadgeBg};">Fora do prazo: ${subPrazo}</span>
+                                                            <span style="font-size:0.72rem; opacity:0.8;">(${sub.status})</span>
+                                                        </div>
+                                                        <div class="rendered-content" style="font-size:0.8rem; opacity:0.9; margin-top:2px; word-break:break-word;">Resposta: ${sub.submissionHtml || '<i>Sem resposta enviada</i>'}</div>
+                                                    </div>
+                                                    <div style="display:flex; gap:6px; align-items:center;">
+                                                        <input type="text" class="admin-input grade-input" data-sub-id="${sub.id}" value="${sub.grade !== null && sub.grade !== undefined ? sub.grade : ''}" placeholder="Nota" style="width: 60px; padding: 6px; font-size:0.85rem;">
+                                                        <button class="glass-btn btn-save-grade" data-sub-id="${sub.id}" style="width: auto; padding: 6px 10px; font-size: 0.78rem;">Salvar</button>
+                                                    </div>
                                                 </div>
-                                                <div style="display:flex; gap:6px; align-items:center;">
-                                                    <input type="text" class="admin-input grade-input" data-sub-id="${sub.id}" value="${sub.grade !== null && sub.grade !== undefined ? sub.grade : ''}" placeholder="Nota" style="width: 60px; padding: 6px; font-size:0.85rem;">
-                                                    <button class="glass-btn btn-save-grade" data-sub-id="${sub.id}" style="width: auto; padding: 6px 10px; font-size: 0.78rem;">Salvar</button>
-                                                </div>
-                                            </div>
-                                        `).join('')}
+                                            `;
+                                        }).join('')}
                                     </div>
                                 </div>
                             </div>
@@ -1896,24 +1992,32 @@
             launchedActivities.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
             centerContent.innerHTML = `
-                <p style="margin-bottom: 10px;">Atividades lançadas recentemente para a sua turma:</p>
+                <p style="margin-bottom: 10px;">Atividades e provas lançadas recentemente para a sua turma:</p>
                 <div style="display:flex; flex-direction:column; gap:12px;">
                     ${launchedActivities.length === 0 ? '<p style="opacity:0.8;">Nenhuma atividade foi lançada por você até o momento.</p>' : ''}
-                    ${launchedActivities.map(act => `
-                        <div style="background: rgba(255,255,255,0.15); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3); display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
-                            <div style="flex: 1; min-width: 220px;">
-                                <div style="font-size: 0.8rem; background: rgba(245, 158, 11, 0.4); padding: 2px 8px; border-radius: 6px; width: fit-content; margin-bottom: 6px;">📂 Módulo: ${act.moduleName}</div>
-                                <strong style="color: #fef3c7; font-size:1.05rem; display:block;">${act.e_prova === 'V' ? '📝 [PROVA]' : '📋 [ATIVIDADE]'} ${act.subject}</strong>
-                                <div style="font-size:0.85rem; opacity:0.9; margin-top:2px;">${act.description || 'Sem descrição'}</div>
-                                <div style="font-size:0.78rem; opacity:0.8; margin-top:6px;">Período: ${act.startDate ? new Date(act.startDate).toLocaleString('pt-BR') : '-'} até ${act.endDate ? new Date(act.endDate).toLocaleString('pt-BR') : '-'}</div>
-                                <div class="rendered-content" style="font-size:0.85rem; margin-top:8px; background: rgba(0,0,0,0.2); padding:8px; border-radius:6px; word-break:break-word;">${act.textHtml}</div>
+                    ${launchedActivities.map(act => {
+                        const deadlineInfo = evaluateDeadlineClient(act);
+                        const actForaPrazo = act.fora_do_prazo || deadlineInfo.fora_do_prazo;
+                        const badgeColor = actForaPrazo === 'V' ? 'rgba(220, 38, 38, 0.7)' : 'rgba(16, 185, 129, 0.6)';
+                        return `
+                            <div style="background: rgba(255,255,255,0.15); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3); display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+                                <div style="flex: 1; min-width: 220px;">
+                                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom: 6px;">
+                                        <span style="font-size: 0.8rem; background: rgba(245, 158, 11, 0.4); padding: 2px 8px; border-radius: 6px;">📂 Módulo: ${act.moduleName}</span>
+                                        <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: ${badgeColor};">Fora do prazo: ${actForaPrazo}</span>
+                                    </div>
+                                    <strong style="color: #fef3c7; font-size:1.05rem; display:block;">${act.e_prova === 'V' ? `📝 [PROVA${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]` : `📋 [ATIVIDADE${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]`} ${act.subject}</strong>
+                                    <div style="font-size:0.85rem; opacity:0.9; margin-top:2px;">${act.description || 'Sem descrição'}</div>
+                                    <div style="font-size:0.78rem; opacity:0.8; margin-top:6px;">Período: ${act.startDate ? new Date(act.startDate).toLocaleString('pt-BR') : '-'} até ${act.endDate ? new Date(act.endDate).toLocaleString('pt-BR') : '-'} (${act.e_prova === 'V' ? 'Sem tolerância' : 'Tolerância: 2 dias'})</div>
+                                    <div class="rendered-content" style="font-size:0.85rem; margin-top:8px; background: rgba(0,0,0,0.2); padding:8px; border-radius:6px; word-break:break-word;">${act.textHtml}</div>
+                                </div>
+                                <div style="display:flex; gap:8px; align-items:center;">
+                                    <button class="glass-btn btn-edit-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">✏️ Editar</button>
+                                    <button class="glass-btn btn-del-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem; background: linear-gradient(135deg,#dc2626,#7f1d1d);">🗑️ Excluir</button>
+                                </div>
                             </div>
-                            <div style="display:flex; gap:8px; align-items:center;">
-                                <button class="glass-btn btn-edit-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">✏️ Editar</button>
-                                <button class="glass-btn btn-del-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem; background: linear-gradient(135deg,#dc2626,#7f1d1d);">🗑️ Excluir</button>
-                            </div>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             `;
 
@@ -1948,71 +2052,80 @@
             });
         }
 
-        function renderStudentAssignmentModal(course, moduleObj, assignment) {
+        function renderStudentAssignmentModal(course, moduleObj, assignment, existingSub = null) {
+            const deadlineInfo = evaluateDeadlineClient(assignment);
+            const isClosed = deadlineInfo.isClosed && (!existingSub || existingSub.isClosed);
+
             const modalDiv = document.createElement('div');
             modalDiv.className = 'modal-overlay';
             modalDiv.innerHTML = `
                 <div class="modal-card" style="max-width: 550px;">
-                    <h3 style="margin-bottom: 8px;">Responder Atividade: ${assignment.subject}</h3>
-                    <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 10px;">${assignment.description || ''}</div>
-                    <div class="editor-toolbar">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                        <h3 style="margin:0;">${assignment.e_prova === 'V' ? '📝 Prova' : '📋 Atividade'}: ${assignment.subject}</h3>
+                        <span style="font-size:0.75rem; font-weight:700; padding:3px 8px; border-radius:6px; background:${deadlineInfo.fora_do_prazo === 'V' ? 'rgba(220,38,38,0.75)' : 'rgba(16,185,129,0.65)'};">Fora do prazo: ${existingSub ? (existingSub.fora_do_prazo || deadlineInfo.fora_do_prazo) : deadlineInfo.fora_do_prazo}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">${assignment.description || ''}</div>
+                    <div class="rendered-content" style="font-size: 0.85rem; background: rgba(0,0,0,0.22); padding: 10px; border-radius: 8px; margin-bottom: 10px;">${assignment.textHtml || ''}</div>
+                    ${deadlineInfo.inTolerance ? `<div style="background: rgba(245, 158, 11, 0.35); border: 1px solid #f59e0b; padding: 8px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 10px;">⚠️ Atenção: O prazo oficial encerrou, mas esta atividade está no período de tolerância de 2 dias.</div>` : ''}
+                    ${isClosed ? `<div style="background: rgba(220, 38, 38, 0.45); border: 1px solid #ef4444; padding: 8px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 10px;">🔒 Prazo encerrado! Esta avaliação está fechada para novas respostas e a nota automática é 0.</div>` : ''}
+                    <div class="editor-toolbar" style="${isClosed ? 'display:none;' : ''}">
                         <button type="button" id="btnAstBold"><b>Negrito</b></button>
                         <button type="button" id="btnAstItalic"><i>Itálico</i></button>
                         <label for="inputAstImg">🖼️ Inserir Imagem</label>
                         <input type="file" id="inputAstImg" accept="image/*" style="display: none;">
                     </div>
-                    <div id="richAssignmentEditor" class="rich-text-editor" contenteditable="true" style="min-height: 150px;"></div>
+                    <div id="richAssignmentEditor" class="rich-text-editor" contenteditable="${!isClosed}" style="min-height: 150px;">${existingSub ? existingSub.submissionHtml : ''}</div>
                     <div style="display: flex; gap: 8px; margin-top: 12px;">
-                        <button type="button" id="btnSubmitAssignment" class="glass-btn" style="flex: 1; padding: 10px; justify-content: center;">Enviar Resposta</button>
-                        <button type="button" id="btnCloseAstModal" class="glass-btn btn-logout" style="flex: 1; padding: 10px; justify-content: center;">Cancelar</button>
+                        ${!isClosed ? `<button type="button" id="btnSubmitAssignment" class="glass-btn" style="flex: 1; padding: 10px; justify-content: center;">Enviar Resposta</button>` : ''}
+                        <button type="button" id="btnCloseAstModal" class="glass-btn btn-logout" style="flex: 1; padding: 10px; justify-content: center;">Fechar</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(modalDiv);
 
             const ed = modalDiv.querySelector('#richAssignmentEditor');
-            enableImageResizingInEditor(ed);
+            if (!isClosed) {
+                enableImageResizingInEditor(ed);
+                modalDiv.querySelector('#btnAstBold').addEventListener('click', () => { ed.focus(); document.execCommand('bold'); });
+                modalDiv.querySelector('#btnAstItalic').addEventListener('click', () => { ed.focus(); document.execCommand('italic'); });
 
-            modalDiv.querySelector('#btnAstBold').addEventListener('click', () => { ed.focus(); document.execCommand('bold'); });
-            modalDiv.querySelector('#btnAstItalic').addEventListener('click', () => { ed.focus(); document.execCommand('italic'); });
-            modalDiv.querySelector('#btnCloseAstModal').addEventListener('click', () => modalDiv.remove());
-
-            const imgInput = modalDiv.querySelector('#inputAstImg');
-            imgInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    ed.focus();
-                    const imgHtml = `<img src="${event.target.result}" alt="Imagem" style="width: 75%; max-width: 100%; height: auto;">`;
-                    if (!document.execCommand('insertHTML', false, imgHtml)) {
-                        ed.innerHTML += imgHtml;
-                    }
-                };
-                reader.readAsDataURL(file);
-                e.target.value = '';
-            });
-
-            modalDiv.querySelector('#btnSubmitAssignment').addEventListener('click', async () => {
-                const res = await fetch('/api/submissions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
-                    body: JSON.stringify({
-                        courseId: course.id,
-                        moduleId: moduleObj.id,
-                        contentId: assignment.id,
-                        studentEmail: user.email,
-                        studentName: user.name,
-                        submissionHtml: ed.innerHTML
-                    })
+                const imgInput = modalDiv.querySelector('#inputAstImg');
+                imgInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        ed.focus();
+                        const imgHtml = `<img src="${event.target.result}" alt="Imagem" style="width: 75%; max-width: 100%; height: auto;">`;
+                        if (!document.execCommand('insertHTML', false, imgHtml)) {
+                            ed.innerHTML += imgHtml;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                    e.target.value = '';
                 });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast(data.message);
+
+                modalDiv.querySelector('#btnSubmitAssignment').addEventListener('click', async () => {
+                    const res = await fetch('/api/submissions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
+                        body: JSON.stringify({
+                            courseId: course.id,
+                            moduleId: moduleObj.id,
+                            contentId: assignment.id,
+                            studentEmail: user.email,
+                            studentName: user.name,
+                            submissionHtml: ed.innerHTML
+                        })
+                    });
+                    const data = await res.json();
+                    showToast(data.message || (res.ok ? 'Enviado!' : 'Erro ao enviar.'));
                     modalDiv.remove();
                     renderPage('my_courses');
-                }
-            });
+                });
+            }
+
+            modalDiv.querySelector('#btnCloseAstModal').addEventListener('click', () => modalDiv.remove());
         }
 
         function renderProfessorCourseView(course, isAdminView = false) {
@@ -2139,9 +2252,13 @@
                         <div style="flex: 1; min-width: 160px;">
                             <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Tipo de Avaliação</label>
                             <select id="selectEProva" class="admin-select">
-                                <option value="F" ${!editItem || editItem.e_prova !== 'V' ? 'selected' : ''}>Atividade Avaliativa</option>
-                                <option value="V" ${editItem && editItem.e_prova === 'V' ? 'selected' : ''}>Prova</option>
+                                <option value="F" ${!editItem || editItem.e_prova !== 'V' ? 'selected' : ''}>Atividade Avaliativa (2 dias tolerância)</option>
+                                <option value="V" ${editItem && editItem.e_prova === 'V' ? 'selected' : ''}>Prova (Sem tolerância)</option>
                             </select>
+                        </div>
+                        <div style="flex: 1; min-width: 160px;">
+                            <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Identificação (Boletim)*</label>
+                            <select id="selectEvaluationCode" class="admin-select"></select>
                         </div>
                         <div style="flex: 1; min-width: 140px;">
                             <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Data Início</label>
@@ -2197,6 +2314,31 @@
 
             if (richAstEd) enableImageResizingInEditor(richAstEd);
             if (richFullEd) enableImageResizingInEditor(richFullEd);
+
+            const selectEProva = document.getElementById('selectEProva');
+            const selectEvaluationCode = document.getElementById('selectEvaluationCode');
+
+            function populateEvaluationCodes(selectedCode = null) {
+                const isProva = selectEProva.value === 'V';
+                const options = isProva
+                    ? [
+                        { value: 'Av1', label: 'Av1 - Avaliação 1 (Prova)' },
+                        { value: 'Av2', label: 'Av2 - Avaliação 2 (Prova)' },
+                        { value: 'Av3', label: 'Av3 - Avaliação 3 (Prova)' }
+                      ]
+                    : [
+                        { value: 'At1', label: 'At1 - Atividade Avaliativa 1' },
+                        { value: 'At2', label: 'At2 - Atividade Avaliativa 2' },
+                        { value: 'At3', label: 'At3 - Atividade Avaliativa 3' }
+                      ];
+
+                selectEvaluationCode.innerHTML = options.map(opt =>
+                    `<option value="${opt.value}" ${selectedCode === opt.value ? 'selected' : ''}>${opt.label}</option>`
+                ).join('');
+            }
+
+            populateEvaluationCodes(editItem ? editItem.evaluationCode : null);
+            selectEProva.addEventListener('change', () => populateEvaluationCodes());
 
             checkAssign.addEventListener('change', () => {
                 const isAct = checkAssign.checked;
@@ -2265,7 +2407,8 @@
                 const subject = document.getElementById('inputSubject').value.trim();
                 const description = document.getElementById('inputDescription').value.trim();
                 const isAssignment = checkAssign.checked;
-                const e_prova = isAssignment ? document.getElementById('selectEProva').value : null;
+                const e_prova = isAssignment ? selectEProva.value : null;
+                const evaluationCode = isAssignment ? selectEvaluationCode.value : null;
                 const startDate = document.getElementById('inputStartDate').value;
                 const endDate = document.getElementById('inputEndDate').value;
                 const textHtml = isAssignment ? richAstEd.innerHTML : richFullEd.innerHTML;
@@ -2279,6 +2422,7 @@
                     textHtml,
                     isAssignment,
                     e_prova,
+                    evaluationCode,
                     startDate,
                     endDate,
                     fileName: attachedFileObj ? attachedFileObj.name : null,
@@ -2314,12 +2458,18 @@
                         <div class="module-box" style="cursor: default;">
                             <div class="module-title">${mod.name}</div>
                             <div style="margin-top:6px; display:flex; flex-direction:column; gap:6px;">
-                                ${mod.contents.map(cnt => `
-                                    <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px;">
-                                        <strong>${cnt.isAssignment ? '📋 Atividade' : '📌 Matéria'}: ${cnt.subject}</strong>
-                                        <div class="rendered-content" style="font-size:0.82rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
-                                    </div>
-                                `).join('')}
+                                ${mod.contents.map(cnt => {
+                                    const deadlineInfo = cnt.isAssignment ? evaluateDeadlineClient(cnt) : null;
+                                    const badgeHtml = cnt.isAssignment
+                                        ? `<span style="font-size:0.7rem; font-weight:700; padding:2px 6px; border-radius:4px; margin-left:6px; background:${deadlineInfo.fora_do_prazo === 'V' ? 'rgba(220,38,38,0.7)' : 'rgba(16,185,129,0.6)'};">Fora do prazo: ${deadlineInfo.fora_do_prazo}</span>`
+                                        : '';
+                                    return `
+                                        <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px;">
+                                            <strong>${cnt.isAssignment ? (cnt.e_prova === 'V' ? '📝 Prova' : '📋 Atividade') : '📌 Matéria'}: ${cnt.subject}</strong>${badgeHtml}
+                                            <div class="rendered-content" style="font-size:0.82rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
+                                        </div>
+                                    `;
+                                }).join('')}
                             </div>
                         </div>
                     `).join('')}

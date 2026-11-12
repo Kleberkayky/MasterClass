@@ -185,7 +185,7 @@ app.post('/api/admin/courses', verificarPermissao('Administrador'), (req, res) =
 // Adicionar conteúdo ou atividade ao módulo
 app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao('Professor', 'Administrador'), (req, res) => {
   const { courseId, moduleId } = req.params;
-  const { subject, description, textHtml, fileName, fileData, fileType, isAssignment, e_prova, startDate, endDate } = req.body;
+  const { subject, description, textHtml, fileName, fileData, fileType, isAssignment, e_prova, evaluationCode, startDate, endDate } = req.body;
 
   if (!subject || subject.trim() === '') {
     return res.status(400).json({ message: 'O assunto é obrigatório.' });
@@ -193,6 +193,18 @@ app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao(
 
   if (isAssignment && (!startDate || !endDate)) {
     return res.status(400).json({ message: 'Data de início e fim são obrigatórias para atividades.' });
+  }
+
+  const validProvas = ['Av1', 'Av2', 'Av3'];
+  const validAtividades = ['At1', 'At2', 'At3'];
+
+  if (isAssignment) {
+    if (e_prova === 'V' && !validProvas.includes(evaluationCode)) {
+      return res.status(400).json({ message: 'Selecione uma identificação válida para Prova (Av1, Av2 ou Av3).' });
+    }
+    if (e_prova !== 'V' && !validAtividades.includes(evaluationCode)) {
+      return res.status(400).json({ message: 'Selecione uma identificação válida para Atividade Avaliativa (At1, At2 ou At3).' });
+    }
   }
 
   const courses = loadCourses();
@@ -214,6 +226,7 @@ app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao(
     file: fileName ? { name: fileName, data: fileData, type: fileType } : null,
     isAssignment: !!isAssignment,
     e_prova: isAssignment ? (e_prova === 'V' ? 'V' : 'F') : null,
+    evaluationCode: isAssignment ? evaluationCode : null,
     startDate: startDate || null,
     endDate: endDate || null,
     createdAt: new Date().toISOString()
@@ -228,7 +241,7 @@ app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao(
 // Atualizar conteúdo/atividade (Professor)
 app.put('/api/courses/:courseId/modules/:moduleId/content/:contentId', verificarPermissao('Professor', 'Administrador'), (req, res) => {
   const { courseId, moduleId, contentId } = req.params;
-  const { subject, description, textHtml, isAssignment, e_prova, startDate, endDate } = req.body;
+  const { subject, description, textHtml, isAssignment, e_prova, evaluationCode, startDate, endDate } = req.body;
 
   const courses = loadCourses();
   const course = courses.find(c => c.id === courseId);
@@ -246,8 +259,10 @@ app.put('/api/courses/:courseId/modules/:moduleId/content/:contentId', verificar
   if (isAssignment !== undefined) item.isAssignment = !!isAssignment;
   if (item.isAssignment) {
     if (e_prova !== undefined) item.e_prova = e_prova === 'V' ? 'V' : 'F';
+    if (evaluationCode !== undefined) item.evaluationCode = evaluationCode;
   } else {
     item.e_prova = null;
+    item.evaluationCode = null;
   }
   if (startDate !== undefined) item.startDate = startDate;
   if (endDate !== undefined) item.endDate = endDate;
@@ -310,21 +325,7 @@ app.get('/api/submissions', (req, res) => {
   return res.status(200).json({ submissions: subs });
 });
 
-// Lançar ou atualizar nota de uma submissão (Professor)
-app.put('/api/submissions/:subId/grade', verificarPermissao('Professor', 'Administrador'), (req, res) => {
-  const { subId } = req.params;
-  const { grade } = req.body;
-
-  let subs = loadSubmissions();
-  const sub = subs.find(s => s.id === subId);
-  if (!sub) return res.status(404).json({ message: 'Submissão não encontrada.' });
-
-  sub.grade = grade;
-  sub.status = 'Avaliado';
-  saveSubmissions(subs);
-
-  return res.status(200).json({ message: 'Nota lançada com sucesso!' });
-});
+// Rota de notas consolidada ao final do arquivo
 
 // Registro público
 app.post('/register', async (req, res) => {
@@ -674,6 +675,62 @@ app.put('/api/submissions/:subId/grade', verificarPermissao('Professor', 'Admini
   saveSubmissions(subs);
 
   return res.status(200).json({ message: 'Nota lançada com sucesso!' });
+});
+
+// Endpoint preparado para o Boletim Escolar do Aluno
+app.get('/api/boletim/:studentEmail', (req, res) => {
+  const targetEmail = decodeURIComponent(req.params.studentEmail).trim().toLowerCase();
+  const courses = loadCourses();
+  const subs = loadSubmissions().filter(s => s.studentEmail.toLowerCase() === targetEmail);
+
+  const boletim = courses.map(course => {
+    const modulesReport = course.modules.map(mod => {
+      const slots = {
+        Av1: null, Av2: null, Av3: null,
+        At1: null, At2: null, At3: null
+      };
+
+      const assignments = mod.contents.filter(c => c.isAssignment && c.evaluationCode);
+      assignments.forEach(ast => {
+        const sub = subs.find(s => s.contentId === ast.id);
+        const numericGrade = (sub && sub.grade !== null && sub.grade !== undefined && String(sub.grade).trim() !== '')
+          ? parseFloat(String(sub.grade).replace(',', '.'))
+          : null;
+
+        slots[ast.evaluationCode] = {
+          contentId: ast.id,
+          subject: ast.subject,
+          e_prova: ast.e_prova,
+          evaluationCode: ast.evaluationCode,
+          status: sub ? sub.status : 'Pendente',
+          grade: !isNaN(numericGrade) ? numericGrade : null
+        };
+      });
+
+      const validGrades = Object.values(slots)
+        .filter(item => item && item.grade !== null)
+        .map(item => item.grade);
+
+      const media = validGrades.length > 0
+        ? Number((validGrades.reduce((acc, val) => acc + val, 0) / validGrades.length).toFixed(2))
+        : null;
+
+      return {
+        moduleId: mod.id,
+        moduleName: mod.name,
+        avaliacoes: slots,
+        mediaModulo: media
+      };
+    });
+
+    return {
+      courseId: course.id,
+      courseTitle: course.title,
+      modules: modulesReport
+    };
+  });
+
+  return res.status(200).json({ studentEmail: targetEmail, boletim });
 });
 
 app.listen(3000, () => {
