@@ -136,6 +136,25 @@ function verificarPermissao(...perfisPermitidos) {
   };
 }
 
+function evaluateDeadlineServer(item, referenceDate = new Date()) {
+  if (!item || !item.endDate) {
+    return { fora_do_prazo: 'F', isPastEnd: false, isClosed: false };
+  }
+  const end = new Date(item.endDate);
+  const isProva = item.e_prova === 'V';
+  const toleranceMs = isProva ? 0 : (2 * 24 * 60 * 60 * 1000);
+  const limit = new Date(end.getTime() + toleranceMs);
+
+  const isPastEnd = referenceDate > end;
+  const isClosed = referenceDate > limit;
+
+  return {
+    fora_do_prazo: isPastEnd ? 'V' : 'F',
+    isPastEnd,
+    isClosed
+  };
+}
+
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!\%*?&]{8,}$/;
 
 const registerSchema = z.object({
@@ -156,7 +175,20 @@ const registerSchema = z.object({
 // Cursos API
 app.get('/api/courses', (req, res) => {
   const courses = loadCourses();
-  return res.status(200).json({ courses });
+  const users = loadUsers();
+  const teachers = users.filter(u => u.role === 'Professor' && u.assignedCourse);
+
+  const enrichedCourses = courses.map(c => {
+    const courseTeachers = teachers
+      .filter(t => t.assignedCourse === c.id)
+      .map(t => ({ name: t.name, email: t.email }));
+    return {
+      ...c,
+      teachers: courseTeachers
+    };
+  });
+
+  return res.status(200).json({ courses: enrichedCourses });
 });
 
 app.post('/api/admin/courses', verificarPermissao('Administrador'), (req, res) => {
@@ -185,7 +217,7 @@ app.post('/api/admin/courses', verificarPermissao('Administrador'), (req, res) =
 // Adicionar conteúdo ou atividade ao módulo
 app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao('Professor', 'Administrador'), (req, res) => {
   const { courseId, moduleId } = req.params;
-  const { subject, description, textHtml, fileName, fileData, fileType, isAssignment, e_prova, evaluationCode, startDate, endDate } = req.body;
+  const { subject, description, textHtml, fileName, fileData, fileType, isAssignment, e_prova, evaluationCode, startDate, endDate, authorName, authorEmail } = req.body;
 
   if (!subject || subject.trim() === '') {
     return res.status(400).json({ message: 'O assunto é obrigatório.' });
@@ -229,6 +261,8 @@ app.post('/api/courses/:courseId/modules/:moduleId/content', verificarPermissao(
     evaluationCode: isAssignment ? evaluationCode : null,
     startDate: startDate || null,
     endDate: endDate || null,
+    authorName: authorName || null,
+    authorEmail: authorEmail || null,
     createdAt: new Date().toISOString()
   };
 
@@ -293,13 +327,27 @@ app.post('/api/submissions', verificarPermissao('Aluno'), (req, res) => {
     return res.status(400).json({ message: 'Dados incompletos.' });
   }
 
+  const courses = loadCourses();
+  const course = courses.find(c => c.id === courseId);
+  const mod = course ? course.modules.find(m => m.id === moduleId) : null;
+  const ast = mod ? mod.contents.find(i => i.id === contentId) : null;
+
+  const now = new Date();
+  const deadlineEval = evaluateDeadlineServer(ast, now);
+
+  if (deadlineEval.isClosed) {
+    return res.status(400).json({ message: 'O prazo de envio desta avaliação já foi encerrado.' });
+  }
+
   let subs = loadSubmissions();
   let existing = subs.find(s => s.contentId === contentId && s.studentEmail.toLowerCase() === studentEmail.toLowerCase());
   
   if (existing) {
     existing.submissionHtml = submissionHtml;
     existing.status = 'Sob análise';
-    existing.updatedAt = new Date().toISOString();
+    existing.fora_do_prazo = deadlineEval.fora_do_prazo;
+    existing.submittedAt = now.toISOString();
+    existing.updatedAt = now.toISOString();
   } else {
     subs.push({
       id: 'sub_' + Date.now(),
@@ -310,8 +358,10 @@ app.post('/api/submissions', verificarPermissao('Aluno'), (req, res) => {
       studentName: studentName || 'Aluno',
       submissionHtml: submissionHtml || '',
       status: 'Sob análise',
+      fora_do_prazo: deadlineEval.fora_do_prazo,
+      submittedAt: now.toISOString(),
       grade: null,
-      createdAt: new Date().toISOString()
+      createdAt: now.toISOString()
     });
   }
 
@@ -324,8 +374,6 @@ app.get('/api/submissions', (req, res) => {
   const subs = loadSubmissions();
   return res.status(200).json({ submissions: subs });
 });
-
-// Rota de notas consolidada ao final do arquivo
 
 // Registro público
 app.post('/register', async (req, res) => {
@@ -658,53 +706,172 @@ app.get('/api/notifications', (req, res) => {
   return res.status(200).json({ notifications });
 });
 
+// Schema Zod para validação da nota (0.0 até 5.0)
+const gradeSubmissionSchema = z.object({
+  grade: z.union([z.string(), z.number(), z.null(), z.undefined()])
+});
+
 // Lançar ou atualizar nota de uma submissão (Professor)
 app.put('/api/submissions/:subId/grade', verificarPermissao('Professor', 'Administrador'), (req, res) => {
   const { subId } = req.params;
-  const { grade } = req.body;
+  const parsedBody = gradeSubmissionSchema.safeParse(req.body);
+
+  if (!parsedBody.success) {
+    return res.status(400).json({ message: 'Formato de nota inválido.' });
+  }
+
+  const { grade } = parsedBody.data;
+  const rawGradeStr = grade !== undefined && grade !== null ? String(grade).trim() : '';
+  const hasGradeInput = rawGradeStr !== '';
+
+  let validatedGrade = null;
+
+  if (hasGradeInput) {
+    const normalizedStr = rawGradeStr.replace(',', '.');
+    const numericGrade = Number(normalizedStr);
+
+    if (isNaN(numericGrade)) {
+      return res.status(400).json({ message: 'Informe um valor numérico válido para a nota (0.0 até 5.0).' });
+    }
+
+    if (numericGrade < 0.0) {
+      return res.status(400).json({ message: 'A nota mínima permitida é 0.0.' });
+    }
+
+    if (numericGrade > 5.0) {
+      return res.status(400).json({ 
+        message: 'As atividades e provas avaliativas têm nota máxima até 5.0.' 
+      });
+    }
+
+    validatedGrade = numericGrade;
+  }
 
   let subs = loadSubmissions();
   const sub = subs.find(s => s.id === subId);
   if (!sub) return res.status(404).json({ message: 'Submissão não encontrada.' });
 
-  const hasValidGrade = grade !== undefined && grade !== null && String(grade).trim() !== '';
-  
-  sub.grade = hasValidGrade ? grade : null;
-  sub.isEvaluated = hasValidGrade; // Armazena booleano V/F para avaliada/não avaliada
-  sub.status = hasValidGrade ? 'Avaliado' : 'Sob análise';
+  const graderName = req.body.gradedBy || null;
+  const graderEmail = req.body.gradedByEmail || null;
+
+  sub.grade = validatedGrade;
+  sub.isEvaluated = validatedGrade !== null;
+  sub.status = validatedGrade !== null ? 'Avaliado' : 'Sob análise';
+  if (validatedGrade !== null) {
+    sub.gradedBy = graderName;
+    sub.gradedByEmail = graderEmail;
+    sub.gradedAt = new Date().toISOString();
+  }
   saveSubmissions(subs);
 
-  return res.status(200).json({ message: 'Nota lançada com sucesso!' });
+  return res.status(200).json({ message: 'Nota lançada com sucesso!', submission: sub });
 });
 
-// Endpoint preparado para o Boletim Escolar do Aluno
+// Endpoint preparado para o Boletim Escolar do Aluno e Avaliações Corrigidas
+function syncExpiredSubmissionsForStudent(studentEmail, studentName = 'Aluno') {
+  const courses = loadCourses();
+  let subs = loadSubmissions();
+  let modified = false;
+  const now = new Date();
+
+  courses.forEach(course => {
+    course.modules.forEach(mod => {
+      mod.contents.filter(c => c.isAssignment).forEach(ast => {
+        const deadlineEval = evaluateDeadlineServer(ast, now);
+        if (deadlineEval.isClosed) {
+          const existing = subs.find(s => s.contentId === ast.id && s.studentEmail.toLowerCase() === studentEmail.toLowerCase());
+          if (!existing) {
+            subs.push({
+              id: 'sub_exp_' + ast.id + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+              courseId: course.id,
+              moduleId: mod.id,
+              contentId: ast.id,
+              studentEmail: studentEmail.toLowerCase(),
+              studentName: studentName,
+              submissionHtml: '',
+              status: 'Encerrada sem envio',
+              fora_do_prazo: 'V',
+              isClosed: true,
+              isEvaluated: true,
+              submittedAt: null,
+              grade: 0,
+              createdAt: now.toISOString()
+            });
+            modified = true;
+          }
+        }
+      });
+    });
+  });
+
+  if (modified) {
+    saveSubmissions(subs);
+  }
+  return subs;
+}
+
 app.get('/api/boletim/:studentEmail', (req, res) => {
   const targetEmail = decodeURIComponent(req.params.studentEmail).trim().toLowerCase();
   const courses = loadCourses();
-  const subs = loadSubmissions().filter(s => s.studentEmail.toLowerCase() === targetEmail);
+  const users = loadUsers();
+  const studentObj = users.find(u => u.email.toLowerCase() === targetEmail);
+  const teachers = users.filter(u => u.role === 'Professor');
+  const allSubs = syncExpiredSubmissionsForStudent(targetEmail, studentObj ? studentObj.name : 'Aluno');
+  const subs = allSubs.filter(s => s.studentEmail.toLowerCase() === targetEmail);
 
   const boletim = courses.map(course => {
+    const courseTeacher = teachers.find(t => t.assignedCourse === course.id);
+    const defaultTeacherName = courseTeacher ? courseTeacher.name : 'Professor não vinculado';
+
     const modulesReport = course.modules.map(mod => {
       const slots = {
         Av1: null, Av2: null, Av3: null,
         At1: null, At2: null, At3: null
       };
 
-      const assignments = mod.contents.filter(c => c.isAssignment && c.evaluationCode);
+      const correctedList = [];
+
+      const assignments = mod.contents.filter(c => c.isAssignment);
       assignments.forEach(ast => {
         const sub = subs.find(s => s.contentId === ast.id);
-        const numericGrade = (sub && sub.grade !== null && sub.grade !== undefined && String(sub.grade).trim() !== '')
+        const deadlineEval = evaluateDeadlineServer(ast);
+        const foraPrazoCode = sub && sub.fora_do_prazo ? sub.fora_do_prazo : deadlineEval.fora_do_prazo;
+
+        let numericGrade = (sub && sub.grade !== null && sub.grade !== undefined && String(sub.grade).trim() !== '')
           ? parseFloat(String(sub.grade).replace(',', '.'))
           : null;
 
-        slots[ast.evaluationCode] = {
+        let effectiveStatus = sub ? sub.status : 'Pendente';
+
+        if (!sub && deadlineEval.isClosed) {
+          numericGrade = 0;
+          effectiveStatus = 'Encerrada sem envio';
+        }
+
+        const evalItem = {
           contentId: ast.id,
+          moduleId: mod.id,
+          moduleName: mod.name,
           subject: ast.subject,
+          description: ast.description || '',
           e_prova: ast.e_prova,
-          evaluationCode: ast.evaluationCode,
-          status: sub ? sub.status : 'Pendente',
-          grade: !isNaN(numericGrade) ? numericGrade : null
+          evaluationCode: ast.evaluationCode || null,
+          startDate: ast.startDate || null,
+          endDate: ast.endDate || null,
+          submittedAt: sub ? (sub.submittedAt || sub.updatedAt || sub.createdAt) : null,
+          fora_do_prazo: foraPrazoCode,
+          status: effectiveStatus,
+          grade: (numericGrade !== null && !isNaN(numericGrade)) ? numericGrade : null,
+          professorName: (sub && sub.gradedBy) ? sub.gradedBy : (ast.authorName || defaultTeacherName)
         };
+
+        if (ast.evaluationCode && Object.prototype.hasOwnProperty.call(slots, ast.evaluationCode)) {
+          slots[ast.evaluationCode] = evalItem;
+        }
+
+        if (evalItem.grade !== null) {
+          correctedList.push(evalItem);
+        }
       });
 
       const validGrades = Object.values(slots)
@@ -719,6 +886,7 @@ app.get('/api/boletim/:studentEmail', (req, res) => {
         moduleId: mod.id,
         moduleName: mod.name,
         avaliacoes: slots,
+        correctedItems: correctedList,
         mediaModulo: media
       };
     });
@@ -726,6 +894,8 @@ app.get('/api/boletim/:studentEmail', (req, res) => {
     return {
       courseId: course.id,
       courseTitle: course.title,
+      courseDescription: course.description || '',
+      professorName: defaultTeacherName,
       modules: modulesReport
     };
   });
