@@ -1,0 +1,533 @@
+:root {
+    --bg-color: #0a171e;
+    --bg-image: url('imagem2.jpg');
+    --glass-bg: rgba(175, 175, 175, 0.22);
+    --glass-border: rgba(255, 255, 255, 0.25);
+    --glass-border-top: rgba(255, 255, 255, 0.5);
+    --btn-grad-top: rgba(255, 255, 255, 0.35);
+    --btn-grad-bottom: rgba(255, 255, 255, 0.014);
+    --btn-primary-bg: linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #dc2626 100%);
+    --btn-primary-shadow: rgba(234, 88, 12, 0.35);
+    --text-main: #ffffff;
+    --accent-glow: rgba(245, 158, 11, 0.2);
+    --blur-effect: blur(12px);
+    --school-img-src: url('imagem5.jpeg');
+}
+
+body.dark-theme {
+    --bg-color: #050914;
+    --bg-image: url('imagem6.webp');
+    --glass-bg: rgba(15, 23, 42, 0.65);
+    --glass-border: rgba(147, 51, 234, 0.35);
+    --glass-border-top: rgba(168, 85, 247, 0.6);
+    --btn-primary-bg: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+    --btn-primary-shadow: rgba(99, 102, 241, 0.35);
+    --accent-glow: rgba(99, 102, 241, 0.2);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+@keyframes osWindowFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg-color) var(--bg-image) no-repeat center center fixed;
+    background-size: cover;
+    overflow-y: auto;
+    position: relative;
+    padding: 20px 0;
+    color: var(--text-main);
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, rgba(0, 0, 0, 0) 70%);
+    top: -100px;
+    left: -100px;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: auto;
+}
+
+.theme-toggle-top {
+    position: absolute !important;
+    top: 20px !important;
+    right: 20px !important;
+    left: auto !important;
+    z-index: 100;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-top: 1px solid var(--glass-border-top);
+    border-radius: 30px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, box-shadow 0.25s ease;
+}
+
+.theme-toggle-top:hover {
+    transform: translateY(-3px);
+}
+
+.theme-toggle-top span {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-top: 1px solid var(--glass-border-top);
+    border-radius: 28px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    padding: 32px 40px;
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+    z-index: 10;
+    animation: osWindowFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tooltip-glass {
+    position: fixed;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    transform: translate3d(0, 0, 0);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.tooltip-glass.visible {
+    opacity: 1;
+}
+
+.school-photo-container {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.school-photo {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+.school-photo:hover {
+    transform: scale(1.05);
+}
+
+h2 {
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 6px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.subtitle {
+    color: rgba(255, 255, 255, 0.95);
+    text-align: center;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+}
+
+.input-group {
+    margin-bottom: 16px;
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 0.95rem;
+    color: #ffffff;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+select option {
+    background: #0a171e;
+    color: #ffffff;
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+input:focus, select:focus {
+    background: rgba(255, 255, 255, 0.26);
+    border-color: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.field-error {
+    color: #ffb3ba;
+    font-size: 0.8rem;
+    margin-top: 6px;
+    font-weight: 500;
+    display: none;
+}
+
+input.error-input, select.error-input {
+    border-color: #ff4d6d !important;
+    background: rgba(255, 77, 109, 0.2) !important;
+}
+
+button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-top: 1px solid rgba(255, 255, 255, 0.8);
+    background: 
+        linear-gradient(to bottom, var(--btn-grad-top) 0%, var(--btn-grad-bottom) 50%),
+        var(--btn-primary-bg);
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px var(--btn-primary-shadow);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.15s ease, box-shadow 0.25s ease;
+}
+
+button:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.1);
+    box-shadow: 0 8px 20px var(--btn-primary-shadow);
+}
+
+button:active {
+    transform: translateY(-1px);
+}
+
+.forgot-password-link {
+    text-align: right;
+    margin-top: -8px;
+    margin-bottom: 12px;
+}
+
+.forgot-password-link a {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.8rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.toggle-mode {
+    margin-top: 18px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.85rem;
+}
+
+.toggle-mode a {
+    color: #ffffff;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#globalMessage {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    text-align: center;
+    display: none;
+    outline: none;
+}
+
+.success {
+    background: rgba(23, 185, 120, 0.35) !important;
+    color: #d4ffec;
+}
+
+.error {
+    background: rgba(255, 77, 109, 0.3) !important;
+    color: #ffd1d6;
+}
+
+.ui-icon {
+    display: inline-block;
+    width: 1.12em;
+    height: 1.12em;
+    flex: 0 0 auto;
+    vertical-align: -0.18em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.22));
+}
+
+/* ==========================================================================
+   LIQUID GLASS — MODO PADRÃO (TRANSPARÊNCIA + REFRAÇÃO + LENTE CONVEXA)
+   ========================================================================== */
+:root {
+    --lg-refraction: 9;
+    --lg-inner-blur: 1.1px;
+    --lg-specular: 0.14;
+    --lg-dark-inner: 0.16;
+    --lg-surface: rgba(25, 30, 40, 0.10);
+}
+
+body.dark-theme {
+    --lg-surface: rgba(8, 12, 25, 0.15);
+}
+
+body:not(.legacy-mode) .glass-card,
+body:not(.legacy-mode) .theme-toggle-top {
+    background-color: var(--lg-surface) !important;
+    border-color: rgba(255, 255, 255, 0.10);
+    border-top-color: rgba(255, 255, 255, 0.14);
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, var(--lg-specular)),
+        inset 0 -1px 2px rgba(0, 0, 0, var(--lg-dark-inner)),
+        0 18px 40px rgba(0, 0, 0, 0.25);
+    isolation: isolate;
+}
+
+body:not(.legacy-mode) .glass-card,
+body:not(.legacy-mode) .theme-toggle-top,
+body:not(.legacy-mode) .tooltip-glass,
+body:not(.legacy-mode) button,
+body:not(.legacy-mode) input,
+body:not(.legacy-mode) select {
+    -webkit-backdrop-filter: url(#liquidGlassRefraction) blur(var(--lg-inner-blur)) saturate(165%) !important;
+    backdrop-filter: url(#liquidGlassRefraction) blur(var(--lg-inner-blur)) saturate(165%) !important;
+}
+
+body:not(.legacy-mode) .glass-card::after,
+body:not(.legacy-mode) .theme-toggle-top::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at 30% 16%,
+            rgba(255, 255, 255, 0.19) 0%,
+            rgba(255, 255, 255, 0.075) 25%,
+            transparent 60%),
+        radial-gradient(ellipse at 72% 88%,
+            rgba(0, 0, 0, 0.075) 0%,
+            transparent 62%);
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.18),
+        inset 0 0 16px rgba(255, 255, 255, 0.035),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.16);
+}
+
+body:not(.legacy-mode) .glass-card > *,
+body:not(.legacy-mode) .theme-toggle-top > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* ==========================================================================
+   MODO DESEMPENHO — ESTÉTICA IDÊNTICA AO MODO PADRÃO, OTIMIZADA SEM GPU BLUR
+   ========================================================================== */
+body.legacy-mode {
+    --blur-effect: none !important;
+}
+
+body.legacy-mode * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+body.legacy-mode .ui-icon {
+    filter: none;
+}
+
+body.legacy-mode:not(.dark-theme) .glass-card,
+body.legacy-mode:not(.dark-theme) .theme-toggle-top {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.03) 38%, transparent 65%),
+        linear-gradient(325deg, rgba(0, 0, 0, 0.22) 0%, transparent 60%),
+        rgba(28, 36, 48, 0.42) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-top-color: rgba(255, 255, 255, 0.28) !important;
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.16),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.22),
+        0 18px 36px rgba(0, 0, 0, 0.28) !important;
+}
+
+body.legacy-mode.dark-theme .glass-card,
+body.legacy-mode.dark-theme .theme-toggle-top {
+    background:
+        linear-gradient(145deg, rgba(180, 195, 255, 0.11) 0%, rgba(180, 195, 255, 0.02) 38%, transparent 65%),
+        linear-gradient(325deg, rgba(0, 0, 0, 0.30) 0%, transparent 60%),
+        rgba(10, 16, 32, 0.54) !important;
+    border: 1px solid rgba(190, 200, 255, 0.16) !important;
+    border-top-color: rgba(190, 200, 255, 0.26) !important;
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.12),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.30),
+        0 18px 36px rgba(0, 0, 0, 0.36) !important;
+}
+
+body.legacy-mode button {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 45%, transparent 65%),
+        var(--btn-primary-bg) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-top-color: rgba(255, 255, 255, 0.48) !important;
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.25),
+        0 5px 14px var(--btn-primary-shadow) !important;
+}
+
+body.legacy-mode input,
+body.legacy-mode select {
+    background: rgba(10, 15, 26, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.24) !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.22) !important;
+}
+
+body.legacy-mode .tooltip-glass {
+    background: rgba(20, 26, 38, 0.88) !important;
+    border: 1px solid rgba(255, 255, 255, 0.24) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28) !important;
+}
+
+/* Ícones coloridos em degradê — glassmorphism inspirado nos tiles do Umbrel. */
+.ui-icon {
+    stroke: url(#mcIconGradient) !important;
+    stroke-width: 2.05;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    overflow: visible;
+    filter: drop-shadow(0 1px 1px rgba(255,255,255,.22)) drop-shadow(0 3px 5px rgba(20,18,60,.34));
+}
+
+/* Ícones de navegação: pequenos tiles translúcidos com cor, reflexo e profundidade. */
+.glass-btn .btn-icon {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: linear-gradient(145deg, rgba(255,255,255,.38), rgba(255,255,255,.08) 48%, rgba(70,75,180,.22)),
+                linear-gradient(135deg, rgba(45,212,191,.48), rgba(99,102,241,.52) 52%, rgba(236,72,153,.48));
+    border: 1px solid rgba(255,255,255,.38);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.48), inset 0 -5px 10px rgba(28,25,75,.16), 0 4px 10px rgba(12,12,35,.22);
+    backdrop-filter: blur(8px) saturate(155%);
+    -webkit-backdrop-filter: blur(8px) saturate(155%);
+}
+.glass-btn .btn-icon::before {
+    content: ""; position: absolute; inset: 1px 1px 48%; border-radius: 10px 10px 7px 7px;
+    background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,0));
+    pointer-events: none; z-index: -1;
+}
+.glass-btn .btn-icon .ui-icon { width: 21px; height: 21px; stroke: #fff !important; filter: drop-shadow(0 1px 2px rgba(20,20,55,.5)); }
+.glass-btn:nth-child(5n+1) .btn-icon { background-image: linear-gradient(145deg,rgba(255,255,255,.4),rgba(255,255,255,.06)),linear-gradient(135deg,#21c8c3,#4278e8 58%,#8056d8); }
+.glass-btn:nth-child(5n+2) .btn-icon { background-image: linear-gradient(145deg,rgba(255,255,255,.4),rgba(255,255,255,.06)),linear-gradient(135deg,#ffbd55,#ff795b 58%,#e94d83); }
+.glass-btn:nth-child(5n+3) .btn-icon { background-image: linear-gradient(145deg,rgba(255,255,255,.4),rgba(255,255,255,.06)),linear-gradient(135deg,#52d69b,#16a9bd 58%,#3979df); }
+.glass-btn:nth-child(5n+4) .btn-icon { background-image: linear-gradient(145deg,rgba(255,255,255,.4),rgba(255,255,255,.06)),linear-gradient(135deg,#9b7bff,#d66bd7 58%,#f28b76); }
+.glass-btn:nth-child(5n) .btn-icon { background-image: linear-gradient(145deg,rgba(255,255,255,.4),rgba(255,255,255,.06)),linear-gradient(135deg,#69b7ff,#5470e8 58%,#8a5bd1); }
+
+/* Ações do cabeçalho e botões com ícone também recebem acabamento glass colorido. */
+.top-icon-btn {
+    background: linear-gradient(145deg,rgba(255,255,255,.30),rgba(255,255,255,.06) 55%),
+                linear-gradient(135deg,rgba(45,212,191,.26),rgba(99,102,241,.30),rgba(236,72,153,.25)) !important;
+    border-color: rgba(255,255,255,.40) !important;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.42), 0 4px 12px rgba(20,18,55,.22);
+}
+.top-icon-btn > .ui-icon, button > .ui-icon { stroke: url(#mcIconGradient) !important; }
+
+/* Ícones em títulos, cartões e conteúdo: degradê sem criar caixas que quebrem o fluxo. */
+.course-title > .ui-icon, h3 > .ui-icon, h4 > .ui-icon, p > .ui-icon, label > .ui-icon, strong > .ui-icon, a > .ui-icon, span > .ui-icon, div > .ui-icon {
+    stroke: url(#mcIconGradient) !important;
+    filter: drop-shadow(0 1px 2px rgba(255,255,255,.22)) drop-shadow(0 2px 4px rgba(36,35,90,.35));
+}
+.profile-btn-avatar { border: 2px solid rgba(255,255,255,.82) !important; box-shadow: 0 0 0 2px rgba(108,99,255,.35), 0 3px 9px rgba(0,0,0,.32) !important; }
+
+/* Modo desempenho: preserva o aspecto colorido sem filtros de desfoque custosos. */
+body.legacy-mode .glass-btn .btn-icon, body.legacy-mode .top-icon-btn {
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+body.legacy-mode .glass-btn .btn-icon { box-shadow: inset 0 1px 1px rgba(255,255,255,.38), 0 3px 7px rgba(12,12,35,.20); }
+
+
+/* Ícone do alternador de tema com acabamento glass colorido. */
+#themeIcon {
+    width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 11px; margin-right: 2px;
+    background: linear-gradient(145deg,rgba(255,255,255,.40),rgba(255,255,255,.08) 52%),
+                linear-gradient(135deg,rgba(45,212,191,.46),rgba(99,102,241,.50),rgba(236,72,153,.44));
+    border: 1px solid rgba(255,255,255,.42);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.48), inset 0 -4px 8px rgba(28,25,75,.14), 0 3px 9px rgba(12,12,35,.20);
+}
+#themeIcon .ui-icon { width: 21px; height: 21px; stroke: #fff !important; filter: drop-shadow(0 1px 2px rgba(20,20,55,.48)); }
+body.legacy-mode #themeIcon { box-shadow: inset 0 1px 1px rgba(255,255,255,.40), 0 2px 6px rgba(12,12,35,.18); }
+
+
+/* AJUSTE VISUAL: ícones minimalistas e blur discreto no modo normal. */
+body:not(.legacy-mode) { --blur-effect: blur(5px); --lg-inner-blur: 1.1px; }
+.ui-icon {
+    stroke: currentColor !important; stroke-width: 1.9 !important;
+    stroke-linecap: round; stroke-linejoin: round; fill: none;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.20)) !important;
+}
+#themeIcon {
+    width: auto !important; height: auto !important; border-radius: 0 !important;
+    margin-right: 2px; background: transparent !important; border: 0 !important;
+    box-shadow: none !important;
+}
+#themeIcon .ui-icon { width: 21px; height: 21px; stroke: currentColor !important; filter: none !important; }

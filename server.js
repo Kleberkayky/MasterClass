@@ -335,17 +335,31 @@ app.post('/api/submissions', verificarPermissao('Aluno'), (req, res) => {
   const now = new Date();
   const deadlineEval = evaluateDeadlineServer(ast, now);
 
-  if (deadlineEval.isClosed) {
-    return res.status(400).json({ message: 'O prazo de envio desta avaliação já foi encerrado.' });
-  }
-
   let subs = loadSubmissions();
   let existing = subs.find(s => s.contentId === contentId && s.studentEmail.toLowerCase() === studentEmail.toLowerCase());
   
+  // Verificar se o prazo está fechado e se NÃO tem apelação aceita
+  const isAppealAccepted = existing && existing.appealStatus === 'accepted';
+  if (deadlineEval.isClosed && !isAppealAccepted) {
+    return res.status(400).json({ message: 'O prazo de envio desta avaliação já foi encerrado.' });
+  }
+
+  if (isAppealAccepted) {
+    // Verificar se expirou as 24h da apelação aceita
+    if (existing.appealDeadline && now > new Date(existing.appealDeadline)) {
+      existing.appealStatus = 'expired';
+      saveSubmissions(subs);
+      return res.status(400).json({ message: 'O prazo de 24 horas da apelação aceita expirou. A nota permanece zero.' });
+    }
+  }
+
   if (existing) {
     existing.submissionHtml = submissionHtml;
     existing.status = 'Sob análise';
     existing.fora_do_prazo = deadlineEval.fora_do_prazo;
+    if (isAppealAccepted) {
+      existing.appealStatus = 'completed';
+    }
     existing.submittedAt = now.toISOString();
     existing.updatedAt = now.toISOString();
   } else {
@@ -359,6 +373,7 @@ app.post('/api/submissions', verificarPermissao('Aluno'), (req, res) => {
       submissionHtml: submissionHtml || '',
       status: 'Sob análise',
       fora_do_prazo: deadlineEval.fora_do_prazo,
+      appealStatus: 'none',
       submittedAt: now.toISOString(),
       grade: null,
       createdAt: now.toISOString()
@@ -367,6 +382,58 @@ app.post('/api/submissions', verificarPermissao('Aluno'), (req, res) => {
 
   saveSubmissions(subs);
   return res.status(200).json({ message: 'Atividade enviada com sucesso e sob análise!' });
+});
+
+// Pedir Apelação (Aluno)
+app.post('/api/submissions/:subId/appeal', verificarPermissao('Aluno'), (req, res) => {
+  const { subId } = req.params;
+  let subs = loadSubmissions();
+  const sub = subs.find(s => s.id === subId);
+  if (!sub) return res.status(404).json({ message: 'Submissão não encontrada.' });
+
+  if (sub.appealStatus && sub.appealStatus !== 'none') {
+    return res.status(400).json({ message: 'Uma apelação já foi solicitada ou processada para esta atividade (permitido apenas uma vez).' });
+  }
+
+  sub.appealStatus = 'requested';
+  sub.appealRequestedAt = new Date().toISOString();
+  saveSubmissions(subs);
+
+  return res.status(200).json({ message: 'Pedido de apelação enviado ao professor com sucesso!' });
+});
+
+// Responder Apelação (Professor)
+app.put('/api/submissions/:subId/appeal-response', verificarPermissao('Professor', 'Administrador'), (req, res) => {
+  const { subId } = req.params;
+  const { action, professorName } = req.body; // 'accept' or 'reject'
+
+  let subs = loadSubmissions();
+  const sub = subs.find(s => s.id === subId);
+  if (!sub) return res.status(404).json({ message: 'Submissão não encontrada.' });
+
+  if (sub.appealStatus !== 'requested') {
+    return res.status(400).json({ message: 'Esta submissão não possui um pedido de apelação pendente.' });
+  }
+
+  const now = new Date();
+  if (action === 'accept') {
+    sub.appealStatus = 'accepted';
+    const deadline24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    sub.appealDeadline = deadline24h.toISOString();
+    sub.appealProcessedBy = professorName || 'Professor';
+    sub.appealProcessedAt = now.toISOString();
+    sub.status = 'Apelação Aceita (Prazo 24h)';
+  } else if (action === 'reject') {
+    sub.appealStatus = 'rejected';
+    sub.appealProcessedBy = professorName || 'Professor';
+    sub.appealProcessedAt = now.toISOString();
+    sub.status = 'Apelação Rejeitada (Nota Zero)';
+  } else {
+    return res.status(400).json({ message: 'Ação inválida.' });
+  }
+
+  saveSubmissions(subs);
+  return res.status(200).json({ message: `Apelação ${action === 'accept' ? 'aceita (o aluno tem 24h para envio)' : 'rejeitada'} com sucesso!`, submission: sub });
 });
 
 // Obter submissões de atividades
@@ -767,7 +834,7 @@ app.put('/api/submissions/:subId/grade', verificarPermissao('Professor', 'Admini
   return res.status(200).json({ message: 'Nota lançada com sucesso!', submission: sub });
 });
 
-// Endpoint preparado para o Boletim Escolar do Aluno e Avaliações Corrigidas
+// Sincronizar submissões expiradas para o aluno
 function syncExpiredSubmissionsForStudent(studentEmail, studentName = 'Aluno') {
   const courses = loadCourses();
   let subs = loadSubmissions();
@@ -779,7 +846,7 @@ function syncExpiredSubmissionsForStudent(studentEmail, studentName = 'Aluno') {
       mod.contents.filter(c => c.isAssignment).forEach(ast => {
         const deadlineEval = evaluateDeadlineServer(ast, now);
         if (deadlineEval.isClosed) {
-          const existing = subs.find(s => s.contentId === ast.id && s.studentEmail.toLowerCase() === studentEmail.toLowerCase());
+          let existing = subs.find(s => s.contentId === ast.id && s.studentEmail.toLowerCase() === studentEmail.toLowerCase());
           if (!existing) {
             subs.push({
               id: 'sub_exp_' + ast.id + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
@@ -793,11 +860,20 @@ function syncExpiredSubmissionsForStudent(studentEmail, studentName = 'Aluno') {
               fora_do_prazo: 'V',
               isClosed: true,
               isEvaluated: true,
+              appealStatus: 'none',
               submittedAt: null,
               grade: 0,
               createdAt: now.toISOString()
             });
             modified = true;
+          } else {
+            // Se apelação foi aceita e passou o prazo de 24h sem envio
+            if (existing.appealStatus === 'accepted' && existing.appealDeadline && now > new Date(existing.appealDeadline)) {
+              existing.appealStatus = 'expired';
+              existing.grade = 0;
+              existing.status = 'Apelação expirada sem envio (Nota Zero)';
+              modified = true;
+            }
           }
         }
       });
@@ -849,6 +925,7 @@ app.get('/api/boletim/:studentEmail', (req, res) => {
         }
 
         const evalItem = {
+          subId: sub ? sub.id : null,
           contentId: ast.id,
           moduleId: mod.id,
           moduleName: mod.name,
@@ -861,6 +938,8 @@ app.get('/api/boletim/:studentEmail', (req, res) => {
           submittedAt: sub ? (sub.submittedAt || sub.updatedAt || sub.createdAt) : null,
           fora_do_prazo: foraPrazoCode,
           status: effectiveStatus,
+          appealStatus: sub ? (sub.appealStatus || 'none') : 'none',
+          appealDeadline: sub ? (sub.appealDeadline || null) : null,
           grade: (numericGrade !== null && !isNaN(numericGrade)) ? numericGrade : null,
           professorName: (sub && sub.gradedBy) ? sub.gradedBy : (ast.authorName || defaultTeacherName)
         };

@@ -8,717 +8,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #0a171e;
-            --bg-image: url('imagem3.jpg');
-            --glass-bg: rgba(175, 175, 175, 0.22);
-            --glass-border: rgba(255, 255, 255, 0.25);
-            --glass-border-top: rgba(255, 255, 255, 0.5);
-            --btn-primary-bg: linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #dc2626 100%);
-            --btn-primary-shadow: rgba(234, 88, 12, 0.35);
-            --text-main: #ffffff;
-            --subpanel-bg: linear-gradient(135deg, rgba(245, 158, 11, 0.85) 0%, rgba(220, 38, 38, 0.85) 100%);
-            --input-bg: rgba(255, 255, 255, 0.22);
-            --select-bg-option: #0a171e;
-            --blur-effect: blur(12px);
-        }
+        <link rel="stylesheet" href="home_page.css">
 
-        body.dark-theme {
-            --bg-color: #050914;
-            --bg-image: url('imagem7.jpg');
-            --glass-bg: rgba(15, 23, 42, 0.65);
-            --glass-border: rgba(147, 51, 234, 0.35);
-            --glass-border-top: rgba(168, 85, 247, 0.6);
-            --btn-primary-bg: linear-gradient(135deg, #1e40af 0%, #4c1d95 50%, #6b21a8 100%);
-            --btn-primary-shadow: rgba(76, 29, 149, 0.4);
-            --subpanel-bg: linear-gradient(135deg, rgba(30, 58, 138, 0.85) 0%, rgba(88, 28, 135, 0.85) 100%);
-            --input-bg: rgba(15, 23, 42, 0.5);
-            --select-bg-option: #050914;
-        }
-
-        body.legacy-mode {
-            --blur-effect: none !important;
-        }
-
-        @keyframes osPanelEntrance {
-            0% { opacity: 0; transform: translateY(10px) scale(0.99); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
-        }
-
-        body {
-            min-height: 100vh;
-            display: flex;
-            background: var(--bg-color) var(--bg-image) no-repeat center center fixed;
-            background-size: cover;
-            position: relative;
-            padding: 15px;
-            overflow-x: hidden;
-            color: var(--text-main);
-        }
-
-        .tooltip-glass {
-            position: fixed;
-            padding: 6px 12px;
-            background: rgba(255, 255, 255, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;
-            color: #ffffff;
-            font-size: 0.75rem;
-            font-weight: 600;
-            pointer-events: none;
-            z-index: 9999;
-            opacity: 0;
-            transition: opacity 0.1s ease;
-        }
-        .tooltip-glass.visible { opacity: 1; }
-
-        .dashboard-container {
-            display: flex;
-            gap: 16px;
-            width: 100%;
-            max-width: 1450px;
-            height: calc(100vh - 30px);
-            margin: auto;
-            position: relative;
-            z-index: 10;
-        }
-
-        .glass-panel {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-top: 1px solid var(--glass-border-top);
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            height: 100%;
-            backdrop-filter: var(--blur-effect);
-            -webkit-backdrop-filter: var(--blur-effect);
-            overflow: hidden;
-        }
-
-        .sidebar {
-            width: 80px;
-            padding: 20px 10px;
-            transition: width 0.3s ease, padding 0.3s ease;
-            flex-shrink: 0;
-            will-change: width;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-
-        .sidebar:not(.collapsed) {
-            width: 260px;
-            padding: 20px;
-        }
-
-        .sidebar-brand {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            cursor: pointer;
-            user-select: none;
-            white-space: nowrap;
-        }
-
-        .sidebar:not(.collapsed) .sidebar-brand { justify-content: flex-start; }
-
-        .school-logo {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            flex-shrink: 0;
-            transition: transform 0.2s ease;
-        }
-        .school-logo:hover { transform: scale(1.05); }
-
-        .sidebar-brand-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            white-space: nowrap;
-            display: none;
-        }
-
-        .sidebar:not(.collapsed) .sidebar-brand-title { display: inline-block; }
-
-        .menu-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            max-height: calc(100vh - 180px);
-            padding-right: 2px;
-        }
-
-        button, .glass-btn {
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.15s ease, box-shadow 0.25s ease;
-        }
-
-        button:hover, .glass-btn:hover {
-            transform: translateY(-3px);
-            filter: brightness(1.1);
-            box-shadow: 0 8px 20px var(--btn-primary-shadow);
-        }
-
-        button:active, .glass-btn:active {
-            transform: translateY(-1px);
-        }
-
-        .glass-btn {
-            width: 100%;
-            padding: 12px 0;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-top: 1px solid rgba(255, 255, 255, 0.8);
-            background: var(--btn-primary-bg);
-            color: #ffffff;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 12px var(--btn-primary-shadow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .sidebar:not(.collapsed) .glass-btn {
-            padding: 12px 16px;
-            justify-content: flex-start;
-        }
-
-        .glass-btn.active {
-            filter: brightness(1.1);
-        }
-
-        .glass-btn .btn-icon {
-            font-size: 1.1rem;
-            min-width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .profile-btn-avatar {
-            width: 24px !important;
-            height: 24px !important;
-            min-width: 24px !important;
-            min-height: 24px !important;
-            border-radius: 50% !important;
-            object-fit: cover !important;
-            object-position: center !important;
-            border: 1.5px solid #fff !important;
-            display: block !important;
-        }
-
-        .glass-btn .btn-text { display: none; }
-        .sidebar:not(.collapsed) .glass-btn .btn-text { display: inline; }
-
-        .glass-btn.btn-logout {
-            margin-top: auto;
-            background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%);
-        }
-
-        .panel-center {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            height: 100%;
-            min-width: 0;
-        }
-
-        .panel-center-header {
-            margin-bottom: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            padding-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .top-icon-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: #fff;
-            font-size: 1rem;
-            position: relative;
-            flex-shrink: 0;
-        }
-        .top-icon-btn:hover { background: rgba(255, 255, 255, 0.35); }
-
-        .notif-badge {
-            position: absolute;
-            top: -2px; right: -2px;
-            background: #ef4444; color: #fff;
-            font-size: 0.6rem; font-weight: bold;
-            padding: 2px 5px; border-radius: 10px;
-            display: none;
-        }
-
-        .search-bar-container {
-            display: none;
-            background: rgba(0, 0, 0, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 14px;
-            flex-direction: column;
-            gap: 8px;
-            backdrop-filter: var(--blur-effect);
-        }
-        .search-input-wrapper {
-            display: flex; gap: 8px; align-items: center; width: 100%;
-        }
-        .search-input {
-            width: 100%; padding: 10px 14px; border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            background: var(--input-bg); color: #fff; outline: none; font-size: 0.9rem;
-        }
-        .recent-suggestions {
-            display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
-            font-size: 0.8rem;
-        }
-        .suggestion-chip {
-            background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 4px 10px; border-radius: 20px; cursor: pointer; color: #fef3c7;
-        }
-
-        h3 { color: #ffffff; font-size: 1.2rem; font-weight: 700; }
-
-        .content-sub-panel {
-            background: var(--subpanel-bg);
-            border: 1px solid rgba(255, 255, 255, 0.35);
-            border-radius: 16px;
-            padding: 20px;
-            flex-grow: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
-            backdrop-filter: var(--blur-effect);
-            -webkit-backdrop-filter: var(--blur-effect);
-            animation: osPanelEntrance 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .content-body img:not(.user-avatar-custom),
-        .rich-text-editor img,
-        .rendered-content img {
-            max-width: 100% !important;
-            height: auto !important;
-            object-fit: contain;
-            border-radius: 6px;
-            margin: 6px 0;
-            display: block;
-            cursor: pointer;
-            transition: outline 0.15s ease;
-        }
-
-        .image-resize-toolbar {
-            position: absolute;
-            background: rgba(15, 23, 42, 0.92);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;
-            padding: 4px 8px;
-            display: flex;
-            gap: 6px;
-            z-index: 10000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            backdrop-filter: blur(8px);
-            align-items: center;
-        }
-        .image-resize-toolbar button {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: #fff;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.72rem;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .image-resize-toolbar button:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        .image-selected-outline {
-            outline: 2px solid #f59e0b !important;
-            outline-offset: 2px;
-        }
-
-        .content-body {
-            color: rgba(255, 255, 255, 0.95);
-            font-size: 0.95rem;
-            line-height: 1.6;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            width: 100%;
-            max-width: 100%;
-        }
-
-        .courses-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 14px;
-            margin-top: 8px;
-            width: 100%;
-        }
-
-        .course-card {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 12px;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            cursor: pointer;
-            transition: transform 0.2s ease, background 0.2s ease;
-            word-break: break-word;
-        }
-        .course-card:hover {
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.3);
-        }
-        .course-title { font-size: 1rem; font-weight: 700; }
-        .course-desc { font-size: 0.85rem; opacity: 0.9; }
-
-        .profile-card-centered {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            gap: 10px;
-            width: 100%;
-            max-width: 450px;
-            margin: 10px auto;
-            padding: 10px;
-        }
-
-        .avatar-wrapper {
-            position: relative;
-            width: 105px !important;
-            height: 105px !important;
-            min-width: 105px !important;
-            min-height: 105px !important;
-            border-radius: 50% !important;
-            overflow: hidden !important;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
-            border: 4px solid rgba(255, 255, 255, 0.85);
-            flex-shrink: 0;
-            background-color: #111;
-        }
-
-        .user-avatar-custom {
-            width: 100% !important;
-            height: 100% !important;
-            min-width: 100% !important;
-            min-height: 100% !important;
-            border-radius: 50% !important;
-            object-fit: cover !important;
-            object-position: center !important;
-            display: block !important;
-            max-width: none !important;
-            max-height: none !important;
-            margin: 0 !important;
-        }
-
-        .avatar-hover-overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.6);
-            color: #ffffff;
-            font-size: 0.72rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 4px;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            user-select: none;
-        }
-
-        .avatar-wrapper:hover .avatar-hover-overlay {
-            opacity: 1;
-        }
-
-        .profile-name-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            width: 100%;
-        }
-
-        .profile-name-text {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #ffffff;
-            word-break: break-word;
-        }
-
-        .btn-edit-icon {
-            background: transparent;
-            border: none;
-            font-size: 1.1rem;
-            cursor: pointer;
-        }
-
-        .profile-email-text {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.9);
-            word-break: break-all;
-        }
-
-        .profile-role-badge {
-            background: rgba(160, 80, 20, 0.75);
-            color: #ffffff;
-            padding: 6px 20px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            margin: 4px 0 10px 0;
-        }
-
-        .profile-select-custom {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.45);
-            background: rgba(255, 255, 255, 0.15);
-            color: #ffffff;
-            font-size: 0.9rem;
-            outline: none;
-        }
-        .profile-select-custom option { background: #1e1e1e; color: #ffffff; }
-
-        .profile-btn-save {
-            width: 100%;
-            padding: 10px;
-            margin-top: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            background: linear-gradient(90deg, #f59e0b 0%, #ea580c 50%, #dc2626 100%);
-            color: #ffffff;
-            font-size: 0.9rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 14px rgba(234, 88, 12, 0.4);
-        }
-
-        .admin-input, .admin-select {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            background: var(--input-bg);
-            color: #fff;
-            font-size: 0.9rem;
-            outline: none;
-        }
-        .admin-select option { background: var(--select-bg-option); color: #fff; }
-
-        .btn-save-name {
-            padding: 8px 14px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            background: var(--btn-primary-bg);
-            color: #fff; font-weight: bold; font-size: 0.8rem; cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .theme-switch-wrapper {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 14px; background: rgba(255, 255, 255, 0.2);
-            border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.4); margin-top: 10px;
-            flex-wrap: wrap; gap: 10px;
-        }
-        .theme-switch { position: relative; display: inline-block; width: 46px; height: 24px; flex-shrink: 0; }
-        .theme-switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.3); transition: .2s; border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
-            background-color: white; transition: .2s; border-radius: 50%;
-        }
-        input:checked + .slider { background-color: #6366f1; }
-        input:checked + .slider:before { transform: translate3d(22px, 0, 0); }
-
-        #toastMsg {
-            font-size: 0.85rem; padding: 10px; border-radius: 8px; margin-top: 10px; display: none;
-            background: rgba(245, 158, 11, 0.4); color: #fef3c7; border: 1px solid rgba(245, 158, 11, 0.6); text-align: center;
-        }
-
-        .editor-toolbar {
-            display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap;
-        }
-        .editor-toolbar button, .editor-toolbar label {
-            background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4);
-            padding: 6px 10px; border-radius: 6px; color: #fff; cursor: pointer; font-size: 0.78rem; font-weight: 600;
-        }
-        
-        .rich-text-editor {
-            width: 100%; min-height: 180px; max-height: 350px; overflow-y: auto;
-            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.4);
-            border-radius: 8px; padding: 12px; color: #fff; outline: none;
-            word-break: break-word;
-            position: relative;
-        }
-
-        .back-btn {
-            background: rgba(255, 255, 255, 0.25); border: 1px solid rgba(255, 255, 255, 0.5);
-            padding: 8px 14px; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 600; width: fit-content; margin-bottom: 10px;
-        }
-
-        .modules-container { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; width: 100%; }
-        .module-box {
-            background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px; padding: 14px; cursor: pointer; word-break: break-word;
-        }
-        .module-box:hover { background: rgba(0, 0, 0, 0.4); }
-        .module-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; color: #fef3c7; }
-
-        .admin-table-container {
-            width: 100%;
-            overflow-x: auto;
-            margin-top: 10px;
-            border-radius: 10px;
-        }
-        .admin-table { width: 100%; min-width: 600px; border-collapse: collapse; background: rgba(0,0,0,0.2); font-size: 0.85rem; }
-        .admin-table th, .admin-table td { padding: 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.2); }
-        .admin-table th { background: rgba(0,0,0,0.35); color: #fef3c7; }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center;
-            z-index: 1000; backdrop-filter: var(--blur-effect); -webkit-backdrop-filter: var(--blur-effect);
-            padding: 15px;
-        }
-        .modal-card {
-            background: var(--glass-bg); border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-border-top);
-            border-radius: 18px; padding: 20px; width: 100%; max-width: 440px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            color: var(--text-main); backdrop-filter: var(--blur-effect); -webkit-backdrop-filter: var(--blur-effect);
-            max-height: 90vh; overflow-y: auto;
-            animation: osPanelEntrance 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .cropper-preview-container {
-            position: relative;
-            width: 280px;
-            height: 280px;
-            margin: 0 auto 14px auto;
-            background: #111;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.3);
-            cursor: grab;
-            touch-action: none;
-        }
-        .cropper-preview-container:active { cursor: grabbing; }
-        .cropper-image {
-            position: absolute;
-            user-select: none;
-            max-width: none;
-            max-height: none;
-        }
-        .cropper-overlay-mask {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
-            border-radius: 50%;
-            pointer-events: none;
-            border: 2px solid rgba(255, 255, 255, 0.9);
-        }
-
-        .grades-hub-btn {
-            background: rgba(255, 255, 255, 0.18);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 14px;
-            padding: 18px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            cursor: pointer;
-            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-            text-align: left;
-            color: #ffffff;
-            width: 100%;
-        }
-        .grades-hub-btn:hover {
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.28);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-        }
-        .grades-hub-btn.primary-boletim {
-            background: var(--btn-primary-bg);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 6px 18px var(--btn-primary-shadow);
-        }
-
-        @media (max-width: 850px) {
-            body { height: auto; overflow-y: auto; padding: 10px; }
-            .dashboard-container { flex-direction: column; height: auto; max-width: 100%; }
-            .sidebar, .sidebar:not(.collapsed) { width: 100% !important; height: auto; padding: 14px; }
-            .menu-list { flex-direction: row; flex-wrap: wrap; justify-content: center; max-height: none; overflow-y: visible; }
-            .glass-btn { width: auto; padding: 10px 14px; justify-content: flex-start; }
-            .glass-btn .btn-text { display: inline; }
-            .glass-btn.btn-logout { margin-top: 0; }
-            .sidebar-brand-title { display: inline-block !important; }
-            .panel-center { height: auto; overflow: visible; }
-            .content-sub-panel { height: auto; max-height: none; overflow-y: visible; }
-        }
-    </style>
 </head>
 <body>
+    <svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;overflow:hidden;pointer-events:none">
+        
+        <defs>
+            <linearGradient id="mcIconGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#36d1dc"/>
+                <stop offset="38%" stop-color="#6c63ff"/>
+                <stop offset="72%" stop-color="#c471ed"/>
+                <stop offset="100%" stop-color="#ff9a5a"/>
+            </linearGradient>
+            <linearGradient id="mcIconGlass" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity=".42"/>
+                <stop offset="48%" stop-color="#b9c7ff" stop-opacity=".16"/>
+                <stop offset="100%" stop-color="#7c3aed" stop-opacity=".30"/>
+            </linearGradient>
+        </defs>
+        <filter id="liquidGlassRefraction" x="-15%" y="-15%" width="130%" height="130%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="8" result="waterNoise" />
+            <feDisplacementMap in="SourceGraphic" in2="waterNoise" scale="9" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+    </svg>
 
     <div class="tooltip-glass" id="globalTooltip"></div>
 
@@ -733,7 +46,7 @@
             <ul class="menu-list" id="mainMenu"></ul>
 
             <a href="#" id="logoutBtn" class="glass-btn btn-logout has-tooltip" data-tooltip="Sair da Conta">
-                <span class="btn-icon">🚪</span>
+                <span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></span>
                 <span class="btn-text">Sair da Conta</span>
             </a>
         </aside>
@@ -742,10 +55,10 @@
             <div class="panel-center-header">
                 <h3 id="centerTitle">Quadro de Avisos</h3>
                 <div class="header-actions">
-                    <button class="top-icon-btn has-tooltip" data-tooltip="Pesquisar opções" id="searchToggleBtn">🔍</button>
-                    <button class="top-icon-btn has-tooltip" data-tooltip="Histórico de Atividades" id="activitiesHistoryBtn" style="display:none;">📋</button>
+                    <button class="top-icon-btn has-tooltip" data-tooltip="Pesquisar opções" id="searchToggleBtn"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
+                    <button class="top-icon-btn has-tooltip" data-tooltip="Histórico de Atividades" id="activitiesHistoryBtn" style="display:none;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg></button>
                     <button class="top-icon-btn has-tooltip" data-tooltip="Notificações" id="notifToggleBtn" style="display:none;">
-                        🔔<span class="notif-badge" id="notifBadge">0</span>
+                        <svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><span class="notif-badge" id="notifBadge">0</span>
                     </button>
                 </div>
             </div>
@@ -753,7 +66,7 @@
             <div class="search-bar-container" id="searchBarContainer">
                 <div class="search-input-wrapper">
                     <input type="text" id="globalSearchInput" class="search-input" placeholder="Digite para pesquisar nas suas opções...">
-                    <button id="btnCloseSearch" class="glass-btn" style="width: auto; padding: 8px 12px; margin: 0;">✕</button>
+                    <button id="btnCloseSearch" class="glass-btn" style="width: auto; padding: 8px 12px; margin: 0;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m18 6-12 12M6 6l12 12"/></svg></button>
                 </div>
                 <div class="recent-suggestions" id="recentSuggestionsArea">
                     <span style="opacity:0.8;">Buscas recentes:</span>
@@ -829,29 +142,31 @@
         const mainMenu = document.getElementById('mainMenu');
 
         function renderMenu() {
+            const gearIconSvg = `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.2M12 19.3v2.2M4.93 4.93l1.56 1.56M17.51 17.51l1.56 1.56M2.5 12h2.2M19.3 12h2.2M4.93 19.07l1.56-1.56M17.51 6.49l1.56-1.56"/><circle cx="12" cy="12" r="7.2" stroke-dasharray="3.2 2.45"/></svg>`;
+
             if (user.role === 'Administrador') {
                 mainMenu.innerHTML = `
-                    <li><a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos"><span class="btn-icon">📢</span><span class="btn-text">Quadro de Avisos</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Controle de contas" data-page="admin_accounts"><span class="btn-icon">🛡️</span><span class="btn-text">Controle de contas</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Gerenciar Cursos" data-page="admin_courses"><span class="btn-icon">📂</span><span class="btn-text">Gerenciar Cursos</span></a></li>
+                    <li><a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg></span><span class="btn-text">Quadro de Avisos</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Controle de contas" data-page="admin_accounts"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11"/><path d="m9 12 2 2 4-4"/></svg></span><span class="btn-text">Controle de contas</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Gerenciar Cursos" data-page="admin_courses"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v1"/><path d="M3 10h18l-2 9H5z"/></svg></span><span class="btn-text">Gerenciar Cursos</span></a></li>
                     <li><a class="glass-btn has-tooltip" data-tooltip="Meu perfil" data-page="my_profile"><span class="btn-icon"><img src="${user.avatar || 'imagem4.jpeg'}" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar"></span><span class="btn-text">Meu perfil</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings"><span class="btn-icon">⚙️</span><span class="btn-text">Configurações</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings"><span class="btn-icon">${gearIconSvg}</span><span class="btn-text">Configurações</span></a></li>
                 `;
             } else if (user.role === 'Aluno') {
                 mainMenu.innerHTML = `
-                    <li><a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos"><span class="btn-icon">📢</span><span class="btn-text">Quadro de Avisos</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Meus Cursos" data-page="my_courses"><span class="btn-icon">📚</span><span class="btn-text">Meus Cursos</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Minhas Notas" data-page="my_grades"><span class="btn-icon">📝</span><span class="btn-text">Minhas Notas</span></a></li>
+                    <li><a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg></span><span class="btn-text">Quadro de Avisos</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Meus Cursos" data-page="my_courses"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h2a5 5 0 0 1 5 5 5 5 0 0 1 5-5h2a2 2 0 0 1 2 2v13"/><path d="M3 18a3 3 0 0 1 3-3h2a4 4 0 0 1 4 4 4 4 0 0 1 4-4h2a3 3 0 0 1 3 3"/></svg></span><span class="btn-text">Meus Cursos</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Minhas Notas" data-page="my_grades"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg></span><span class="btn-text">Minhas Notas</span></a></li>
                     <li><a class="glass-btn has-tooltip" data-tooltip="Meu Perfil" data-page="my_profile"><span class="btn-icon"><img src="${user.avatar || 'imagem4.jpeg'}" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar"></span><span class="btn-text">Meu Perfil</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings"><span class="btn-icon">⚙️</span><span class="btn-text">Configurações</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings"><span class="btn-icon">${gearIconSvg}</span><span class="btn-text">Configurações</span></a></li>
                 `;
             } else {
                 mainMenu.innerHTML = `
-                    <li><a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos"><span class="btn-icon">📢</span><span class="btn-text">Quadro de Avisos</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Meu Curso" data-page="my_courses"><span class="btn-icon">📚</span><span class="btn-text">Meu Curso</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Lançar Notas" data-page="my_grades"><span class="btn-icon">📝</span><span class="btn-text">Lançar Notas</span></a></li>
+                    <li><a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg></span><span class="btn-text">Quadro de Avisos</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Meu Curso" data-page="my_courses"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h2a5 5 0 0 1 5 5 5 5 0 0 1 5-5h2a2 2 0 0 1 2 2v13"/><path d="M3 18a3 3 0 0 1 3-3h2a4 4 0 0 1 4 4 4 4 0 0 1 4-4h2a3 3 0 0 1 3 3"/></svg></span><span class="btn-text">Meu Curso</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Lançar Notas" data-page="my_grades"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg></span><span class="btn-text">Lançar Notas</span></a></li>
                     <li><a class="glass-btn has-tooltip" data-tooltip="Meu Perfil" data-page="my_profile"><span class="btn-icon"><img src="${user.avatar || 'imagem4.jpeg'}" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar"></span><span class="btn-text">Meu Perfil</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings"><span class="btn-icon">⚙️</span><span class="btn-text">Configurações</span></a></li>
+                    <li><a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings"><span class="btn-icon">${gearIconSvg}</span><span class="btn-text">Configurações</span></a></li>
                 `;
             }
         }
@@ -979,7 +294,7 @@
                     <button type="button" data-size="75">Grande (75%)</button>
                     <button type="button" data-size="100">Máximo (100%)</button>
                     <button type="button" data-size="custom">Outro...</button>
-                    <button type="button" data-action="delete" style="background: rgba(220,38,38,0.4); border-color: rgba(220,38,38,0.6);">🗑️</button>
+                    <button type="button" data-action="delete" style="background: rgba(220,38,38,0.4); border-color: rgba(220,38,38,0.6);"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6"/><path d="M10 11v6m4-6v6"/></svg></button>
                 `;
 
                 document.body.appendChild(activeToolbar);
@@ -1070,7 +385,7 @@
                 searchResultsDropdown.style.display = 'block';
                 searchResultsDropdown.innerHTML = matches.map(m => `
                     <div class="search-result-item" data-page="${m.pageKey}" style="padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.88rem; background: rgba(255,255,255,0.1); margin-bottom: 4px;">
-                        📄 ${m.name}
+                        <svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg> ${m.name}
                     </div>
                 `).join('');
 
@@ -1154,7 +469,7 @@
             modalDiv.innerHTML = `
                 <div class="modal-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <h3 style="margin: 0;">🔔 Central de Notificações</h3>
+                        <h3 style="margin: 0;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> Central de Notificações</h3>
                         <button type="button" id="btnMarkAllRead" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; cursor: pointer;">Marcar todas como lidas</button>
                     </div>
                     <div style="overflow-y: auto; max-height: 350px; display:flex; flex-direction:column; gap:8px;" id="notifListContainer">
@@ -1228,7 +543,7 @@
                     if (user.role === 'Administrador') {
                         adminCreateAvisoBtnHtml = `
                             <div style="display: flex; justify-content: center; margin-bottom: 16px;">
-                                <button id="btnOpenCreateAvisoModal" class="glass-btn" style="width: auto; padding: 10px 20px; font-size: 0.95rem;">📢 Criar novo aviso</button>
+                                <button id="btnOpenCreateAvisoModal" class="glass-btn" style="width: auto; padding: 10px 20px; font-size: 0.95rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg> Criar novo aviso</button>
                             </div>
                         `;
                     }
@@ -1239,10 +554,10 @@
                         <div style="display:flex; flex-direction:column; gap:12px;">
                             ${avisos.map(av => `
                                 <div style="background:rgba(255,255,255,0.15); padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.3); position: relative;">
-                                    <strong style="font-size: 1.05rem; color: #fef3c7; display:block; padding-right:60px;">📢 ${av.subject}</strong>
+                                    <strong style="font-size: 1.05rem; color: #fef3c7; display:block; padding-right:60px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg> ${av.subject}</strong>
                                     <div style="font-size:0.85rem; opacity:0.9; margin:4px 0;">${av.description}</div>
                                     <div class="rendered-content" style="font-size:0.9rem; margin-top: 8px; word-break: break-word;">${av.textHtml}</div>
-                                    ${av.file ? `<div style="margin-top:8px; font-size:0.85rem;"><a href="${av.file.data}" download="${av.file.name}" style="color:#fef3c7; text-decoration:underline;">📎 ${av.file.name}</a></div>` : ''}
+                                    ${av.file ? `<div style="margin-top:8px; font-size:0.85rem;"><a href="${av.file.data}" download="${av.file.name}" style="color:#fef3c7; text-decoration:underline;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m21 11.5-8.5 8.5a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8"/></svg> ${av.file.name}</a></div>` : ''}
                                     ${user.role === 'Administrador' ? `<button class="glass-btn btn-del-aviso" data-id="${av.id}" style="position: absolute; top: 14px; right: 14px; width: auto; padding: 4px 8px; font-size: 0.7rem; background: linear-gradient(135deg,#dc2626,#7f1d1d);">Excluir</button>` : ''}
                                 </div>
                             `).join('')}
@@ -1450,7 +765,7 @@
                         <div class="courses-grid">
                             ${courses.map(c => `
                                 <div class="course-card view-admin-course-details" data-id="${c.id}">
-                                    <div class="course-title">📂 ${c.title}</div>
+                                    <div class="course-title"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v1"/><path d="M3 10h18l-2 9H5z"/></svg> ${c.title}</div>
                                     <div class="course-desc">${c.description}</div>
                                     <span style="font-size:0.75rem; background: rgba(245, 158, 11, 0.5); padding: 3px 8px; border-radius: 6px; width: fit-content; margin-top:4px;">Gerenciar Módulos</span>
                                 </div>
@@ -1490,7 +805,7 @@
                     if (user.role === 'Professor') {
                         const assigned = courses.find(c => c.id === user.assignedCourse);
                         if (!assigned) {
-                            centerContent.innerHTML = `<p>⚠️ Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
+                            centerContent.innerHTML = `<p><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg> Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
                             return;
                         }
                         renderProfessorCourseView(assigned);
@@ -1501,12 +816,14 @@
                             c.modules.forEach(m => {
                                 m.contents.filter(cnt => cnt.isAssignment).forEach(cnt => {
                                     const mySub = subs.find(s => s.contentId === cnt.id && s.studentEmail.toLowerCase() === user.email.toLowerCase());
-                                    if (mySub) return;
-
+                                    
+                                    // Se tem submissão e apelação aceita, permitir envio mesmo se fechada
+                                    const isAppealAccepted = mySub && mySub.appealStatus === 'accepted';
                                     const deadlineInfo = evaluateDeadlineClient(cnt);
-                                    if (deadlineInfo.isClosed) return;
+                                    if (deadlineInfo.isClosed && !isAppealAccepted) return;
+                                    if (mySub && mySub.grade !== null && mySub.grade !== undefined && String(mySub.grade).trim() !== '' && !isAppealAccepted) return;
 
-                                    pendingAssignments.push({ ...cnt, courseTitle: c.title, courseId: c.id, moduleId: m.id, deadlineInfo });
+                                    pendingAssignments.push({ ...cnt, courseTitle: c.title, courseId: c.id, moduleId: m.id, deadlineInfo, mySub });
                                 });
                             });
                         });
@@ -1514,13 +831,15 @@
 
                         centerContent.innerHTML = `
                             <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3); margin-bottom: 16px;">
-                                <h4 style="color: #fef3c7; margin-bottom: 8px;">📋 Atividades e Provas Recentes</h4>
+                                <h4 style="color: #fef3c7; margin-bottom: 8px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> Atividades e Provas Recentes</h4>
                                 <div style="display:flex; flex-direction:column; gap:10px;">
                                     ${pendingAssignments.length === 0 ? '<p style="font-size:0.85rem; opacity:0.8;">Nenhuma atividade ou prova pendente no momento.</p>' : ''}
                                     ${pendingAssignments.map(ast => {
                                         const deadlineInfo = ast.deadlineInfo;
                                         const isProva = ast.e_prova === 'V';
                                         const foraPrazoCode = deadlineInfo.fora_do_prazo;
+                                        const mySub = ast.mySub;
+                                        const isAppealAccepted = mySub && mySub.appealStatus === 'accepted';
 
                                         const badgeColor = foraPrazoCode === 'V' ? 'rgba(220, 38, 38, 0.7)' : 'rgba(16, 185, 129, 0.6)';
                                         const badgeText = formatForaPrazoBadge(foraPrazoCode);
@@ -1534,17 +853,23 @@
                                             }
                                         }
 
+                                        let appealAcceptedNotice = '';
+                                        if (isAppealAccepted) {
+                                            appealAcceptedNotice = `<div style="color: #34d399; font-weight: 700; font-size: 0.8rem; margin-top: 3px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3Z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1L19 14Z"/></svg> Apelação aceita! Você tem até ${new Date(mySub.appealDeadline).toLocaleString('pt-BR')} para enviar.</div>`;
+                                        }
+
                                         return `
                                             <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                                                 <div style="flex: 1; min-width: 220px;">
                                                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:4px;">
-                                                        <strong style="color: #fef3c7; font-size:0.95rem;">${ast.courseTitle} - ${isProva ? `📝 [PROVA${ast.evaluationCode ? ' - ' + ast.evaluationCode : ''}]` : `📋 [ATIVIDADE${ast.evaluationCode ? ' - ' + ast.evaluationCode : ''}]`} ${ast.subject}</strong>
+                                                        <strong style="color: #fef3c7; font-size:0.95rem;">${ast.courseTitle} - ${isProva ? `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> [PROVA${ast.evaluationCode ? ' - ' + ast.evaluationCode : ''}]` : `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> [ATIVIDADE${ast.evaluationCode ? ' - ' + ast.evaluationCode : ''}]`} ${ast.subject}</strong>
                                                         <span style="font-size:0.7rem; font-weight:700; padding:2px 7px; border-radius:6px; background:${badgeColor};">${badgeText}</span>
                                                     </div>
                                                     <div style="font-size:0.8rem; opacity:0.9;">${ast.description || 'Sem descrição'}</div>
                                                     <div style="font-size:0.75rem; opacity:0.85; margin-top:4px;">
                                                         Entrega: de ${ast.startDate ? new Date(ast.startDate).toLocaleString('pt-BR') : '-'} até ${ast.endDate ? new Date(ast.endDate).toLocaleString('pt-BR') : '-'}${toleranceHtml}
                                                     </div>
+                                                    ${appealAcceptedNotice}
                                                     <div style="font-size:0.78rem; margin-top:3px;">
                                                         <strong>Pendente de Envio</strong>
                                                     </div>
@@ -1560,7 +885,7 @@
                             <div class="courses-grid">
                                 ${courses.map(c => `
                                     <div class="course-card student-view-course" data-id="${c.id}" style="border: 2px solid rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.3);">
-                                        <div class="course-title">💻 ${c.title}</div>
+                                        <div class="course-title"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M2 21h20l-1-4H3z"/></svg> ${c.title}</div>
                                         <div class="course-desc">${c.description}</div>
                                     </div>
                                 `).join('')}
@@ -1596,7 +921,7 @@
                     } else {
                         const assigned = courses.find(c => c.id === user.assignedCourse);
                         if (!assigned) {
-                            centerContent.innerHTML = `<p>⚠️ Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
+                            centerContent.innerHTML = `<p><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg> Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
                             return;
                         }
                         renderProfessorGradeModules(assigned);
@@ -1618,7 +943,7 @@
 
                     let createAccountBtnHtml = user.role === 'Administrador' ? `
                         <button id="btnOpenCreateAccModal" class="glass-btn" style="width: 100%; padding: 10px; justify-content: center; margin-top: 8px; font-size: 0.9rem;">
-                            ➕ Criar Nova Conta
+                            <svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Criar Nova Conta
                         </button>
                     ` : '';
 
@@ -1632,7 +957,7 @@
 
                             <div class="profile-name-row">
                                 <span id="userName" class="profile-name-text">${user.name}</span>
-                                <button id="btnEditName" class="btn-edit-icon" title="Editar nome">✏️</button>
+                                <button id="btnEditName" class="btn-edit-icon" title="Editar nome"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m16 4 4 4L8 20H4v-4z"/><path d="m14 6 4 4"/></svg></button>
                             </div>
 
                             <div id="nameEditForm" style="display: none; width: 100%; max-width: 300px; gap: 8px; margin-top: 4px;">
@@ -1670,7 +995,7 @@
                         <div class="theme-switch-wrapper">
                             <div>
                                 <strong style="display:block; color:#fef3c7; font-size:0.95rem;">Modo de Desempenho (Desativar Efeitos Visuais)</strong>
-                                <span style="font-size:0.78rem; opacity:0.8;">Desativa o desfoque (blur) para máxima performance.</span>
+                                <span style="font-size:0.78rem; opacity:0.8;">Reduz desfoques e efeitos gráficos pesados, mantendo a aparência translúcida.</span>
                             </div>
                             <label class="theme-switch">
                                 <input type="checkbox" id="legacyCheckbox" ${isLegacy ? 'checked' : ''}>
@@ -1719,36 +1044,36 @@
                 <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 6px;">
                     <button type="button" class="grades-hub-btn primary-boletim" id="btnStudentMeuBoletim">
                         <div style="display: flex; align-items: center; gap: 14px;">
-                            <span style="font-size: 1.8rem;">📊</span>
+                            <span style="font-size: 1.8rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-5 5"/></svg></span>
                             <div>
                                 <div style="font-size: 1.08rem; font-weight: 800; color: #ffffff;">Meu Boletim</div>
                                 <div style="font-size: 0.84rem; opacity: 0.92; font-weight: 400;">Escolha um curso individualmente para visualizar o boletim completo e médias por módulo.</div>
                             </div>
                         </div>
-                        <span style="font-size: 1.2rem; font-weight: 700;">➔</span>
+                        <span style="font-size: 1.2rem; font-weight: 700;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span>
                     </button>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 4px;">
                         <button type="button" class="grades-hub-btn" id="btnStudentAtividadesCorrigidas" style="border-left: 5px solid #10b981;">
                             <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 1.6rem;">📋</span>
+                                <span style="font-size: 1.6rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg></span>
                                 <div>
                                     <div style="font-size: 1rem; font-weight: 700; color: #fef3c7;">Atividades Corrigidas</div>
-                                    <div style="font-size: 0.82rem; opacity: 0.88; font-weight: 400;">Consulte suas atividades já avaliadas e com nota lançada por curso.</div>
+                                    <div style="font-size: 0.82rem; opacity: 0.88; font-weight: 400;">Consulte suas atividades já avaliadas e com nota lançada por curso. (Inclui botão de Apelação para prazos perdidos).</div>
                                 </div>
                             </div>
-                            <span style="font-size: 1.1rem;">➔</span>
+                            <span style="font-size: 1.1rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span>
                         </button>
 
                         <button type="button" class="grades-hub-btn" id="btnStudentProvasCorrigidas" style="border-left: 5px solid #3b82f6;">
                             <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 1.6rem;">📝</span>
+                                <span style="font-size: 1.6rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg></span>
                                 <div>
                                     <div style="font-size: 1rem; font-weight: 700; color: #fef3c7;">Provas Corrigidas</div>
-                                    <div style="font-size: 0.82rem; opacity: 0.88; font-weight: 400;">Consulte suas provas já corrigidas e suas respectivas notas por curso.</div>
+                                    <div style="font-size: 0.82rem; opacity: 0.88; font-weight: 400;">Consulte suas provas já corrigidas e suas respectivas notas por curso. (Inclui botão de Apelação para prazos perdidos).</div>
                                 </div>
                             </div>
-                            <span style="font-size: 1.1rem;">➔</span>
+                            <span style="font-size: 1.1rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span>
                         </button>
                     </div>
                 </div>
@@ -1781,7 +1106,7 @@
 
             centerTitle.innerText = titlesMap[mode];
             centerContent.innerHTML = `
-                <button class="back-btn" id="btnBackToGradesHub">⬅ Voltar para Minhas Notas</button>
+                <button class="back-btn" id="btnBackToGradesHub"> Voltar para Minhas Notas</button>
                 <p>${descriptionsMap[mode]}</p>
                 <div class="courses-grid">
                     ${boletimList.length === 0 ? '<p style="opacity:0.85;">Nenhum curso disponível para consulta.</p>' : ''}
@@ -1789,19 +1114,19 @@
                         let badgeInfo = '';
                         if (mode === 'atividades') {
                             const countAt = c.modules.reduce((acc, m) => acc + (m.correctedItems || []).filter(i => i.e_prova !== 'V').length, 0);
-                            badgeInfo = `<span style="font-size:0.75rem; background: rgba(16, 185, 129, 0.45); padding: 3px 8px; border-radius: 6px; width: fit-content; margin-top: 4px; font-weight: 600;">${countAt} atividade(s) corrigida(s)</span>`;
+                            badgeInfo = `<span style="font-size:0.75rem; background: rgba(16, 185, 129, 0.45); padding: 3px 8px; border-radius: 6px; width: fit-content; margin-top: 4px; font-weight: 600;">${countAt} atividade(s)</span>`;
                         } else if (mode === 'provas') {
                             const countAv = c.modules.reduce((acc, m) => acc + (m.correctedItems || []).filter(i => i.e_prova === 'V').length, 0);
-                            badgeInfo = `<span style="font-size:0.75rem; background: rgba(59, 130, 246, 0.45); padding: 3px 8px; border-radius: 6px; width: fit-content; margin-top: 4px; font-weight: 600;">${countAv} prova(s) corrigida(s)</span>`;
+                            badgeInfo = `<span style="font-size:0.75rem; background: rgba(59, 130, 246, 0.45); padding: 3px 8px; border-radius: 6px; width: fit-content; margin-top: 4px; font-weight: 600;">${countAv} prova(s)</span>`;
                         } else {
                             badgeInfo = `<span style="font-size:0.75rem; background: rgba(245, 158, 11, 0.45); padding: 3px 8px; border-radius: 6px; width: fit-content; margin-top: 4px; font-weight: 600;">Ver Boletim Completo</span>`;
                         }
 
                         return `
                             <div class="course-card select-grade-course-card" data-course-id="${c.courseId}" style="border: 2px solid rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.24);">
-                                <div class="course-title">📘 ${c.courseTitle}</div>
+                                <div class="course-title"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h2a5 5 0 0 1 5 5 5 5 0 0 1 5-5h2a2 2 0 0 1 2 2v13"/><path d="M3 18a3 3 0 0 1 3-3h2a4 4 0 0 1 4 4 4 4 0 0 1 4-4h2a3 3 0 0 1 3 3"/></svg> ${c.courseTitle}</div>
                                 <div class="course-desc">${c.courseDescription || 'Clique para acessar os registros deste curso.'}</div>
-                                <div style="font-size: 0.78rem; opacity: 0.85; margin-top: 2px;">👨‍🏫 Prof.: ${c.professorName || 'Não vinculado'}</div>
+                                <div style="font-size: 0.78rem; opacity: 0.85; margin-top: 2px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m2 10 10-5 10 5-10 5z"/><path d="M6 12v5c4 3 8 3 12 0v-5m4-2v6"/></svg> Prof.: ${c.professorName || 'Não vinculado'}</div>
                                 ${badgeInfo}
                             </div>
                         `;
@@ -1834,8 +1159,8 @@
                 <button class="back-btn" id="btnBackToBoletimCourseSelect">⬅ Escolher Outro Curso</button>
                 <div style="background: rgba(0,0,0,0.28); padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.35);">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom: 10px;">
-                        <h4 style="color: #fef3c7; font-size: 1.08rem;">📘 ${courseReport.courseTitle}</h4>
-                        <span style="font-size: 0.82rem; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 8px;">👨‍🏫 Professor: <strong>${courseReport.professorName || 'Não vinculado'}</strong></span>
+                        <h4 style="color: #fef3c7; font-size: 1.08rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h2a5 5 0 0 1 5 5 5 5 0 0 1 5-5h2a2 2 0 0 1 2 2v13"/><path d="M3 18a3 3 0 0 1 3-3h2a4 4 0 0 1 4 4 4 4 0 0 1 4-4h2a3 3 0 0 1 3 3"/></svg> ${courseReport.courseTitle}</h4>
+                        <span style="font-size: 0.82rem; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 8px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m2 10 10-5 10 5-10 5z"/><path d="M6 12v5c4 3 8 3 12 0v-5m4-2v6"/></svg> Professor: <strong>${courseReport.professorName || 'Não vinculado'}</strong></span>
                     </div>
                     <div class="admin-table-container">
                         <table class="admin-table">
@@ -1901,9 +1226,9 @@
             centerContent.innerHTML = `
                 <button class="back-btn" id="btnBackToEvalCourseSelect">⬅ Escolher Outro Curso</button>
                 <div style="background: rgba(0,0,0,0.28); padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.35);">
-                    <h4 style="color: #fef3c7; margin-bottom: 10px;">${isProvaOnly ? '📝 Provas' : '📋 Atividades'} Corrigidas — ${courseReport.courseTitle}</h4>
+                    <h4 style="color: #fef3c7; margin-bottom: 10px;">${isProvaOnly ? '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> Provas' : '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> Atividades'} Corrigidas — ${courseReport.courseTitle}</h4>
                     ${items.length === 0
-                        ? `<p style="opacity:0.85; font-size:0.9rem; padding: 10px 0;">Nenhuma ${isProvaOnly ? 'prova' : 'atividade'} corrigida com nota lançada para este curso até o momento.</p>`
+                        ? `<p style="opacity:0.85; font-size:0.9rem; padding: 10px 0;">Nenhuma ${isProvaOnly ? 'prova' : 'atividade'} encontrada para este curso até o momento.</p>`
                         : `
                         <div class="admin-table-container">
                             <table class="admin-table">
@@ -1914,14 +1239,15 @@
                                         <th>Prazo / Atraso</th>
                                         <th>Data de Entrega</th>
                                         <th>Nota</th>
-                                        <th>Professor</th>
+                                        <th>Apelação / Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${items.map(item => {
                                         const isAtrasada = item.fora_do_prazo === 'V';
+                                        const isZeroedWithoutSubmission = isAtrasada && (item.status === 'Encerrada sem envio' || item.grade === 0);
                                         const atrasoBadgeBg = isAtrasada ? 'rgba(220, 38, 38, 0.7)' : 'rgba(16, 185, 129, 0.6)';
-                                        const atrasoLabel = isAtrasada ? 'Atrasada' : 'No Prazo';
+                                        const atrasoLabel = isAtrasada ? 'Atrasada / Não Entregue' : 'No Prazo';
 
                                         let deliveryDateStr = '-';
                                         if (item.submittedAt) {
@@ -1931,6 +1257,30 @@
                                         }
 
                                         const codeTag = item.evaluationCode ? `<span style="font-size:0.72rem; background:rgba(255,255,255,0.18); padding:2px 6px; border-radius:4px; margin-right:6px;">${item.evaluationCode}</span>` : '';
+
+                                        // Apelação UI
+                                        let appealHtml = '-';
+                                        const appealStatus = item.appealStatus || 'none';
+
+                                        if (isZeroedWithoutSubmission) {
+                                            if (appealStatus === 'none' || !appealStatus) {
+                                                appealHtml = `<button class="glass-btn btn-request-appeal" data-sub-id="${item.subId}" style="width: auto; padding: 6px 10px; font-size: 0.75rem; background: linear-gradient(135deg, #f59e0b, #d97706);">Pedir Apelação</button>`;
+                                            } else if (appealStatus === 'requested') {
+                                                appealHtml = `<span style="font-size: 0.75rem; background: rgba(245, 158, 11, 0.4); padding: 4px 8px; border-radius: 6px; font-weight: 600;">⏳ Apelação solicitada (Aguardando)</span>`;
+                                            } else if (appealStatus === 'accepted') {
+                                                const deadlineAppealStr = item.appealDeadline ? new Date(item.appealDeadline).toLocaleString('pt-BR') : '24h';
+                                                appealHtml = `
+                                                    <div style="display:flex; flex-direction:column; gap:4px;">
+                                                        <span style="font-size: 0.72rem; color: #34d399; font-weight: 700;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3Z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1L19 14Z"/></svg> Apelação Aceita! Envie até ${deadlineAppealStr}</span>
+                                                        <button class="glass-btn btn-open-assignment-appeal" data-id="${item.contentId}" data-course="${courseReport.courseId}" data-module="${item.moduleId}" style="width: auto; padding: 5px 10px; font-size: 0.75rem; background: linear-gradient(135deg, #10b981, #059669);">Enviar Atividade</button>
+                                                    </div>
+                                                `;
+                                            } else if (appealStatus === 'rejected') {
+                                                appealHtml = `<span style="font-size: 0.75rem; background: rgba(239, 68, 68, 0.4); padding: 4px 8px; border-radius: 6px; font-weight: 600;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6m0-6 6 6"/></svg> Apelação rejeitada</span>`;
+                                            } else if (appealStatus === 'expired') {
+                                                appealHtml = `<span style="font-size: 0.75rem; background: rgba(100, 100, 100, 0.5); padding: 4px 8px; border-radius: 6px; font-weight: 600;">⌛ Prazo de apelação esgotado (Nota Zero)</span>`;
+                                            }
+                                        }
 
                                         return `
                                             <tr>
@@ -1948,7 +1298,7 @@
                                                     </strong>
                                                     ${item.status === 'Encerrada sem envio' ? '<div style="font-size:0.7rem; color:#fca5a5; margin-top:2px;">Não enviada no prazo</div>' : ''}
                                                 </td>
-                                                <td>👤 ${item.professorName || courseReport.professorName || 'Não informado'}</td>
+                                                <td>${appealHtml}</td>
                                             </tr>
                                         `;
                                     }).join('')}
@@ -1963,11 +1313,85 @@
             document.getElementById('btnBackToEvalCourseSelect').addEventListener('click', () => {
                 renderStudentCourseSelector(boletimList, isProvaOnly ? 'provas' : 'atividades');
             });
+
+            // Eventos de Apelação
+            centerContent.querySelectorAll('.btn-request-appeal').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const subId = btn.getAttribute('data-sub-id');
+                    if (!confirm('Deseja pedir apelação para esta atividade? Atenção: você só pode pedir apelação uma única vez para esta atividade.')) return;
+
+                    const res = await fetch(`/api/submissions/${subId}/appeal`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-user-role': user.role }
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast(data.message || 'Apelação solicitada com sucesso!');
+                        renderStudentCorrectedEvaluationsDetail(courseReport, boletimList, isProvaOnly);
+                    } else {
+                        showToast(data.message || 'Erro ao solicitar apelação.');
+                    }
+                });
+            });
+
+            centerContent.querySelectorAll('.btn-open-assignment-appeal').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const cId = btn.getAttribute('data-course');
+                    const mId = btn.getAttribute('data-module');
+                    const aId = btn.getAttribute('data-id');
+                    const coursesAll = await fetchCourses();
+                    const courseObj = coursesAll.find(x => x.id === cId);
+                    const modObj = courseObj.modules.find(x => x.id === mId);
+                    const astObj = modObj.contents.find(x => x.id === aId);
+                    const subs = await fetchSubmissions();
+                    const existingSub = subs.find(s => s.contentId === aId && s.studentEmail.toLowerCase() === user.email.toLowerCase());
+                    renderStudentAssignmentModal(courseObj, modObj, astObj, existingSub);
+                });
+            });
         }
 
         function renderProfessorGradeModules(course) {
+            centerTitle.innerText = `Lançar Notas & Apelações: ${course.title}`;
+            centerContent.innerHTML = `
+                <p>Selecione uma opção para gerenciar:</p>
+                <div style="display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap;">
+                    <button type="button" class="grades-hub-btn primary-boletim" id="btnProfManageGrades" style="flex:1; min-width:260px;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <span style="font-size: 1.8rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg></span>
+                            <div>
+                                <div style="font-size: 1.08rem; font-weight: 800; color: #ffffff;">Lançar / Corrigir Notas</div>
+                                <div style="font-size: 0.84rem; opacity: 0.92; font-weight: 400;">Gerenciar submissões de atividades e provas por módulo.</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 1.2rem; font-weight: 700;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span>
+                    </button>
+                    
+                    <button type="button" class="grades-hub-btn" id="btnProfManageAppeals" style="flex:1; min-width:260px; border-left: 5px solid #f59e0b;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <span style="font-size: 1.8rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8a5 5 0 0 1-6 0ZM2 16l3-8 3 8a5 5 0 0 1-6 0Z"/><path d="M12 3v18m-4 0h8m-8-17h8"/></svg></span>
+                            <div>
+                                <div style="font-size: 1.08rem; font-weight: 800; color: #fef3c7;">Gerenciar Apelações</div>
+                                <div style="font-size: 0.84rem; opacity: 0.92; font-weight: 400;">Avaliar pedidos de apelação pendentes dos alunos para prazos perdidos.</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 1.2rem; font-weight: 700;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span>
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('btnProfManageGrades').addEventListener('click', () => {
+                renderProfessorGradeModulesSelectModule(course);
+            });
+
+            document.getElementById('btnProfManageAppeals').addEventListener('click', () => {
+                renderProfessorAppealsList(course);
+            });
+        }
+
+        function renderProfessorGradeModulesSelectModule(course) {
             centerTitle.innerText = `Lançar Notas: ${course.title}`;
             centerContent.innerHTML = `
+                <button class="back-btn" id="backToProfHub">Voltar</button>
                 <p>Selecione o módulo desejado para gerenciar e lançar notas:</p>
                 <div class="modules-container">
                     ${course.modules.map(mod => `
@@ -1979,6 +1403,8 @@
                 </div>
             `;
 
+            document.getElementById('backToProfHub').addEventListener('click', () => renderProfessorGradeModules(course));
+
             document.querySelectorAll('.select-grade-module-btn').forEach(box => {
                 box.addEventListener('click', () => {
                     const modId = box.getAttribute('data-mod-id');
@@ -1988,24 +1414,107 @@
             });
         }
 
+        async function renderProfessorAppealsList(course) {
+            centerTitle.innerText = `Apelações de Alunos: ${course.title}`;
+            const subs = await fetchSubmissions();
+
+            let pendingAppeals = [];
+            course.modules.forEach(mod => {
+                mod.contents.filter(c => c.isAssignment).forEach(ast => {
+                    const astSubs = subs.filter(s => s.contentId === ast.id && s.courseId === course.id);
+                    astSubs.forEach(sub => {
+                        if (sub.appealStatus === 'requested') {
+                            pendingAppeals.push({ ...sub, assignmentSubject: ast.subject, moduleName: mod.name, evaluationCode: ast.evaluationCode });
+                        }
+                    });
+                });
+            });
+
+            centerContent.innerHTML = `
+                <button class="back-btn" id="backToProfHub2">Voltar</button>
+                <div style="background: rgba(0,0,0,0.28); padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.35);">
+                    <h4 style="color: #fef3c7; margin-bottom: 12px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8a5 5 0 0 1-6 0ZM2 16l3-8 3 8a5 5 0 0 1-6 0Z"/><path d="M12 3v18m-4 0h8m-8-17h8"/></svg> Pedidos de Apelação Pendentes (${pendingAppeals.length})</h4>
+                    ${pendingAppeals.length === 0
+                        ? '<p style="opacity:0.85; font-size:0.9rem; padding: 10px 0;">Nenhum pedido de apelação pendente no momento.</p>'
+                        : `
+                        <div style="display:flex; flex-direction:column; gap:10px;">
+                            ${pendingAppeals.map(app => `
+                                <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                                    <div>
+                                        <div style="font-size:0.85rem; color:#fef3c7; font-weight:700;">${app.moduleName} - ${app.assignmentSubject}</div>
+                                        <div style="font-size:0.82rem; margin-top:2px;">Aluno: <strong>${app.studentName}</strong> (${app.studentEmail})</div>
+                                        <div style="font-size:0.75rem; opacity:0.85; margin-top:2px;">Solicitado em: ${app.appealRequestedAt ? new Date(app.appealRequestedAt).toLocaleString('pt-BR') : '-'}</div>
+                                    </div>
+                                    <div style="display:flex; gap:8px;">
+                                        <button class="glass-btn btn-accept-appeal" data-sub-id="${app.id}" style="width: auto; padding: 6px 12px; font-size: 0.78rem; background: linear-gradient(135deg, #10b981, #059669);">Aceitar (Dar 24h)</button>
+                                        <button class="glass-btn btn-reject-appeal" data-sub-id="${app.id}" style="width: auto; padding: 6px 12px; font-size: 0.78rem; background: linear-gradient(135deg, #dc2626, #7f1d1d);">Rejeitar</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        `
+                    }
+                </div>
+            `;
+
+            document.getElementById('backToProfHub2').addEventListener('click', () => renderProfessorGradeModules(course));
+
+            centerContent.querySelectorAll('.btn-accept-appeal').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const subId = btn.getAttribute('data-sub-id');
+                    const res = await fetch(`/api/submissions/${subId}/appeal-response`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
+                        body: JSON.stringify({ action: 'accept', professorName: user.name })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast(data.message || 'Apelação aceita com sucesso!');
+                        renderProfessorAppealsList(course);
+                    } else {
+                        showToast(data.message || 'Erro ao processar apelação.');
+                    }
+                });
+            });
+
+            centerContent.querySelectorAll('.btn-reject-appeal').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const subId = btn.getAttribute('data-sub-id');
+                    if (!confirm('Deseja realmente rejeitar esta apelação? O aluno não poderá solicitar outra.')) return;
+                    const res = await fetch(`/api/submissions/${subId}/appeal-response`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
+                        body: JSON.stringify({ action: 'reject', professorName: user.name })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast(data.message || 'Apelação rejeitada.');
+                        renderProfessorAppealsList(course);
+                    } else {
+                        showToast(data.message || 'Erro ao processar apelação.');
+                    }
+                });
+            });
+        }
+
         function renderProfessorGradeOptions(course, moduleObj) {
             centerTitle.innerText = `${course.title} > ${moduleObj.name}`;
             centerContent.innerHTML = `
-                <button class="back-btn" id="backToGradeModules">⬅ Voltar aos Módulos</button>
+                <button class="back-btn" id="backToGradeModules">Voltar aos Módulos</button>
                 <p>Escolha uma das opções abaixo para visualizar e lançar notas:</p>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 12px;">
                     <div class="course-card" id="btnOptEvaluated" style="background: rgba(245, 158, 11, 0.25); border: 1px solid rgba(245, 158, 11, 0.6);">
-                        <div class="course-title">📋 Atividades Avaliadas</div>
+                        <div class="course-title"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> Atividades Avaliadas</div>
                         <div class="course-desc">Gerenciar submissões de atividades que exigem notas e avaliações.</div>
                     </div>
                     <div class="course-card" id="btnOptUnevaluated" style="background: rgba(59, 130, 246, 0.25); border: 1px solid rgba(59, 130, 246, 0.6);">
-                        <div class="course-title">📌 Atividades Não Avaliadas</div>
+                        <div class="course-title"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> Atividades Não Avaliadas</div>
                         <div class="course-desc">Visualizar atividades e provas ainda pendentes de atribuição de nota.</div>
                     </div>
                 </div>
             `;
 
-            document.getElementById('backToGradeModules').addEventListener('click', () => renderProfessorGradeModules(course));
+            document.getElementById('backToGradeModules').addEventListener('click', () => renderProfessorGradeModulesSelectModule(course));
 
             document.getElementById('btnOptEvaluated').addEventListener('click', () => {
                 renderProfessorActivitiesList(course, moduleObj, true);
@@ -2034,7 +1543,7 @@
             });
 
             centerContent.innerHTML = `
-                <button class="back-btn" id="backToGradeOptions">⬅ Voltar às Opções</button>
+                <button class="back-btn" id="backToGradeOptions">Voltar às Opções</button>
                 <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
                     ${filteredContents.length === 0 ? `<p style="opacity:0.8;">Nenhuma ${isEvaluated ? 'atividade avaliada' : 'atividade não avaliada'} encontrada neste módulo.</p>` : ''}
                     ${filteredContents.map(act => {
@@ -2057,7 +1566,7 @@
                                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                     <div>
                                         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                                            <strong style="color: #fef3c7; font-size:1rem;">${isProva ? `📝 [PROVA${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]` : `📋 [ATIVIDADE${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]`} ${act.subject}</strong>
+                                            <strong style="color: #fef3c7; font-size:1rem;">${isProva ? `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> [PROVA${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]` : `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> [ATIVIDADE${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]`} ${act.subject}</strong>
                                             <span style="font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:6px; background:${badgeColor};">${badgeText}</span>
                                             <span style="font-size:0.72rem; font-weight:600; padding:2px 8px; border-radius:6px; background:rgba(245,158,11,0.35);">Nota: 0.0 a 5.0</span>
                                         </div>
@@ -2140,7 +1649,7 @@
             modalDiv.className = 'modal-overlay';
             modalDiv.innerHTML = `
                 <div class="modal-card" style="max-width: 600px;">
-                    <h3 style="margin-bottom: 10px;">📢 Criar Novo Aviso</h3>
+                    <h3 style="margin-bottom: 10px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg> Criar Novo Aviso</h3>
                     <div style="display: flex; flex-direction: column; gap: 10px; max-height: 70vh; overflow-y: auto; padding-right: 4px;">
                         <div>
                             <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Assunto do Aviso*</label>
@@ -2155,7 +1664,7 @@
                             <div class="editor-toolbar">
                                 <button type="button" id="btnAvisoBold"><b>Negrito</b></button>
                                 <button type="button" id="btnAvisoItalic"><i>Itálico</i></button>
-                                <label for="inputAvisoImg">🖼️ Inserir Imagem</label>
+                                <label for="inputAvisoImg"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg> Inserir Imagem</label>
                                 <input type="file" id="inputAvisoImg" accept="image/*" style="display: none;">
                             </div>
                             <div id="richAvisoEditor" class="rich-text-editor" contenteditable="true"></div>
@@ -2246,7 +1755,7 @@
             const courses = await fetchCourses();
             const assigned = courses.find(c => c.id === user.assignedCourse);
             if (!assigned) {
-                centerContent.innerHTML = `<p>⚠️ Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
+                centerContent.innerHTML = `<p><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg> Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
                 return;
             }
 
@@ -2281,17 +1790,17 @@
                             <div style="background: rgba(255,255,255,0.15); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3); display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
                                 <div style="flex: 1; min-width: 220px;">
                                     <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom: 6px;">
-                                        <span style="font-size: 0.8rem; background: rgba(245, 158, 11, 0.4); padding: 2px 8px; border-radius: 6px;">📂 Módulo: ${act.moduleName}</span>
+                                        <span style="font-size: 0.8rem; background: rgba(245, 158, 11, 0.4); padding: 2px 8px; border-radius: 6px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v1"/><path d="M3 10h18l-2 9H5z"/></svg> Módulo: ${act.moduleName}</span>
                                         <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: ${badgeColor};">${badgeText}</span>
                                     </div>
-                                    <strong style="color: #fef3c7; font-size:1.05rem; display:block;">${isProva ? `📝 [PROVA${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]` : `📋 [ATIVIDADE${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]`} ${act.subject}</strong>
+                                    <strong style="color: #fef3c7; font-size:1.05rem; display:block;">${isProva ? `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> [PROVA${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]` : `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> [ATIVIDADE${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]`} ${act.subject}</strong>
                                     <div style="font-size:0.85rem; opacity:0.9; margin-top:2px;">${act.description || 'Sem descrição'}</div>
                                     <div style="font-size:0.78rem; opacity:0.8; margin-top:6px;">Período: ${act.startDate ? new Date(act.startDate).toLocaleString('pt-BR') : '-'} até ${act.endDate ? new Date(act.endDate).toLocaleString('pt-BR') : '-'}${infoPrazoExtra}</div>
                                     <div class="rendered-content" style="font-size:0.85rem; margin-top:8px; background: rgba(0,0,0,0.2); padding:8px; border-radius:6px; word-break:break-word;">${act.textHtml}</div>
                                 </div>
                                 <div style="display:flex; gap:8px; align-items:center;">
-                                    <button class="glass-btn btn-edit-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">✏️ Editar</button>
-                                    <button class="glass-btn btn-del-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem; background: linear-gradient(135deg,#dc2626,#7f1d1d);">🗑️ Excluir</button>
+                                    <button class="glass-btn btn-edit-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m16 4 4 4L8 20H4v-4z"/><path d="m14 6 4 4"/></svg> Editar</button>
+                                    <button class="glass-btn btn-del-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem; background: linear-gradient(135deg,#dc2626,#7f1d1d);"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6"/><path d="M10 11v6m4-6v6"/></svg> Excluir</button>
                                 </div>
                             </div>
                         `;
@@ -2332,7 +1841,8 @@
 
         function renderStudentAssignmentModal(course, moduleObj, assignment, existingSub = null) {
             const deadlineInfo = evaluateDeadlineClient(assignment);
-            const isClosed = deadlineInfo.isClosed && (!existingSub || existingSub.isClosed);
+            const isAppealAccepted = existingSub && existingSub.appealStatus === 'accepted';
+            const isClosed = deadlineInfo.isClosed && !isAppealAccepted;
             const currentPrazoCode = existingSub ? (existingSub.fora_do_prazo || deadlineInfo.fora_do_prazo) : deadlineInfo.fora_do_prazo;
 
             const modalDiv = document.createElement('div');
@@ -2340,17 +1850,18 @@
             modalDiv.innerHTML = `
                 <div class="modal-card" style="max-width: 550px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
-                        <h3 style="margin:0;">${assignment.e_prova === 'V' ? '📝 Prova' : '📋 Atividade'}: ${assignment.subject}</h3>
+                        <h3 style="margin:0;">${assignment.e_prova === 'V' ? '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> Prova' : '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> Atividade'}: ${assignment.subject}</h3>
                         <span style="font-size:0.75rem; font-weight:700; padding:3px 8px; border-radius:6px; background:${currentPrazoCode === 'V' ? 'rgba(220,38,38,0.75)' : 'rgba(16,185,129,0.65)'};">${formatForaPrazoBadge(currentPrazoCode)}</span>
                     </div>
                     <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">${assignment.description || ''}</div>
                     <div class="rendered-content" style="font-size: 0.85rem; background: rgba(0,0,0,0.22); padding: 10px; border-radius: 8px; margin-bottom: 10px;">${assignment.textHtml || ''}</div>
-                    ${deadlineInfo.inTolerance ? `<div style="background: rgba(245, 158, 11, 0.35); border: 1px solid #f59e0b; padding: 8px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 10px;">⚠️ Atenção: O prazo oficial encerrou, mas esta atividade está no período de tolerância de 2 dias.</div>` : ''}
-                    ${isClosed ? `<div style="background: rgba(220, 38, 38, 0.45); border: 1px solid #ef4444; padding: 8px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 10px;">🔒 Prazo encerrado${assignment.e_prova === 'V' ? ' (Sem tolerância)' : ''}! Esta avaliação está fechada para novas respostas e a nota automática é 0.</div>` : ''}
+                    ${deadlineInfo.inTolerance ? `<div style="background: rgba(245, 158, 11, 0.35); border: 1px solid #f59e0b; padding: 8px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 10px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg> Atenção: O prazo oficial encerrou, mas esta atividade está no período de tolerância de 2 dias.</div>` : ''}
+                    ${isAppealAccepted ? `<div style="background: rgba(16, 185, 129, 0.35); border: 1px solid #10b981; padding: 8px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 10px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3Z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1L19 14Z"/></svg> Apelação aceita! Prazo de 24h para envio até ${new Date(existingSub.appealDeadline).toLocaleString('pt-BR')}.</div>` : ''}
+                    ${isClosed ? `<div style="background: rgba(220, 38, 38, 0.45); border: 1px solid #ef4444; padding: 8px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 10px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> Prazo encerrado${assignment.e_prova === 'V' ? ' (Sem tolerância)' : ''}! Esta avaliação está fechada para novas respostas e a nota automática é 0.</div>` : ''}
                     <div class="editor-toolbar" style="${isClosed ? 'display:none;' : ''}">
                         <button type="button" id="btnAstBold"><b>Negrito</b></button>
                         <button type="button" id="btnAstItalic"><i>Itálico</i></button>
-                        <label for="inputAstImg">🖼️ Inserir Imagem</label>
+                        <label for="inputAstImg"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg> Inserir Imagem</label>
                         <input type="file" id="inputAstImg" accept="image/*" style="display: none;">
                     </div>
                     <div id="richAssignmentEditor" class="rich-text-editor" contenteditable="${!isClosed}" style="min-height: 150px;">${existingSub ? existingSub.submissionHtml : ''}</div>
@@ -2410,9 +1921,9 @@
         function renderProfessorCourseView(course, isAdminView = false) {
             centerTitle.innerText = `Curso: ${course.title}`;
             centerContent.innerHTML = `
-                ${isAdminView ? '<button class="back-btn" id="backToAdminCourses">⬅ Voltar aos Cursos</button>' : ''}
+                ${isAdminView ? '<button class="back-btn" id="backToAdminCourses">Voltar aos Cursos</button>' : ''}
                 <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                    <button id="btnViewOnlyContents" class="glass-btn" style="width: auto; padding: 8px 14px; font-size: 0.8rem;">📚 Ver Somente Conteúdos (Histórico)</button>
+                    <button id="btnViewOnlyContents" class="glass-btn" style="width: auto; padding: 8px 14px; font-size: 0.8rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h2a5 5 0 0 1 5 5 5 5 0 0 1 5-5h2a2 2 0 0 1 2 2v13"/><path d="M3 18a3 3 0 0 1 3-3h2a4 4 0 0 1 4 4 4 4 0 0 1 4-4h2a3 3 0 0 1 3 3"/></svg> Ver Histórico de Conteúdos Teóricos</button>
                 </div>
                 <p>Selecione um dos módulos para lançar novos conteúdos ou gerenciar:</p>
                 <div class="modules-container">
@@ -2448,7 +1959,7 @@
         function renderProfessorSelectModuleForContents(course, isAdminView) {
             centerTitle.innerText = `Selecionar Módulo: ${course.title}`;
             centerContent.innerHTML = `
-                <button class="back-btn" id="backToCourseMain">⬅ Voltar</button>
+                <button class="back-btn" id="backToCourseMain">Voltar</button>
                 <p>Escolha qual dos módulos deseja visitar para ver o histórico de matérias:</p>
                 <div class="modules-container">
                     ${course.modules.map(mod => `
@@ -2476,15 +1987,15 @@
             const onlyContents = moduleObj.contents.filter(cnt => !cnt.isAssignment);
 
             centerContent.innerHTML = `
-                <button class="back-btn" id="backToModSelect">⬅ Voltar aos Módulos</button>
+                <button class="back-btn" id="backToModSelect">Voltar aos Módulos</button>
                 <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
                     <div style="background: rgba(0,0,0,0.25); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3);">
-                        <h4 style="color: #fef3c7; margin-bottom: 6px;">📂 ${moduleObj.name}</h4>
+                        <h4 style="color: #fef3c7; margin-bottom: 6px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v1"/><path d="M3 10h18l-2 9H5z"/></svg> ${moduleObj.name}</h4>
                         ${onlyContents.length === 0 ? '<p style="font-size:0.85rem; opacity:0.8;">Nenhum conteúdo teórico lançado neste módulo.</p>' : ''}
                         ${onlyContents.map(cnt => `
                             <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; margin-top: 6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                 <div style="flex: 1; min-width: 180px;">
-                                    <strong>📌 ${cnt.subject}</strong>
+                                    <strong><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> ${cnt.subject}</strong>
                                     <div style="font-size:0.8rem; opacity:0.9; margin-top:2px;">${cnt.description || 'Sem descrição'}</div>
                                     <div class="rendered-content" style="font-size:0.85rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
                                 </div>
@@ -2514,7 +2025,7 @@
         function renderModuleContentEditor(course, moduleObj, isAdminView, editItem = null) {
             centerTitle.innerText = `${course.title} > ${moduleObj.name}`;
             centerContent.innerHTML = `
-                <button class="back-btn" id="backToModules">⬅ Voltar</button>
+                <button class="back-btn" id="backToModules">Voltar</button>
                 <div style="background: rgba(0,0,0,0.25); padding: 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3); display: flex; flex-direction: column; gap: 12px;">
                     <div>
                         <label style="font-size:0.82rem; font-weight:600; display:block; margin-bottom:4px;">Assunto (Obrigatório)*</label>
@@ -2556,7 +2067,7 @@
                             <div class="editor-toolbar">
                                 <button type="button" id="btnAstSimpleBold"><b>Negrito</b></button>
                                 <button type="button" id="btnAstSimpleItalic"><i>Itálico</i></button>
-                                <label for="inputAstSimpleImg">🖼️ Inserir Imagem</label>
+                                <label for="inputAstSimpleImg"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg> Inserir Imagem</label>
                                 <input type="file" id="inputAstSimpleImg" accept="image/*" style="display: none;">
                             </div>
                             <div id="richAssignmentEditor" class="rich-text-editor" contenteditable="true">${editItem && editItem.isAssignment ? editItem.textHtml : ''}</div>
@@ -2567,7 +2078,7 @@
                             <div class="editor-toolbar">
                                 <button type="button" id="btnFullBold"><b>Negrito</b></button>
                                 <button type="button" id="btnFullItalic"><i>Itálico</i></button>
-                                <label for="inputEditorImg">🖼️ Inserir Imagem</label>
+                                <label for="inputEditorImg"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg> Inserir Imagem</label>
                                 <input type="file" id="inputEditorImg" accept="image/*" style="display: none;">
                             </div>
                             <div id="richFullEditor" class="rich-text-editor" contenteditable="true">${editItem && !editItem.isAssignment ? editItem.textHtml : ''}</div>
@@ -2733,7 +2244,7 @@
         function renderStudentCourseDetails(course) {
             centerTitle.innerText = `Curso: ${course.title}`;
             centerContent.innerHTML = `
-                <button class="back-btn" id="backToStudentCourses">⬅ Voltar</button>
+                <button class="back-btn" id="backToStudentCourses">Voltar</button>
                 <p>${course.description}</p>
                 <div class="modules-container">
                     ${course.modules.map(mod => `
@@ -2747,7 +2258,7 @@
                                         : '';
                                     return `
                                         <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px;">
-                                            <strong>${cnt.isAssignment ? (cnt.e_prova === 'V' ? '📝 Prova' : '📋 Atividade') : '📌 Matéria'}: ${cnt.subject}</strong>${badgeHtml}
+                                            <strong>${cnt.isAssignment ? (cnt.e_prova === 'V' ? '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> Prova' : '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> Atividade') : '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> Matéria'}: ${cnt.subject}</strong>${badgeHtml}
                                             <div class="rendered-content" style="font-size:0.82rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
                                         </div>
                                     `;
