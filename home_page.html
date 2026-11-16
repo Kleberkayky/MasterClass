@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Class - Painel Principal</title>
-    <link rel="icon" type="image/png" href="imagem8.1.png">
+    <link rel="icon" type="image/png" href="Icone_master_class2.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2264,25 +2264,25 @@
                 <button class="back-btn" id="backToStudentCourses">Voltar</button>
                 <p>${course.description}</p>
                 <div class="modules-container">
-                    ${course.modules.map(mod => `
-                        <div class="module-box" style="cursor: default;">
-                            <div class="module-title">${mod.name}</div>
-                            <div style="margin-top:6px; display:flex; flex-direction:column; gap:6px;">
-                                ${mod.contents.map(cnt => {
-                                    const deadlineInfo = cnt.isAssignment ? evaluateDeadlineClient(cnt) : null;
-                                    const badgeHtml = cnt.isAssignment
-                                        ? `<span style="font-size:0.7rem; font-weight:700; padding:2px 6px; border-radius:4px; margin-left:6px; background:${deadlineInfo.fora_do_prazo === 'V' ? 'rgba(220,38,38,0.7)' : 'rgba(16,185,129,0.6)'};">${formatForaPrazoBadge(deadlineInfo.fora_do_prazo)}</span>`
-                                        : '';
-                                    return `
+                    ${course.modules.map(mod => {
+                        const theoreticalContents = mod.contents.filter(cnt => !cnt.isAssignment);
+                        return `
+                            <div class="module-box" style="cursor: default;">
+                                <div class="module-title">${mod.name}</div>
+                                <div style="margin-top:6px; display:flex; flex-direction:column; gap:6px;">
+                                    ${theoreticalContents.length === 0 ? '<p style="font-size:0.82rem; opacity:0.75;">Nenhum conteúdo teórico disponível neste módulo.</p>' : ''}
+                                    ${theoreticalContents.map(cnt => `
                                         <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px;">
-                                            <strong>${cnt.isAssignment ? (cnt.e_prova === 'V' ? `${ICONS.exam} Prova` : `${ICONS.clipboard} Atividade`) : `${ICONS.pin} Matéria`}: ${cnt.subject}</strong>${badgeHtml}
+                                            <strong>${ICONS.pin} Matéria: ${cnt.subject}</strong>
+                                            ${cnt.description ? `<div style="font-size:0.8rem; opacity:0.85; margin-top:2px;">${cnt.description}</div>` : ''}
                                             <div class="rendered-content" style="font-size:0.82rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
+                                            ${cnt.file ? `<div style="margin-top:6px; font-size:0.8rem;"><a href="${cnt.file.data}" download="${cnt.file.name}" style="color:#fef3c7; text-decoration:underline;">Anexo: ${cnt.file.name}</a></div>` : ''}
                                         </div>
-                                    `;
-                                }).join('')}
+                                    `).join('')}
+                                </div>
                             </div>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             `;
             document.getElementById('backToStudentCourses').addEventListener('click', () => renderPage('my_courses'));
