@@ -534,3 +534,133 @@ body:not(.legacy-mode) { --blur-effect: blur(5px); --lg-inner-blur: 1.1px; }
     box-shadow: none !important;
 }
 #themeIcon .ui-icon { width: 21px; height: 21px; stroke: currentColor !important; filter: none !important; }
+
+/* ==========================================================================
+   ESTILIZAÇÃO PERSONALIZADA DA BARRA DE ROLAGEM (GLASSMORPHISM / LIQUID GLASS)
+   ========================================================================== */
+:root {
+    --sb-track: rgba(15, 23, 36, 0.28);
+    --sb-thumb: linear-gradient(180deg, rgba(245, 158, 11, 0.72) 0%, rgba(234, 88, 12, 0.78) 50%, rgba(220, 38, 38, 0.72) 100%);
+    --sb-thumb-hover: linear-gradient(180deg, rgba(251, 191, 36, 0.92) 0%, rgba(249, 115, 22, 0.95) 50%, rgba(239, 68, 68, 0.92) 100%);
+    --sb-thumb-solid: rgba(234, 88, 12, 0.75);
+    --sb-border: rgba(255, 255, 255, 0.25);
+}
+
+body.dark-theme {
+    --sb-track: rgba(8, 12, 26, 0.42);
+    --sb-thumb: linear-gradient(180deg, rgba(54, 209, 220, 0.65) 0%, rgba(108, 99, 255, 0.75) 50%, rgba(196, 113, 237, 0.72) 100%);
+    --sb-thumb-hover: linear-gradient(180deg, rgba(54, 209, 220, 0.92) 0%, rgba(108, 99, 255, 0.95) 50%, rgba(196, 113, 237, 0.92) 100%);
+    --sb-thumb-solid: rgba(108, 99, 255, 0.75);
+    --sb-border: rgba(190, 200, 255, 0.28);
+}
+
+/* Padrão W3C (Firefox e navegadores modernos) */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--sb-thumb-solid) var(--sb-track);
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--sb-track);
+    border-radius: 999px;
+    margin: 4px 0;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--sb-thumb);
+    border-radius: 999px;
+    border: 1px solid var(--sb-border);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.28);
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--sb-thumb-hover);
+    border-color: rgba(255, 255, 255, 0.55);
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* ==========================================================================
+   ESTILIZAÇÃO DE COMBOBOX (<select>) E CHECKBOX (GLASSMORPHISM)
+   ========================================================================== */
+
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.14) 0%, transparent 55%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat, no-repeat !important;
+    background-position: 0 0, right 14px center !important;
+    background-size: 100% 100%, 16px 16px !important;
+    padding-right: 40px !important;
+    cursor: pointer;
+}
+
+select:hover {
+    border-color: rgba(255, 255, 255, 0.65) !important;
+}
+
+select option {
+    background-color: #0a171e;
+    color: #ffffff;
+}
+
+body.dark-theme select option {
+    background-color: #050914;
+    color: #ffffff;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 19px !important;
+    height: 19px !important;
+    min-width: 19px;
+    min-height: 19px;
+    padding: 0 !important;
+    border-radius: 6px !important;
+    background: rgba(15, 23, 36, 0.42) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.38) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.18) !important;
+    cursor: pointer;
+    display: inline-grid;
+    place-content: center;
+    vertical-align: middle;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+input[type="checkbox"]:hover {
+    border-color: rgba(255, 255, 255, 0.68) !important;
+    transform: scale(1.05);
+}
+
+input[type="checkbox"]:checked {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.24) 0%, transparent 55%),
+        var(--btn-primary-bg) !important;
+    border-color: rgba(255, 255, 255, 0.65) !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 3px 10px var(--btn-primary-shadow) !important;
+}
+
+input[type="checkbox"]:checked::after {
+    content: "";
+    width: 11px;
+    height: 11px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    display: block;
+}

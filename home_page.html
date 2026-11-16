@@ -4,29 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Class - Painel Principal</title>
-    <link rel="icon" type="image/png" href="imagem8.png">
+    <link rel="icon" type="image/png" href="imagem8.1.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="home_page.css">
-
+    <link rel="stylesheet" href="home_page.css">
 </head>
 <body>
     <svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;overflow:hidden;pointer-events:none">
-        
-        <defs>
-            <linearGradient id="mcIconGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#36d1dc"/>
-                <stop offset="38%" stop-color="#6c63ff"/>
-                <stop offset="72%" stop-color="#c471ed"/>
-                <stop offset="100%" stop-color="#ff9a5a"/>
-            </linearGradient>
-            <linearGradient id="mcIconGlass" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ffffff" stop-opacity=".42"/>
-                <stop offset="48%" stop-color="#b9c7ff" stop-opacity=".16"/>
-                <stop offset="100%" stop-color="#7c3aed" stop-opacity=".30"/>
-            </linearGradient>
-        </defs>
         <filter id="liquidGlassRefraction" x="-15%" y="-15%" width="130%" height="130%">
             <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="8" result="waterNoise" />
             <feDisplacementMap in="SourceGraphic" in2="waterNoise" scale="9" xChannelSelector="R" yChannelSelector="G" />
@@ -36,11 +21,10 @@
     <div class="tooltip-glass" id="globalTooltip"></div>
 
     <div class="dashboard-container">
-        
         <aside class="glass-panel sidebar collapsed" id="sidebar">
             <div class="sidebar-brand has-tooltip" data-tooltip="Expandir/Minimizar Barra Lateral" id="sidebarBrandToggle">
                 <img src="imagem5.jpeg" alt="Logo Escola Master Class" class="school-logo has-tooltip" data-tooltip="Escola Master Class" id="schoolImg" onerror="this.src='https://via.placeholder.com/48?text=Escola'">
-                <span class="sidebar-brand-title">Master Class</span>
+                <span class="sidebar-brand-title has-tooltip" data-tooltip="Sobre o Projeto Master Class" id="brandAboutTrigger" role="button" tabindex="0">Master Class</span>
             </div>
 
             <ul class="menu-list" id="mainMenu"></ul>
@@ -79,7 +63,6 @@
                 <div class="content-body" id="centerContent"></div>
             </div>
         </main>
-
     </div>
 
     <script>
@@ -88,17 +71,56 @@
 
         let user = JSON.parse(storedUser);
 
-        function updateSchoolLogoByTheme(isDark) {
-            const logoElem = document.getElementById('schoolImg');
-            if (logoElem) {
-                logoElem.src = isDark ? 'Imagem9.png' : 'imagem5.jpeg';
+        // Cache e controle de requisições em voo (evita fetch duplicado e acelera navegação)
+        const apiCache = {
+            courses: null,
+            avisos: null,
+            submissions: null,
+            boletim: null
+        };
+        const pendingRequests = {};
+
+        async function fetchWithDedupe(key, url, extractor) {
+            if (apiCache[key] !== null) return apiCache[key];
+            if (pendingRequests[key]) return pendingRequests[key];
+
+            pendingRequests[key] = (async () => {
+                try {
+                    const res = await fetch(url);
+                    const data = res.ok ? await res.json() : {};
+                    const result = extractor(data);
+                    apiCache[key] = result;
+                    return result;
+                } catch {
+                    return [];
+                } finally {
+                    delete pendingRequests[key];
+                }
+            })();
+
+            return pendingRequests[key];
+        }
+
+        function invalidateCache(...keys) {
+            if (keys.length === 0) {
+                Object.keys(apiCache).forEach(k => apiCache[k] = null);
+            } else {
+                keys.forEach(k => { if (k in apiCache) apiCache[k] = null; });
             }
         }
 
-        const isDarkTheme = localStorage.getItem('masterclass_theme') === 'dark';
-        if (isDarkTheme) {
-            document.body.classList.add('dark-theme');
+        const fetchCourses = () => fetchWithDedupe('courses', '/api/courses', d => d.courses || []);
+        const fetchAvisos = () => fetchWithDedupe('avisos', '/api/avisos', d => d.avisos || []);
+        const fetchSubmissions = () => fetchWithDedupe('submissions', '/api/submissions', d => d.submissions || []);
+        const fetchStudentBoletim = () => fetchWithDedupe('boletim', `/api/boletim/${encodeURIComponent(user.email)}`, d => d.boletim || []);
+
+        function updateSchoolLogoByTheme(isDark) {
+            const logoElem = document.getElementById('schoolImg');
+            if (logoElem) logoElem.src = isDark ? 'Imagem9.png' : 'imagem5.jpeg';
         }
+
+        const isDarkTheme = localStorage.getItem('masterclass_theme') === 'dark';
+        if (isDarkTheme) document.body.classList.add('dark-theme');
         updateSchoolLogoByTheme(isDarkTheme);
 
         if (localStorage.getItem('masterclass_legacy') === 'true') {
@@ -108,67 +130,86 @@
         function focusAndScrollTo(el) {
             if (!el) return;
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            if (typeof el.focus === 'function') {
-                el.focus({ preventScroll: true });
-            }
+            if (typeof el.focus === 'function') el.focus({ preventScroll: true });
         }
 
         function evaluateDeadlineClient(item) {
             if (!item || !item.endDate) {
-                return { fora_do_prazo: 'F', isPastEnd: false, isClosed: false, inTolerance: false, limitDate: null };
+                return { fora_do_prazo: 'F', isPastEnd: false, isClosed: false, inTolerance: false };
             }
-            const now = new Date();
-            const end = new Date(item.endDate);
+            const now = Date.now();
+            const end = new Date(item.endDate).getTime();
             const isProva = item.e_prova === 'V';
             const toleranceMs = isProva ? 0 : (2 * 24 * 60 * 60 * 1000);
-            const limit = new Date(end.getTime() + toleranceMs);
+            const limit = end + toleranceMs;
 
             const isPastEnd = now > end;
             const isClosed = now > limit;
 
             return {
                 fora_do_prazo: isPastEnd ? 'V' : 'F',
-                isPastEnd: isPastEnd,
-                isClosed: isClosed,
-                inTolerance: !isProva && isPastEnd && !isClosed,
-                limitDate: limit
+                isPastEnd,
+                isClosed,
+                inTolerance: !isProva && isPastEnd && !isClosed
             };
         }
 
-        function formatForaPrazoBadge(code) {
-            return code === 'V' ? 'Fora do Prazo' : 'Dentro do Prazo';
-        }
+        const formatForaPrazoBadge = code => code === 'V' ? 'Fora do Prazo' : 'Dentro do Prazo';
+
+        // Ícones SVG reutilizáveis
+        const ICONS = {
+            megaphone: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg>',
+            shield: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11"/><path d="m9 12 2 2 4-4"/></svg>',
+            folder: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v1"/><path d="M3 10h18l-2 9H5z"/></svg>',
+            book: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h2a5 5 0 0 1 5 5 5 5 0 0 1 5-5h2a2 2 0 0 1 2 2v13"/><path d="M3 18a3 3 0 0 1 3-3h2a4 4 0 0 1 4 4 4 4 0 0 1 4-4h2a3 3 0 0 1 3 3"/></svg>',
+            exam: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg>',
+            clipboard: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg>',
+            gear: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.2M12 19.3v2.2M4.93 4.93l1.56 1.56M17.51 17.51l1.56 1.56M2.5 12h2.2M19.3 12h2.2M4.93 19.07l1.56-1.56M17.51 6.49l1.56-1.56"/><circle cx="12" cy="12" r="7.2" stroke-dasharray="3.2 2.45"/></svg>',
+            trash: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6"/><path d="M10 11v6m4-6v6"/></svg>',
+            edit: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m16 4 4 4L8 20H4v-4z"/><path d="m14 6 4 4"/></svg>',
+            pin: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+            image: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>',
+            warning: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg>',
+            sparkle: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3Z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1L19 14Z"/></svg>',
+            arrowRight: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>',
+            scale: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8a5 5 0 0 1-6 0ZM2 16l3-8 3 8a5 5 0 0 1-6 0Z"/><path d="M12 3v18m-4 0h8m-8-17h8"/></svg>',
+            gradCap: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m2 10 10-5 10 5-10 5z"/><path d="M6 12v5c4 3 8 3 12 0v-5m4-2v6"/></svg>',
+            code: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+            externalLink: '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
+        };
 
         const mainMenu = document.getElementById('mainMenu');
 
         function renderMenu() {
-            const gearIconSvg = `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.2M12 19.3v2.2M4.93 4.93l1.56 1.56M17.51 17.51l1.56 1.56M2.5 12h2.2M19.3 12h2.2M4.93 19.07l1.56-1.56M17.51 6.49l1.56-1.56"/><circle cx="12" cy="12" r="7.2" stroke-dasharray="3.2 2.45"/></svg>`;
+            const avatarImg = `<img src="${user.avatar || 'imagem4.jpeg'}" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar">`;
+            const menusByRole = {
+                Administrador: [
+                    { page: 'avisos', label: 'Quadro de Avisos', icon: ICONS.megaphone, active: true },
+                    { page: 'admin_accounts', label: 'Controle de contas', icon: ICONS.shield },
+                    { page: 'admin_courses', label: 'Gerenciar Cursos', icon: ICONS.folder },
+                    { page: 'my_profile', label: 'Meu perfil', icon: avatarImg },
+                    { page: 'settings', label: 'Configurações', icon: ICONS.gear }
+                ],
+                Aluno: [
+                    { page: 'avisos', label: 'Quadro de Avisos', icon: ICONS.megaphone, active: true },
+                    { page: 'my_courses', label: 'Meus Cursos', icon: ICONS.book },
+                    { page: 'my_grades', label: 'Minhas Notas', icon: ICONS.exam },
+                    { page: 'my_profile', label: 'Meu Perfil', icon: avatarImg },
+                    { page: 'settings', label: 'Configurações', icon: ICONS.gear }
+                ],
+                Professor: [
+                    { page: 'avisos', label: 'Quadro de Avisos', icon: ICONS.megaphone, active: true },
+                    { page: 'my_courses', label: 'Meu Curso', icon: ICONS.book },
+                    { page: 'my_grades', label: 'Lançar Notas', icon: ICONS.exam },
+                    { page: 'my_profile', label: 'Meu Perfil', icon: avatarImg },
+                    { page: 'settings', label: 'Configurações', icon: ICONS.gear }
+                ]
+            };
 
-            if (user.role === 'Administrador') {
-                mainMenu.innerHTML = `
-                    <li><a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg></span><span class="btn-text">Quadro de Avisos</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Controle de contas" data-page="admin_accounts"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11"/><path d="m9 12 2 2 4-4"/></svg></span><span class="btn-text">Controle de contas</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Gerenciar Cursos" data-page="admin_courses"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v1"/><path d="M3 10h18l-2 9H5z"/></svg></span><span class="btn-text">Gerenciar Cursos</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Meu perfil" data-page="my_profile"><span class="btn-icon"><img src="${user.avatar || 'imagem4.jpeg'}" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar"></span><span class="btn-text">Meu perfil</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings"><span class="btn-icon">${gearIconSvg}</span><span class="btn-text">Configurações</span></a></li>
-                `;
-            } else if (user.role === 'Aluno') {
-                mainMenu.innerHTML = `
-                    <li><a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg></span><span class="btn-text">Quadro de Avisos</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Meus Cursos" data-page="my_courses"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h2a5 5 0 0 1 5 5 5 5 0 0 1 5-5h2a2 2 0 0 1 2 2v13"/><path d="M3 18a3 3 0 0 1 3-3h2a4 4 0 0 1 4 4 4 4 0 0 1 4-4h2a3 3 0 0 1 3 3"/></svg></span><span class="btn-text">Meus Cursos</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Minhas Notas" data-page="my_grades"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg></span><span class="btn-text">Minhas Notas</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Meu Perfil" data-page="my_profile"><span class="btn-icon"><img src="${user.avatar || 'imagem4.jpeg'}" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar"></span><span class="btn-text">Meu Perfil</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings"><span class="btn-icon">${gearIconSvg}</span><span class="btn-text">Configurações</span></a></li>
-                `;
-            } else {
-                mainMenu.innerHTML = `
-                    <li><a class="glass-btn has-tooltip active" data-tooltip="Quadro de Avisos" data-page="avisos"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg></span><span class="btn-text">Quadro de Avisos</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Meu Curso" data-page="my_courses"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h2a5 5 0 0 1 5 5 5 5 0 0 1 5-5h2a2 2 0 0 1 2 2v13"/><path d="M3 18a3 3 0 0 1 3-3h2a4 4 0 0 1 4 4 4 4 0 0 1 4-4h2a3 3 0 0 1 3 3"/></svg></span><span class="btn-text">Meu Curso</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Lançar Notas" data-page="my_grades"><span class="btn-icon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg></span><span class="btn-text">Lançar Notas</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Meu Perfil" data-page="my_profile"><span class="btn-icon"><img src="${user.avatar || 'imagem4.jpeg'}" alt="Perfil" class="profile-btn-avatar" id="navProfileAvatar"></span><span class="btn-text">Meu Perfil</span></a></li>
-                    <li><a class="glass-btn has-tooltip" data-tooltip="Configurações" data-page="settings"><span class="btn-icon">${gearIconSvg}</span><span class="btn-text">Configurações</span></a></li>
-                `;
-            }
+            const items = menusByRole[user.role] || menusByRole.Professor;
+            mainMenu.innerHTML = items.map(item => `
+                <li><a class="glass-btn has-tooltip${item.active ? ' active' : ''}" data-tooltip="${item.label}" data-page="${item.page}"><span class="btn-icon">${item.icon}</span><span class="btn-text">${item.label}</span></a></li>
+            `).join('');
         }
         renderMenu();
 
@@ -186,75 +227,157 @@
 
         setupGlobalSearch();
 
+        // Tooltip otimizado com requestAnimationFrame
         const tooltip = document.getElementById('globalTooltip');
+        let tooltipRafPending = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
         document.addEventListener('mouseover', (e) => {
             const target = e.target.closest('.has-tooltip');
             if (target) {
                 const text = target.getAttribute('data-tooltip');
-                if (text) { tooltip.innerText = text; tooltip.classList.add('visible'); }
+                if (text) {
+                    tooltip.innerText = text;
+                    tooltip.classList.add('visible');
+                }
             }
         });
+
         document.addEventListener('mousemove', (e) => {
-            if (tooltip.classList.contains('visible')) {
-                tooltip.style.left = `${e.clientX + 14}px`;
-                tooltip.style.top = `${e.clientY + 14}px`;
+            if (!tooltip.classList.contains('visible')) return;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            if (!tooltipRafPending) {
+                tooltipRafPending = true;
+                requestAnimationFrame(() => {
+                    tooltip.style.transform = `translate3d(${lastMouseX + 14}px, ${lastMouseY + 14}px, 0)`;
+                    tooltip.style.left = '0px';
+                    tooltip.style.top = '0px';
+                    tooltipRafPending = false;
+                });
             }
-        });
+        }, { passive: true });
+
         document.addEventListener('mouseout', (e) => {
-            if (e.target.closest('.has-tooltip')) { tooltip.classList.remove('visible'); }
+            if (e.target.closest('.has-tooltip')) tooltip.classList.remove('visible');
         });
 
         const sidebar = document.getElementById('sidebar');
-        document.getElementById('sidebarBrandToggle').addEventListener('click', () => {
+        const brandAboutTrigger = document.getElementById('brandAboutTrigger');
+
+        document.getElementById('sidebarBrandToggle').addEventListener('click', (e) => {
+            if (e.target.closest('#brandAboutTrigger')) return;
             sidebar.classList.toggle('collapsed');
+        });
+
+        function openAboutProjectModal() {
+            const existing = document.getElementById('aboutProjectModalOverlay');
+            if (existing) existing.remove();
+
+            const currentLogoSrc = document.body.classList.contains('dark-theme') ? 'Imagem9.png' : 'imagem5.jpeg';
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal-overlay';
+            modalDiv.id = 'aboutProjectModalOverlay';
+            modalDiv.innerHTML = `
+                <div class="modal-card about-modal-card" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle">
+                    <div class="about-header">
+                        <img src="${currentLogoSrc}" alt="Logo Master Class" class="about-logo" onerror="this.src='https://via.placeholder.com/54?text=MC'">
+                        <div>
+                            <div class="about-brand-heading" id="aboutModalTitle">Master Class</div>
+                            <div class="about-subtitle">Sobre o Projeto &amp; Desenvolvimento</div>
+                        </div>
+                    </div>
+
+                    <div class="about-sections">
+                        <div class="about-block">
+                            <div class="about-block-title">${ICONS.book} Sobre a Plataforma</div>
+                            <p>
+                                O <strong>Master Class</strong> é um protótipo de design e desenvolvimento de uma plataforma de estudos. Uma das principais inspirações para sua criação foi o <strong>AVA</strong> da minha faculdade: a partir da análise prática de seus pontos fortes e fracos no dia a dia acadêmico, busquei reunir nesta interface as melhorias de usabilidade, organização e fluidez visual que eu gostaria de ver em um ambiente virtual de aprendizagem moderno.
+                            </p>
+                        </div>
+
+                        <div class="about-block">
+                            <div class="about-block-title">${ICONS.sparkle} Em Desenvolvimento &amp; Próximos Passos</div>
+                            <p>O projeto segue em evolução contínua, com novas funcionalidades planejadas para expandir a experiência de ensino e gestão:</p>
+                            <ul class="about-roadmap-list">
+                                <li><span class="about-roadmap-dot"></span><span><strong>Biblioteca Digital:</strong> acervo integrado de materiais complementares e referências de estudo para os cursos.</span></li>
+                                <li><span class="about-roadmap-dot"></span><span><strong>Integração com Inteligência Artificial:</strong> ferramentas de apoio dedicadas a <strong>administradores</strong> e <strong>professores</strong> para otimizar rotinas pedagógicas e administrativas.</span></li>
+                            </ul>
+                        </div>
+
+                        <div class="about-block">
+                            <div class="about-block-title">${ICONS.gradCap} Autor</div>
+                            <p>
+                                Desenvolvido por <strong>Kleber Kayky Coelho Cruz</strong>, acadêmico de <strong>Engenharia da Computação</strong> na <strong>META Centro Universitário</strong>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="about-actions">
+                        <a href="https://github.com/Kleberkayky/MasterClass" target="_blank" rel="noopener noreferrer" class="glass-btn" style="flex: 1; min-width: 210px; padding: 11px 16px; justify-content: center;">
+                            ${ICONS.code}<span>Ver Repositório no GitHub</span>${ICONS.externalLink}
+                        </a>
+                        <button type="button" id="btnCloseAboutModal" class="glass-btn btn-logout" style="flex: 0 0 auto; width: auto; min-width: 120px; padding: 11px 18px; justify-content: center; margin-top: 0;">
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalDiv);
+
+            const closeModal = () => modalDiv.remove();
+            modalDiv.querySelector('#btnCloseAboutModal').addEventListener('click', closeModal);
+            modalDiv.addEventListener('click', (ev) => {
+                if (ev.target === modalDiv) closeModal();
+            });
+            const escHandler = (ev) => {
+                if (ev.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        }
+
+        brandAboutTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            tooltip.classList.remove('visible');
+            openAboutProjectModal();
+        });
+
+        brandAboutTrigger.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                tooltip.classList.remove('visible');
+                openAboutProjectModal();
+            }
         });
 
         const centerTitle = document.getElementById('centerTitle');
         const centerContent = document.getElementById('centerContent');
+        let toastTimer = null;
 
         function showToast(txt, targetFocusElem = null) {
             const toast = document.getElementById('toastMsg');
             toast.innerText = txt;
             toast.style.display = 'block';
             focusAndScrollTo(targetFocusElem || toast);
-            setTimeout(() => { toast.style.display = 'none'; }, 3500);
-        }
-
-        async function fetchCourses() {
-            try {
-                const res = await fetch('/api/courses');
-                const data = await res.json();
-                return res.ok ? data.courses : [];
-            } catch (err) { return []; }
-        }
-
-        async function fetchAvisos() {
-            try {
-                const res = await fetch('/api/avisos');
-                const data = await res.json();
-                return res.ok ? data.avisos : [];
-            } catch (err) { return []; }
-        }
-
-        async function fetchSubmissions() {
-            try {
-                const res = await fetch('/api/submissions');
-                const data = await res.json();
-                return res.ok ? data.submissions : [];
-            } catch (err) { return []; }
-        }
-
-        async function fetchStudentBoletim() {
-            try {
-                const res = await fetch(`/api/boletim/${encodeURIComponent(user.email)}`);
-                const data = res.ok ? await res.json() : { boletim: [] };
-                return data.boletim || [];
-            } catch (err) { return []; }
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3500);
         }
 
         function enableImageResizingInEditor(editorElement) {
             let activeToolbar = null;
             let selectedImage = null;
+
+            function positionToolbar() {
+                if (!activeToolbar || !selectedImage) return;
+                const rect = selectedImage.getBoundingClientRect();
+                activeToolbar.style.top = `${window.scrollY + rect.top - 42}px`;
+                activeToolbar.style.left = `${window.scrollX + rect.left + (rect.width / 2) - 130}px`;
+            }
 
             function removeToolbar() {
                 if (activeToolbar) {
@@ -265,6 +388,8 @@
                     selectedImage.classList.remove('image-selected-outline');
                     selectedImage = null;
                 }
+                window.removeEventListener('scroll', positionToolbar);
+                window.removeEventListener('resize', positionToolbar);
             }
 
             editorElement.addEventListener('click', (e) => {
@@ -279,9 +404,7 @@
                     }
                     return;
                 }
-                if (!e.target.closest('.image-resize-toolbar')) {
-                    removeToolbar();
-                }
+                if (!e.target.closest('.image-resize-toolbar')) removeToolbar();
             });
 
             function showToolbarForImage(img) {
@@ -294,11 +417,13 @@
                     <button type="button" data-size="75">Grande (75%)</button>
                     <button type="button" data-size="100">Máximo (100%)</button>
                     <button type="button" data-size="custom">Outro...</button>
-                    <button type="button" data-action="delete" style="background: rgba(220,38,38,0.4); border-color: rgba(220,38,38,0.6);"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6"/><path d="M10 11v6m4-6v6"/></svg></button>
+                    <button type="button" data-action="delete" style="background: rgba(220,38,38,0.4); border-color: rgba(220,38,38,0.6);">${ICONS.trash}</button>
                 `;
 
                 document.body.appendChild(activeToolbar);
                 positionToolbar();
+                window.addEventListener('scroll', positionToolbar, { passive: true });
+                window.addEventListener('resize', positionToolbar, { passive: true });
 
                 activeToolbar.querySelectorAll('button').forEach(btn => {
                     btn.addEventListener('click', (ev) => {
@@ -332,16 +457,23 @@
                     });
                 });
             }
+        }
 
-            function positionToolbar() {
-                if (!activeToolbar || !selectedImage) return;
-                const rect = selectedImage.getBoundingClientRect();
-                activeToolbar.style.top = `${window.scrollY + rect.top - 42}px`;
-                activeToolbar.style.left = `${window.scrollX + rect.left + (rect.width / 2) - 130}px`;
-            }
-
-            window.addEventListener('scroll', positionToolbar);
-            window.addEventListener('resize', positionToolbar);
+        function insertImageIntoEditor(inputEl, editorEl) {
+            inputEl.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    editorEl.focus();
+                    const imgHtml = `<img src="${event.target.result}" alt="Imagem" style="width: 75%; max-width: 100%; height: auto;">`;
+                    if (!document.execCommand('insertHTML', false, imgHtml)) {
+                        editorEl.innerHTML += imgHtml;
+                    }
+                };
+                reader.readAsDataURL(file);
+                e.target.value = '';
+            });
         }
 
         function setupGlobalSearch() {
@@ -354,7 +486,10 @@
             searchToggleBtn.addEventListener('click', () => {
                 const isVisible = searchBarContainer.style.display === 'flex';
                 searchBarContainer.style.display = isVisible ? 'none' : 'flex';
-                if (!isVisible) { globalSearchInput.focus(); renderRecentSearches(); }
+                if (!isVisible) {
+                    globalSearchInput.focus();
+                    renderRecentSearches();
+                }
             });
             btnCloseSearch.addEventListener('click', () => { searchBarContainer.style.display = 'none'; });
 
@@ -372,17 +507,19 @@
 
             globalSearchInput.addEventListener('input', (e) => {
                 const query = e.target.value.toLowerCase().trim();
-                if (!query) { searchResultsDropdown.style.display = 'none'; return; }
-                
+                if (!query) {
+                    searchResultsDropdown.style.display = 'none';
+                    return;
+                }
+
                 const matches = availablePages.filter(p => p.name.toLowerCase().includes(query));
-                
+                searchResultsDropdown.style.display = 'block';
+
                 if (matches.length === 0) {
-                    searchResultsDropdown.style.display = 'block';
                     searchResultsDropdown.innerHTML = `<div style="padding: 6px 10px; font-size: 0.85rem; opacity: 0.8; text-align: center;">Nenhum resultado encontrado.</div>`;
                     return;
                 }
 
-                searchResultsDropdown.style.display = 'block';
                 searchResultsDropdown.innerHTML = matches.map(m => `
                     <div class="search-result-item" data-page="${m.pageKey}" style="padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.88rem; background: rgba(255,255,255,0.1); margin-bottom: 4px;">
                         <svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg> ${m.name}
@@ -418,20 +555,14 @@
             }
         }
 
-        function getReadNotificationsKey() {
-            return `masterclass_read_notifs_${user.email.toLowerCase()}`;
-        }
+        const getReadNotificationsKey = () => `masterclass_read_notifs_${user.email.toLowerCase()}`;
 
         function getReadNotifications() {
-            try {
-                return JSON.parse(localStorage.getItem(getReadNotificationsKey()) || '[]');
-            } catch {
-                return [];
-            }
+            try { return JSON.parse(localStorage.getItem(getReadNotificationsKey()) || '[]'); } catch { return []; }
         }
 
         function markNotificationAsRead(notifId) {
-            let readList = getReadNotifications();
+            const readList = getReadNotifications();
             if (!readList.includes(notifId)) {
                 readList.push(notifId);
                 localStorage.setItem(getReadNotificationsKey(), JSON.stringify(readList));
@@ -455,9 +586,9 @@
                         badge.style.display = 'none';
                     }
 
-                    notifBtn.addEventListener('click', () => { renderNotificationsModal(allNotifs); });
+                    notifBtn.addEventListener('click', () => renderNotificationsModal(allNotifs));
                 }
-            } catch (err) {}
+            } catch {}
         }
 
         function renderNotificationsModal(notifications) {
@@ -491,62 +622,51 @@
 
             modalDiv.querySelectorAll('.notif-item').forEach(item => {
                 item.addEventListener('click', () => {
-                    const id = item.getAttribute('data-id');
-                    markNotificationAsRead(id);
+                    markNotificationAsRead(item.getAttribute('data-id'));
                     item.remove();
-                    
+
                     const container = modalDiv.querySelector('#notifListContainer');
                     if (container.querySelectorAll('.notif-item').length === 0) {
                         container.innerHTML = '<p style="text-align: center; opacity: 0.8; font-size: 0.9rem; padding: 20px 0;">Nenhuma notificação nova no momento.</p>';
                     }
-
                     updateBadgeCount(notifications);
                 });
             });
 
             modalDiv.querySelector('#btnMarkAllRead').addEventListener('click', () => {
                 notifications.forEach(n => markNotificationAsRead(n.id));
-                const container = modalDiv.querySelector('#notifListContainer');
-                container.innerHTML = '<p style="text-align: center; opacity: 0.8; font-size: 0.9rem; padding: 20px 0;">Nenhuma notificação nova no momento.</p>';
+                modalDiv.querySelector('#notifListContainer').innerHTML = '<p style="text-align: center; opacity: 0.8; font-size: 0.9rem; padding: 20px 0;">Nenhuma notificação nova no momento.</p>';
                 updateBadgeCount(notifications);
             });
 
-            modalDiv.querySelector('#btnCloseNotifModal').addEventListener('click', () => {
-                modalDiv.remove();
-            });
+            modalDiv.querySelector('#btnCloseNotifModal').addEventListener('click', () => modalDiv.remove());
         }
 
         function updateBadgeCount(notifications) {
             const badge = document.getElementById('notifBadge');
+            if (!badge) return;
             const readList = getReadNotifications();
             const unreadCount = notifications.filter(n => !readList.includes(n.id)).length;
-            
-            if (badge) {
-                if (unreadCount > 0) {
-                    badge.innerText = unreadCount;
-                    badge.style.display = 'inline-block';
-                } else {
-                    badge.innerText = '0';
-                    badge.style.display = 'none';
-                }
+
+            if (unreadCount > 0) {
+                badge.innerText = unreadCount;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.innerText = '0';
+                badge.style.display = 'none';
             }
         }
 
         async function renderPage(pageKey) {
-            const courses = await fetchCourses();
-
             switch(pageKey) {
-                case 'avisos':
+                case 'avisos': {
                     centerTitle.innerText = "Quadro de Avisos";
                     const avisos = await fetchAvisos();
-                    let adminCreateAvisoBtnHtml = '';
-                    if (user.role === 'Administrador') {
-                        adminCreateAvisoBtnHtml = `
-                            <div style="display: flex; justify-content: center; margin-bottom: 16px;">
-                                <button id="btnOpenCreateAvisoModal" class="glass-btn" style="width: auto; padding: 10px 20px; font-size: 0.95rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg> Criar novo aviso</button>
-                            </div>
-                        `;
-                    }
+                    const adminCreateAvisoBtnHtml = user.role === 'Administrador' ? `
+                        <div style="display: flex; justify-content: center; margin-bottom: 16px;">
+                            <button id="btnOpenCreateAvisoModal" class="glass-btn" style="width: auto; padding: 10px 20px; font-size: 0.95rem;">${ICONS.megaphone} Criar novo aviso</button>
+                        </div>
+                    ` : '';
 
                     centerContent.innerHTML = `
                         ${adminCreateAvisoBtnHtml}
@@ -554,7 +674,7 @@
                         <div style="display:flex; flex-direction:column; gap:12px;">
                             ${avisos.map(av => `
                                 <div style="background:rgba(255,255,255,0.15); padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.3); position: relative;">
-                                    <strong style="font-size: 1.05rem; color: #fef3c7; display:block; padding-right:60px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg> ${av.subject}</strong>
+                                    <strong style="font-size: 1.05rem; color: #fef3c7; display:block; padding-right:60px;">${ICONS.megaphone} ${av.subject}</strong>
                                     <div style="font-size:0.85rem; opacity:0.9; margin:4px 0;">${av.description}</div>
                                     <div class="rendered-content" style="font-size:0.9rem; margin-top: 8px; word-break: break-word;">${av.textHtml}</div>
                                     ${av.file ? `<div style="margin-top:8px; font-size:0.85rem;"><a href="${av.file.data}" download="${av.file.name}" style="color:#fef3c7; text-decoration:underline;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m21 11.5-8.5 8.5a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8"/></svg> ${av.file.name}</a></div>` : ''}
@@ -565,9 +685,7 @@
                     `;
 
                     if (user.role === 'Administrador') {
-                        document.getElementById('btnOpenCreateAvisoModal').addEventListener('click', () => {
-                            renderAdminCreateAvisoModal();
-                        });
+                        document.getElementById('btnOpenCreateAvisoModal').addEventListener('click', renderAdminCreateAvisoModal);
 
                         document.querySelectorAll('.btn-del-aviso').forEach(btn => {
                             btn.addEventListener('click', async () => {
@@ -578,19 +696,24 @@
                                     headers: { 'x-user-role': user.role }
                                 });
                                 const data = await res.json();
+                                invalidateCache('avisos');
                                 showToast(data.message || 'Aviso excluído.');
                                 renderPage('avisos');
                             });
                         });
                     }
                     break;
+                }
 
-                case 'admin_accounts':
+                case 'admin_accounts': {
                     centerTitle.innerText = "Controle de contas";
                     try {
                         const res = await fetch('/api/admin/users', { headers: { 'x-user-role': user.role } });
                         const data = await res.json();
-                        if (!res.ok) { centerContent.innerHTML = `<p>Erro ao carregar usuários.</p>`; return; }
+                        if (!res.ok) {
+                            centerContent.innerHTML = `<p>Erro ao carregar usuários.</p>`;
+                            return;
+                        }
                         const usersList = data.users || [];
 
                         centerContent.innerHTML = `
@@ -647,8 +770,7 @@
                             const filtered = usersList.filter(u => {
                                 const matchesRole = (selectedRole === 'Todos' || u.role === selectedRole);
                                 const fieldValue = String(u[field] || '').toLowerCase();
-                                const matchesQuery = fieldValue.includes(query);
-                                return matchesRole && matchesQuery;
+                                return matchesRole && fieldValue.includes(query);
                             });
 
                             if (filtered.length === 0) {
@@ -680,17 +802,16 @@
                                 const roleSelect = row.querySelector('.row-role');
                                 const saveBtn = row.querySelector('.btn-save-row');
                                 const originalEmail = row.getAttribute('data-original-email');
-
                                 const origUser = usersList.find(x => x.email === originalEmail);
 
-                                function checkChanges() {
+                                const checkChanges = () => {
                                     const hasChanged = (
                                         nameInput.value !== origUser.name ||
                                         emailInput.value !== origUser.email ||
                                         roleSelect.value !== origUser.role
                                     );
                                     saveBtn.style.display = hasChanged ? 'inline-block' : 'none';
-                                }
+                                };
 
                                 nameInput.addEventListener('input', checkChanges);
                                 emailInput.addEventListener('input', checkChanges);
@@ -740,14 +861,15 @@
                         searchField.addEventListener('change', renderTableRows);
                         searchInput.addEventListener('input', renderTableRows);
                         renderTableRows();
-
-                    } catch (err) {
+                    } catch {
                         centerContent.innerHTML = `<p>Erro ao carregar módulo de contas.</p>`;
                     }
                     break;
+                }
 
-                case 'admin_courses':
+                case 'admin_courses': {
                     centerTitle.innerText = "Gerenciar Cursos";
+                    const courses = await fetchCourses();
                     centerContent.innerHTML = `
                         <p>Cadastrar um novo curso na plataforma:</p>
                         <div style="background: rgba(0,0,0,0.25); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3); margin-top: 8px; display:flex; flex-direction:column; gap:10px;">
@@ -765,7 +887,7 @@
                         <div class="courses-grid">
                             ${courses.map(c => `
                                 <div class="course-card view-admin-course-details" data-id="${c.id}">
-                                    <div class="course-title"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v1"/><path d="M3 10h18l-2 9H5z"/></svg> ${c.title}</div>
+                                    <div class="course-title">${ICONS.folder} ${c.title}</div>
                                     <div class="course-desc">${c.description}</div>
                                     <span style="font-size:0.75rem; background: rgba(245, 158, 11, 0.5); padding: 3px 8px; border-radius: 6px; width: fit-content; margin-top:4px;">Gerenciar Módulos</span>
                                 </div>
@@ -783,7 +905,10 @@
                     document.getElementById('btnCreateCourse').addEventListener('click', async () => {
                         const title = document.getElementById('newCourseTitle').value.trim();
                         const description = document.getElementById('newCourseDesc').value.trim();
-                        if (!title) { showToast('Informe o título do curso.'); return; }
+                        if (!title) {
+                            showToast('Informe o título do curso.');
+                            return;
+                        }
 
                         const res = await fetch('/api/admin/courses', {
                             method: 'POST',
@@ -792,6 +917,7 @@
                         });
                         const data = await res.json();
                         if (res.ok) {
+                            invalidateCache('courses');
                             showToast(data.message);
                             renderPage('admin_courses');
                         } else {
@@ -799,25 +925,37 @@
                         }
                     });
                     break;
+                }
 
-                case 'my_courses':
+                case 'my_courses': {
                     centerTitle.innerText = user.role === 'Aluno' ? "Meus Cursos" : "Meu Curso";
                     if (user.role === 'Professor') {
+                        const courses = await fetchCourses();
                         const assigned = courses.find(c => c.id === user.assignedCourse);
                         if (!assigned) {
-                            centerContent.innerHTML = `<p><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg> Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
+                            centerContent.innerHTML = `<p>${ICONS.warning} Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
                             return;
                         }
                         renderProfessorCourseView(assigned);
                     } else {
-                        const subs = await fetchSubmissions();
-                        let pendingAssignments = [];
+                        // Busca paralela de cursos e submissões
+                        const [courses, subs] = await Promise.all([fetchCourses(), fetchSubmissions()]);
+                        const userEmailLower = user.email.toLowerCase();
+
+                        // Indexação O(1) das submissões do aluno por contentId
+                        const mySubsMap = new Map();
+                        subs.forEach(s => {
+                            if (s.studentEmail.toLowerCase() === userEmailLower) {
+                                mySubsMap.set(s.contentId, s);
+                            }
+                        });
+
+                        const pendingAssignments = [];
                         courses.forEach(c => {
                             c.modules.forEach(m => {
-                                m.contents.filter(cnt => cnt.isAssignment).forEach(cnt => {
-                                    const mySub = subs.find(s => s.contentId === cnt.id && s.studentEmail.toLowerCase() === user.email.toLowerCase());
-                                    
-                                    // Se tem submissão e apelação aceita, permitir envio mesmo se fechada
+                                m.contents.forEach(cnt => {
+                                    if (!cnt.isAssignment) return;
+                                    const mySub = mySubsMap.get(cnt.id);
                                     const isAppealAccepted = mySub && mySub.appealStatus === 'accepted';
                                     const deadlineInfo = evaluateDeadlineClient(cnt);
                                     if (deadlineInfo.isClosed && !isAppealAccepted) return;
@@ -831,7 +969,7 @@
 
                         centerContent.innerHTML = `
                             <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3); margin-bottom: 16px;">
-                                <h4 style="color: #fef3c7; margin-bottom: 8px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> Atividades e Provas Recentes</h4>
+                                <h4 style="color: #fef3c7; margin-bottom: 8px;">${ICONS.clipboard} Atividades e Provas Recentes</h4>
                                 <div style="display:flex; flex-direction:column; gap:10px;">
                                     ${pendingAssignments.length === 0 ? '<p style="font-size:0.85rem; opacity:0.8;">Nenhuma atividade ou prova pendente no momento.</p>' : ''}
                                     ${pendingAssignments.map(ast => {
@@ -844,25 +982,19 @@
                                         const badgeColor = foraPrazoCode === 'V' ? 'rgba(220, 38, 38, 0.7)' : 'rgba(16, 185, 129, 0.6)';
                                         const badgeText = formatForaPrazoBadge(foraPrazoCode);
 
-                                        let toleranceHtml = '';
-                                        if (!isProva) {
-                                            if (deadlineInfo.inTolerance) {
-                                                toleranceHtml = ` (<span style="color:#fde047;">Em período de tolerância: 2 dias</span>)`;
-                                            } else {
-                                                toleranceHtml = ` (Tolerância: 2 dias)`;
-                                            }
-                                        }
+                                        const toleranceHtml = !isProva
+                                            ? (deadlineInfo.inTolerance ? ` (<span style="color:#fde047;">Em período de tolerância: 2 dias</span>)` : ` (Tolerância: 2 dias)`)
+                                            : '';
 
-                                        let appealAcceptedNotice = '';
-                                        if (isAppealAccepted) {
-                                            appealAcceptedNotice = `<div style="color: #34d399; font-weight: 700; font-size: 0.8rem; margin-top: 3px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3Z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1L19 14Z"/></svg> Apelação aceita! Você tem até ${new Date(mySub.appealDeadline).toLocaleString('pt-BR')} para enviar.</div>`;
-                                        }
+                                        const appealAcceptedNotice = isAppealAccepted
+                                            ? `<div style="color: #34d399; font-weight: 700; font-size: 0.8rem; margin-top: 3px;">${ICONS.sparkle} Apelação aceita! Você tem até ${new Date(mySub.appealDeadline).toLocaleString('pt-BR')} para enviar.</div>`
+                                            : '';
 
                                         return `
                                             <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                                                 <div style="flex: 1; min-width: 220px;">
                                                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:4px;">
-                                                        <strong style="color: #fef3c7; font-size:0.95rem;">${ast.courseTitle} - ${isProva ? `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> [PROVA${ast.evaluationCode ? ' - ' + ast.evaluationCode : ''}]` : `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> [ATIVIDADE${ast.evaluationCode ? ' - ' + ast.evaluationCode : ''}]`} ${ast.subject}</strong>
+                                                        <strong style="color: #fef3c7; font-size:0.95rem;">${ast.courseTitle} - ${isProva ? `${ICONS.exam} [PROVA${ast.evaluationCode ? ' - ' + ast.evaluationCode : ''}]` : `${ICONS.clipboard} [ATIVIDADE${ast.evaluationCode ? ' - ' + ast.evaluationCode : ''}]`} ${ast.subject}</strong>
                                                         <span style="font-size:0.7rem; font-weight:700; padding:2px 7px; border-radius:6px; background:${badgeColor};">${badgeText}</span>
                                                     </div>
                                                     <div style="font-size:0.8rem; opacity:0.9;">${ast.description || 'Sem descrição'}</div>
@@ -870,9 +1002,7 @@
                                                         Entrega: de ${ast.startDate ? new Date(ast.startDate).toLocaleString('pt-BR') : '-'} até ${ast.endDate ? new Date(ast.endDate).toLocaleString('pt-BR') : '-'}${toleranceHtml}
                                                     </div>
                                                     ${appealAcceptedNotice}
-                                                    <div style="font-size:0.78rem; margin-top:3px;">
-                                                        <strong>Pendente de Envio</strong>
-                                                    </div>
+                                                    <div style="font-size:0.78rem; margin-top:3px;"><strong>Pendente de Envio</strong></div>
                                                 </div>
                                                 <button class="glass-btn btn-open-assignment" data-id="${ast.id}" data-course="${ast.courseId}" data-module="${ast.moduleId}" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">Responder</button>
                                             </div>
@@ -907,30 +1037,33 @@
                                 const courseObj = courses.find(x => x.id === cId);
                                 const modObj = courseObj.modules.find(x => x.id === mId);
                                 const astObj = modObj.contents.find(x => x.id === aId);
-                                const existingSub = subs.find(s => s.contentId === aId && s.studentEmail.toLowerCase() === user.email.toLowerCase());
-                                renderStudentAssignmentModal(courseObj, modObj, astObj, existingSub);
+                                renderStudentAssignmentModal(courseObj, modObj, astObj, mySubsMap.get(aId) || null);
                             });
                         });
                     }
                     break;
+                }
 
-                case 'my_grades':
+                case 'my_grades': {
                     centerTitle.innerText = user.role === 'Aluno' ? "Minhas Notas" : "Lançar Notas";
                     if (user.role === 'Aluno') {
                         renderStudentGradesHub();
                     } else {
+                        const courses = await fetchCourses();
                         const assigned = courses.find(c => c.id === user.assignedCourse);
                         if (!assigned) {
-                            centerContent.innerHTML = `<p><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg> Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
+                            centerContent.innerHTML = `<p>${ICONS.warning} Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
                             return;
                         }
                         renderProfessorGradeModules(assigned);
                     }
                     break;
+                }
 
-                case 'my_profile':
+                case 'my_profile': {
                     centerTitle.innerText = "Meu perfil";
-                    let teacherCourseSelectHtml = user.role === 'Professor' ? `
+                    const courses = user.role === 'Professor' ? await fetchCourses() : [];
+                    const teacherCourseSelectHtml = user.role === 'Professor' ? `
                         <div style="width: 100%; max-width: 400px; text-align: left; margin-top: 8px;">
                             <label style="font-size: 0.85rem; font-weight: 700; color: #ffffff; display: block; margin-bottom: 4px;">Curso que Leciona:</label>
                             <select id="teacherCourseSelect" class="profile-select-custom">
@@ -941,7 +1074,7 @@
                         </div>
                     ` : '';
 
-                    let createAccountBtnHtml = user.role === 'Administrador' ? `
+                    const createAccountBtnHtml = user.role === 'Administrador' ? `
                         <button id="btnOpenCreateAccModal" class="glass-btn" style="width: 100%; padding: 10px; justify-content: center; margin-top: 8px; font-size: 0.9rem;">
                             <svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Criar Nova Conta
                         </button>
@@ -957,7 +1090,7 @@
 
                             <div class="profile-name-row">
                                 <span id="userName" class="profile-name-text">${user.name}</span>
-                                <button id="btnEditName" class="btn-edit-icon" title="Editar nome"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m16 4 4 4L8 20H4v-4z"/><path d="m14 6 4 4"/></svg></button>
+                                <button id="btnEditName" class="btn-edit-icon" title="Editar nome">${ICONS.edit}</button>
                             </div>
 
                             <div id="nameEditForm" style="display: none; width: 100%; max-width: 300px; gap: 8px; margin-top: 4px;">
@@ -973,10 +1106,11 @@
                             <div id="profileMsg" tabindex="-1"></div>
                         </div>
                     `;
-                    setupProfileEvents(courses);
+                    setupProfileEvents();
                     break;
+                }
 
-                case 'settings':
+                case 'settings': {
                     centerTitle.innerText = "Configurações";
                     const isDark = document.body.classList.contains('dark-theme');
                     const isLegacy = document.body.classList.contains('legacy-mode');
@@ -1006,28 +1140,18 @@
 
                     document.getElementById('themeCheckbox').addEventListener('change', (e) => {
                         const checked = e.target.checked;
-                        if (checked) {
-                            document.body.classList.add('dark-theme');
-                            localStorage.setItem('masterclass_theme', 'dark');
-                            updateSchoolLogoByTheme(true);
-                        } else {
-                            document.body.classList.remove('dark-theme');
-                            localStorage.setItem('masterclass_theme', 'light');
-                            updateSchoolLogoByTheme(false);
-                        }
+                        document.body.classList.toggle('dark-theme', checked);
+                        localStorage.setItem('masterclass_theme', checked ? 'dark' : 'light');
+                        updateSchoolLogoByTheme(checked);
                     });
 
                     document.getElementById('legacyCheckbox').addEventListener('change', (e) => {
                         const checked = e.target.checked;
-                        if (checked) {
-                            document.body.classList.add('legacy-mode');
-                            localStorage.setItem('masterclass_legacy', 'true');
-                        } else {
-                            document.body.classList.remove('legacy-mode');
-                            localStorage.setItem('masterclass_legacy', 'false');
-                        }
+                        document.body.classList.toggle('legacy-mode', checked);
+                        localStorage.setItem('masterclass_legacy', checked ? 'true' : 'false');
                     });
                     break;
+                }
             }
         }
 
@@ -1050,46 +1174,38 @@
                                 <div style="font-size: 0.84rem; opacity: 0.92; font-weight: 400;">Escolha um curso individualmente para visualizar o boletim completo e médias por módulo.</div>
                             </div>
                         </div>
-                        <span style="font-size: 1.2rem; font-weight: 700;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span>
+                        <span style="font-size: 1.2rem; font-weight: 700;">${ICONS.arrowRight}</span>
                     </button>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 4px;">
                         <button type="button" class="grades-hub-btn" id="btnStudentAtividadesCorrigidas" style="border-left: 5px solid #10b981;">
                             <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 1.6rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg></span>
+                                <span style="font-size: 1.6rem;">${ICONS.clipboard}</span>
                                 <div>
                                     <div style="font-size: 1rem; font-weight: 700; color: #fef3c7;">Atividades Corrigidas</div>
                                     <div style="font-size: 0.82rem; opacity: 0.88; font-weight: 400;">Consulte suas atividades já avaliadas e com nota lançada por curso. (Inclui botão de Apelação para prazos perdidos).</div>
                                 </div>
                             </div>
-                            <span style="font-size: 1.1rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span>
+                            <span style="font-size: 1.1rem;">${ICONS.arrowRight}</span>
                         </button>
 
                         <button type="button" class="grades-hub-btn" id="btnStudentProvasCorrigidas" style="border-left: 5px solid #3b82f6;">
                             <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 1.6rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg></span>
+                                <span style="font-size: 1.6rem;">${ICONS.exam}</span>
                                 <div>
                                     <div style="font-size: 1rem; font-weight: 700; color: #fef3c7;">Provas Corrigidas</div>
                                     <div style="font-size: 0.82rem; opacity: 0.88; font-weight: 400;">Consulte suas provas já corrigidas e suas respectivas notas por curso. (Inclui botão de Apelação para prazos perdidos).</div>
                                 </div>
                             </div>
-                            <span style="font-size: 1.1rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span>
+                            <span style="font-size: 1.1rem;">${ICONS.arrowRight}</span>
                         </button>
                     </div>
                 </div>
             `;
 
-            document.getElementById('btnStudentMeuBoletim').addEventListener('click', () => {
-                renderStudentCourseSelector(boletimList, 'boletim');
-            });
-
-            document.getElementById('btnStudentAtividadesCorrigidas').addEventListener('click', () => {
-                renderStudentCourseSelector(boletimList, 'atividades');
-            });
-
-            document.getElementById('btnStudentProvasCorrigidas').addEventListener('click', () => {
-                renderStudentCourseSelector(boletimList, 'provas');
-            });
+            document.getElementById('btnStudentMeuBoletim').addEventListener('click', () => renderStudentCourseSelector(boletimList, 'boletim'));
+            document.getElementById('btnStudentAtividadesCorrigidas').addEventListener('click', () => renderStudentCourseSelector(boletimList, 'atividades'));
+            document.getElementById('btnStudentProvasCorrigidas').addEventListener('click', () => renderStudentCourseSelector(boletimList, 'provas'));
         }
 
         function renderStudentCourseSelector(boletimList, mode) {
@@ -1106,7 +1222,7 @@
 
             centerTitle.innerText = titlesMap[mode];
             centerContent.innerHTML = `
-                <button class="back-btn" id="btnBackToGradesHub"> Voltar para Minhas Notas</button>
+                <button class="back-btn" id="btnBackToGradesHub">Voltar para Minhas Notas</button>
                 <p>${descriptionsMap[mode]}</p>
                 <div class="courses-grid">
                     ${boletimList.length === 0 ? '<p style="opacity:0.85;">Nenhum curso disponível para consulta.</p>' : ''}
@@ -1124,9 +1240,9 @@
 
                         return `
                             <div class="course-card select-grade-course-card" data-course-id="${c.courseId}" style="border: 2px solid rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.24);">
-                                <div class="course-title"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h2a5 5 0 0 1 5 5 5 5 0 0 1 5-5h2a2 2 0 0 1 2 2v13"/><path d="M3 18a3 3 0 0 1 3-3h2a4 4 0 0 1 4 4 4 4 0 0 1 4-4h2a3 3 0 0 1 3 3"/></svg> ${c.courseTitle}</div>
+                                <div class="course-title">${ICONS.book} ${c.courseTitle}</div>
                                 <div class="course-desc">${c.courseDescription || 'Clique para acessar os registros deste curso.'}</div>
-                                <div style="font-size: 0.78rem; opacity: 0.85; margin-top: 2px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m2 10 10-5 10 5-10 5z"/><path d="M6 12v5c4 3 8 3 12 0v-5m4-2v6"/></svg> Prof.: ${c.professorName || 'Não vinculado'}</div>
+                                <div style="font-size: 0.78rem; opacity: 0.85; margin-top: 2px;">${ICONS.gradCap} Prof.: ${c.professorName || 'Não vinculado'}</div>
                                 ${badgeInfo}
                             </div>
                         `;
@@ -1134,7 +1250,7 @@
                 </div>
             `;
 
-            document.getElementById('btnBackToGradesHub').addEventListener('click', () => renderStudentGradesHub());
+            document.getElementById('btnBackToGradesHub').addEventListener('click', renderStudentGradesHub);
 
             document.querySelectorAll('.select-grade-course-card').forEach(card => {
                 card.addEventListener('click', () => {
@@ -1144,10 +1260,8 @@
 
                     if (mode === 'boletim') {
                         renderStudentCourseBoletimDetail(courseReport, boletimList);
-                    } else if (mode === 'atividades') {
-                        renderStudentCorrectedEvaluationsDetail(courseReport, boletimList, false);
-                    } else if (mode === 'provas') {
-                        renderStudentCorrectedEvaluationsDetail(courseReport, boletimList, true);
+                    } else {
+                        renderStudentCorrectedEvaluationsDetail(courseReport, boletimList, mode === 'provas');
                     }
                 });
             });
@@ -1159,8 +1273,8 @@
                 <button class="back-btn" id="btnBackToBoletimCourseSelect">⬅ Escolher Outro Curso</button>
                 <div style="background: rgba(0,0,0,0.28); padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.35);">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom: 10px;">
-                        <h4 style="color: #fef3c7; font-size: 1.08rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h2a5 5 0 0 1 5 5 5 5 0 0 1 5-5h2a2 2 0 0 1 2 2v13"/><path d="M3 18a3 3 0 0 1 3-3h2a4 4 0 0 1 4 4 4 4 0 0 1 4-4h2a3 3 0 0 1 3 3"/></svg> ${courseReport.courseTitle}</h4>
-                        <span style="font-size: 0.82rem; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 8px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m2 10 10-5 10 5-10 5z"/><path d="M6 12v5c4 3 8 3 12 0v-5m4-2v6"/></svg> Professor: <strong>${courseReport.professorName || 'Não vinculado'}</strong></span>
+                        <h4 style="color: #fef3c7; font-size: 1.08rem;">${ICONS.book} ${courseReport.courseTitle}</h4>
+                        <span style="font-size: 0.82rem; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 8px;">${ICONS.gradCap} Professor: <strong>${courseReport.professorName || 'Não vinculado'}</strong></span>
                     </div>
                     <div class="admin-table-container">
                         <table class="admin-table">
@@ -1214,19 +1328,16 @@
             const labelTipo = isProvaOnly ? 'Provas Corrigidas' : 'Atividades Corrigidas';
             centerTitle.innerText = `${labelTipo}: ${courseReport.courseTitle}`;
 
-            let items = [];
+            const items = [];
             courseReport.modules.forEach(m => {
-                const modItems = (m.correctedItems || []).filter(item => {
-                    if (isProvaOnly) return item.e_prova === 'V';
-                    return item.e_prova !== 'V';
-                });
+                const modItems = (m.correctedItems || []).filter(item => isProvaOnly ? item.e_prova === 'V' : item.e_prova !== 'V');
                 items.push(...modItems);
             });
 
             centerContent.innerHTML = `
                 <button class="back-btn" id="btnBackToEvalCourseSelect">⬅ Escolher Outro Curso</button>
                 <div style="background: rgba(0,0,0,0.28); padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.35);">
-                    <h4 style="color: #fef3c7; margin-bottom: 10px;">${isProvaOnly ? '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> Provas' : '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> Atividades'} Corrigidas — ${courseReport.courseTitle}</h4>
+                    <h4 style="color: #fef3c7; margin-bottom: 10px;">${isProvaOnly ? `${ICONS.exam} Provas` : `${ICONS.clipboard} Atividades`} Corrigidas — ${courseReport.courseTitle}</h4>
                     ${items.length === 0
                         ? `<p style="opacity:0.85; font-size:0.9rem; padding: 10px 0;">Nenhuma ${isProvaOnly ? 'prova' : 'atividade'} encontrada para este curso até o momento.</p>`
                         : `
@@ -1258,7 +1369,6 @@
 
                                         const codeTag = item.evaluationCode ? `<span style="font-size:0.72rem; background:rgba(255,255,255,0.18); padding:2px 6px; border-radius:4px; margin-right:6px;">${item.evaluationCode}</span>` : '';
 
-                                        // Apelação UI
                                         let appealHtml = '-';
                                         const appealStatus = item.appealStatus || 'none';
 
@@ -1271,7 +1381,7 @@
                                                 const deadlineAppealStr = item.appealDeadline ? new Date(item.appealDeadline).toLocaleString('pt-BR') : '24h';
                                                 appealHtml = `
                                                     <div style="display:flex; flex-direction:column; gap:4px;">
-                                                        <span style="font-size: 0.72rem; color: #34d399; font-weight: 700;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3Z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1L19 14Z"/></svg> Apelação Aceita! Envie até ${deadlineAppealStr}</span>
+                                                        <span style="font-size: 0.72rem; color: #34d399; font-weight: 700;">${ICONS.sparkle} Apelação Aceita! Envie até ${deadlineAppealStr}</span>
                                                         <button class="glass-btn btn-open-assignment-appeal" data-id="${item.contentId}" data-course="${courseReport.courseId}" data-module="${item.moduleId}" style="width: auto; padding: 5px 10px; font-size: 0.75rem; background: linear-gradient(135deg, #10b981, #059669);">Enviar Atividade</button>
                                                     </div>
                                                 `;
@@ -1314,7 +1424,6 @@
                 renderStudentCourseSelector(boletimList, isProvaOnly ? 'provas' : 'atividades');
             });
 
-            // Eventos de Apelação
             centerContent.querySelectorAll('.btn-request-appeal').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const subId = btn.getAttribute('data-sub-id');
@@ -1326,8 +1435,11 @@
                     });
                     const data = await res.json();
                     if (res.ok) {
+                        invalidateCache('boletim', 'submissions');
+                        const updatedBoletim = await fetchStudentBoletim();
+                        const updatedCourse = updatedBoletim.find(x => x.courseId === courseReport.courseId) || courseReport;
                         showToast(data.message || 'Apelação solicitada com sucesso!');
-                        renderStudentCorrectedEvaluationsDetail(courseReport, boletimList, isProvaOnly);
+                        renderStudentCorrectedEvaluationsDetail(updatedCourse, updatedBoletim, isProvaOnly);
                     } else {
                         showToast(data.message || 'Erro ao solicitar apelação.');
                     }
@@ -1339,11 +1451,10 @@
                     const cId = btn.getAttribute('data-course');
                     const mId = btn.getAttribute('data-module');
                     const aId = btn.getAttribute('data-id');
-                    const coursesAll = await fetchCourses();
+                    const [coursesAll, subs] = await Promise.all([fetchCourses(), fetchSubmissions()]);
                     const courseObj = coursesAll.find(x => x.id === cId);
                     const modObj = courseObj.modules.find(x => x.id === mId);
                     const astObj = modObj.contents.find(x => x.id === aId);
-                    const subs = await fetchSubmissions();
                     const existingSub = subs.find(s => s.contentId === aId && s.studentEmail.toLowerCase() === user.email.toLowerCase());
                     renderStudentAssignmentModal(courseObj, modObj, astObj, existingSub);
                 });
@@ -1357,35 +1468,30 @@
                 <div style="display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap;">
                     <button type="button" class="grades-hub-btn primary-boletim" id="btnProfManageGrades" style="flex:1; min-width:260px;">
                         <div style="display: flex; align-items: center; gap: 14px;">
-                            <span style="font-size: 1.8rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg></span>
+                            <span style="font-size: 1.8rem;">${ICONS.exam}</span>
                             <div>
                                 <div style="font-size: 1.08rem; font-weight: 800; color: #ffffff;">Lançar / Corrigir Notas</div>
                                 <div style="font-size: 0.84rem; opacity: 0.92; font-weight: 400;">Gerenciar submissões de atividades e provas por módulo.</div>
                             </div>
                         </div>
-                        <span style="font-size: 1.2rem; font-weight: 700;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span>
+                        <span style="font-size: 1.2rem; font-weight: 700;">${ICONS.arrowRight}</span>
                     </button>
                     
                     <button type="button" class="grades-hub-btn" id="btnProfManageAppeals" style="flex:1; min-width:260px; border-left: 5px solid #f59e0b;">
                         <div style="display: flex; align-items: center; gap: 14px;">
-                            <span style="font-size: 1.8rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8a5 5 0 0 1-6 0ZM2 16l3-8 3 8a5 5 0 0 1-6 0Z"/><path d="M12 3v18m-4 0h8m-8-17h8"/></svg></span>
+                            <span style="font-size: 1.8rem;">${ICONS.scale}</span>
                             <div>
                                 <div style="font-size: 1.08rem; font-weight: 800; color: #fef3c7;">Gerenciar Apelações</div>
                                 <div style="font-size: 0.84rem; opacity: 0.92; font-weight: 400;">Avaliar pedidos de apelação pendentes dos alunos para prazos perdidos.</div>
                             </div>
                         </div>
-                        <span style="font-size: 1.2rem; font-weight: 700;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span>
+                        <span style="font-size: 1.2rem; font-weight: 700;">${ICONS.arrowRight}</span>
                     </button>
                 </div>
             `;
 
-            document.getElementById('btnProfManageGrades').addEventListener('click', () => {
-                renderProfessorGradeModulesSelectModule(course);
-            });
-
-            document.getElementById('btnProfManageAppeals').addEventListener('click', () => {
-                renderProfessorAppealsList(course);
-            });
+            document.getElementById('btnProfManageGrades').addEventListener('click', () => renderProfessorGradeModulesSelectModule(course));
+            document.getElementById('btnProfManageAppeals').addEventListener('click', () => renderProfessorAppealsList(course));
         }
 
         function renderProfessorGradeModulesSelectModule(course) {
@@ -1407,8 +1513,7 @@
 
             document.querySelectorAll('.select-grade-module-btn').forEach(box => {
                 box.addEventListener('click', () => {
-                    const modId = box.getAttribute('data-mod-id');
-                    const modObj = course.modules.find(m => m.id === modId);
+                    const modObj = course.modules.find(m => m.id === box.getAttribute('data-mod-id'));
                     renderProfessorGradeOptions(course, modObj);
                 });
             });
@@ -1418,12 +1523,12 @@
             centerTitle.innerText = `Apelações de Alunos: ${course.title}`;
             const subs = await fetchSubmissions();
 
-            let pendingAppeals = [];
+            const pendingAppeals = [];
             course.modules.forEach(mod => {
-                mod.contents.filter(c => c.isAssignment).forEach(ast => {
-                    const astSubs = subs.filter(s => s.contentId === ast.id && s.courseId === course.id);
-                    astSubs.forEach(sub => {
-                        if (sub.appealStatus === 'requested') {
+                mod.contents.forEach(ast => {
+                    if (!ast.isAssignment) return;
+                    subs.forEach(sub => {
+                        if (sub.contentId === ast.id && sub.courseId === course.id && sub.appealStatus === 'requested') {
                             pendingAppeals.push({ ...sub, assignmentSubject: ast.subject, moduleName: mod.name, evaluationCode: ast.evaluationCode });
                         }
                     });
@@ -1433,7 +1538,7 @@
             centerContent.innerHTML = `
                 <button class="back-btn" id="backToProfHub2">Voltar</button>
                 <div style="background: rgba(0,0,0,0.28); padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.35);">
-                    <h4 style="color: #fef3c7; margin-bottom: 12px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8a5 5 0 0 1-6 0ZM2 16l3-8 3 8a5 5 0 0 1-6 0Z"/><path d="M12 3v18m-4 0h8m-8-17h8"/></svg> Pedidos de Apelação Pendentes (${pendingAppeals.length})</h4>
+                    <h4 style="color: #fef3c7; margin-bottom: 12px;">${ICONS.scale} Pedidos de Apelação Pendentes (${pendingAppeals.length})</h4>
                     ${pendingAppeals.length === 0
                         ? '<p style="opacity:0.85; font-size:0.9rem; padding: 10px 0;">Nenhum pedido de apelação pendente no momento.</p>'
                         : `
@@ -1459,40 +1564,30 @@
 
             document.getElementById('backToProfHub2').addEventListener('click', () => renderProfessorGradeModules(course));
 
-            centerContent.querySelectorAll('.btn-accept-appeal').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const subId = btn.getAttribute('data-sub-id');
-                    const res = await fetch(`/api/submissions/${subId}/appeal-response`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
-                        body: JSON.stringify({ action: 'accept', professorName: user.name })
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                        showToast(data.message || 'Apelação aceita com sucesso!');
-                        renderProfessorAppealsList(course);
-                    } else {
-                        showToast(data.message || 'Erro ao processar apelação.');
-                    }
+            const handleAppealResponse = async (subId, action, successFallbackMsg) => {
+                const res = await fetch(`/api/submissions/${subId}/appeal-response`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
+                    body: JSON.stringify({ action, professorName: user.name })
                 });
+                const data = await res.json();
+                if (res.ok) {
+                    invalidateCache('submissions', 'boletim');
+                    showToast(data.message || successFallbackMsg);
+                    renderProfessorAppealsList(course);
+                } else {
+                    showToast(data.message || 'Erro ao processar apelação.');
+                }
+            };
+
+            centerContent.querySelectorAll('.btn-accept-appeal').forEach(btn => {
+                btn.addEventListener('click', () => handleAppealResponse(btn.getAttribute('data-sub-id'), 'accept', 'Apelação aceita com sucesso!'));
             });
 
             centerContent.querySelectorAll('.btn-reject-appeal').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const subId = btn.getAttribute('data-sub-id');
+                btn.addEventListener('click', () => {
                     if (!confirm('Deseja realmente rejeitar esta apelação? O aluno não poderá solicitar outra.')) return;
-                    const res = await fetch(`/api/submissions/${subId}/appeal-response`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
-                        body: JSON.stringify({ action: 'reject', professorName: user.name })
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                        showToast(data.message || 'Apelação rejeitada.');
-                        renderProfessorAppealsList(course);
-                    } else {
-                        showToast(data.message || 'Erro ao processar apelação.');
-                    }
+                    handleAppealResponse(btn.getAttribute('data-sub-id'), 'reject', 'Apelação rejeitada.');
                 });
             });
         }
@@ -1504,42 +1599,37 @@
                 <p>Escolha uma das opções abaixo para visualizar e lançar notas:</p>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 12px;">
                     <div class="course-card" id="btnOptEvaluated" style="background: rgba(245, 158, 11, 0.25); border: 1px solid rgba(245, 158, 11, 0.6);">
-                        <div class="course-title"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> Atividades Avaliadas</div>
+                        <div class="course-title">${ICONS.clipboard} Atividades Avaliadas</div>
                         <div class="course-desc">Gerenciar submissões de atividades que exigem notas e avaliações.</div>
                     </div>
                     <div class="course-card" id="btnOptUnevaluated" style="background: rgba(59, 130, 246, 0.25); border: 1px solid rgba(59, 130, 246, 0.6);">
-                        <div class="course-title"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> Atividades Não Avaliadas</div>
+                        <div class="course-title">${ICONS.pin} Atividades Não Avaliadas</div>
                         <div class="course-desc">Visualizar atividades e provas ainda pendentes de atribuição de nota.</div>
                     </div>
                 </div>
             `;
 
             document.getElementById('backToGradeModules').addEventListener('click', () => renderProfessorGradeModulesSelectModule(course));
-
-            document.getElementById('btnOptEvaluated').addEventListener('click', () => {
-                renderProfessorActivitiesList(course, moduleObj, true);
-            });
-
-            document.getElementById('btnOptUnevaluated').addEventListener('click', () => {
-                renderProfessorActivitiesList(course, moduleObj, false);
-            });
+            document.getElementById('btnOptEvaluated').addEventListener('click', () => renderProfessorActivitiesList(course, moduleObj, true));
+            document.getElementById('btnOptUnevaluated').addEventListener('click', () => renderProfessorActivitiesList(course, moduleObj, false));
         }
 
         async function renderProfessorActivitiesList(course, moduleObj, isEvaluated) {
             centerTitle.innerText = `${moduleObj.name} > ${isEvaluated ? 'Atividades Avaliadas' : 'Atividades Não Avaliadas'}`;
             const subs = await fetchSubmissions();
 
+            // Agrupamento O(n) de submissões por contentId
+            const subsByContent = new Map();
+            subs.forEach(s => {
+                if (!subsByContent.has(s.contentId)) subsByContent.set(s.contentId, []);
+                subsByContent.get(s.contentId).push(s);
+            });
+
             const filteredContents = moduleObj.contents.filter(cnt => {
                 if (!cnt.isAssignment) return false;
-
-                const actSubs = subs.filter(s => s.contentId === cnt.id);
+                const actSubs = subsByContent.get(cnt.id) || [];
                 const hasAnyEvaluatedSub = actSubs.some(s => s.grade !== null && s.grade !== undefined && String(s.grade).trim() !== '');
-
-                if (isEvaluated) {
-                    return hasAnyEvaluatedSub;
-                } else {
-                    return !hasAnyEvaluatedSub;
-                }
+                return isEvaluated ? hasAnyEvaluatedSub : !hasAnyEvaluatedSub;
             });
 
             centerContent.innerHTML = `
@@ -1547,26 +1637,23 @@
                 <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
                     ${filteredContents.length === 0 ? `<p style="opacity:0.8;">Nenhuma ${isEvaluated ? 'atividade avaliada' : 'atividade não avaliada'} encontrada neste módulo.</p>` : ''}
                     ${filteredContents.map(act => {
-                        const actSubs = subs.filter(s => s.contentId === act.id);
+                        const actSubs = subsByContent.get(act.id) || [];
                         const deadlineInfo = evaluateDeadlineClient(act);
                         const actForaPrazo = act.fora_do_prazo || deadlineInfo.fora_do_prazo;
                         const badgeColor = actForaPrazo === 'V' ? 'rgba(220, 38, 38, 0.7)' : 'rgba(16, 185, 129, 0.6)';
                         const badgeText = formatForaPrazoBadge(actForaPrazo);
                         const isProva = act.e_prova === 'V';
 
-                        let infoPrazoExtra = '';
-                        if (isProva) {
-                            if (deadlineInfo.isPastEnd) infoPrazoExtra = ' | Sem tolerância';
-                        } else {
-                            infoPrazoExtra = ' | Tolerância: 2 dias';
-                        }
+                        const infoPrazoExtra = isProva
+                            ? (deadlineInfo.isPastEnd ? ' | Sem tolerância' : '')
+                            : ' | Tolerância: 2 dias';
 
                         return `
                             <div style="background: rgba(255,255,255,0.15); padding: 14px; border-radius: 12px; display:flex; flex-direction:column; gap:10px;">
                                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                     <div>
                                         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                                            <strong style="color: #fef3c7; font-size:1rem;">${isProva ? `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> [PROVA${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]` : `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> [ATIVIDADE${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]`} ${act.subject}</strong>
+                                            <strong style="color: #fef3c7; font-size:1rem;">${isProva ? `${ICONS.exam} [PROVA${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]` : `${ICONS.clipboard} [ATIVIDADE${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]`} ${act.subject}</strong>
                                             <span style="font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:6px; background:${badgeColor};">${badgeText}</span>
                                             <span style="font-size:0.72rem; font-weight:600; padding:2px 8px; border-radius:6px; background:rgba(245,158,11,0.35);">Nota: 0.0 a 5.0</span>
                                         </div>
@@ -1612,8 +1699,7 @@
             centerContent.querySelectorAll('.btn-save-grade').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const subId = btn.getAttribute('data-sub-id');
-                    const row = btn.closest('div');
-                    const gradeInput = row.querySelector('.grade-input');
+                    const gradeInput = btn.closest('div').querySelector('.grade-input');
                     const gradeRaw = gradeInput.value.trim();
 
                     if (gradeRaw !== '') {
@@ -1627,7 +1713,7 @@
                             return;
                         }
                     }
-                    
+
                     const res = await fetch(`/api/submissions/${subId}/grade`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'x-user-role': user.role },
@@ -1638,6 +1724,7 @@
                         showToast(data.message || 'Erro ao lançar nota.', gradeInput);
                         return;
                     }
+                    invalidateCache('submissions', 'boletim');
                     showToast(data.message || 'Nota salva!');
                     renderProfessorActivitiesList(course, moduleObj, isEvaluated);
                 });
@@ -1649,7 +1736,7 @@
             modalDiv.className = 'modal-overlay';
             modalDiv.innerHTML = `
                 <div class="modal-card" style="max-width: 600px;">
-                    <h3 style="margin-bottom: 10px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13z"/><path d="M11 14.5 13 21H8l-2-8"/><path d="M21 10v4"/></svg> Criar Novo Aviso</h3>
+                    <h3 style="margin-bottom: 10px;">${ICONS.megaphone} Criar Novo Aviso</h3>
                     <div style="display: flex; flex-direction: column; gap: 10px; max-height: 70vh; overflow-y: auto; padding-right: 4px;">
                         <div>
                             <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Assunto do Aviso*</label>
@@ -1664,7 +1751,7 @@
                             <div class="editor-toolbar">
                                 <button type="button" id="btnAvisoBold"><b>Negrito</b></button>
                                 <button type="button" id="btnAvisoItalic"><i>Itálico</i></button>
-                                <label for="inputAvisoImg"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg> Inserir Imagem</label>
+                                <label for="inputAvisoImg">${ICONS.image} Inserir Imagem</label>
                                 <input type="file" id="inputAvisoImg" accept="image/*" style="display: none;">
                             </div>
                             <div id="richAvisoEditor" class="rich-text-editor" contenteditable="true"></div>
@@ -1684,30 +1771,14 @@
 
             const ed = modalDiv.querySelector('#richAvisoEditor');
             enableImageResizingInEditor(ed);
+            insertImageIntoEditor(modalDiv.querySelector('#inputAvisoImg'), ed);
 
             modalDiv.querySelector('#btnAvisoBold').addEventListener('click', () => { ed.focus(); document.execCommand('bold'); });
             modalDiv.querySelector('#btnAvisoItalic').addEventListener('click', () => { ed.focus(); document.execCommand('italic'); });
             modalDiv.querySelector('#btnCloseAvisoModal').addEventListener('click', () => modalDiv.remove());
 
-            const imgInput = modalDiv.querySelector('#inputAvisoImg');
-            imgInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    ed.focus();
-                    const imgHtml = `<img src="${event.target.result}" alt="Imagem" style="width: 75%; max-width: 100%; height: auto;">`;
-                    if (!document.execCommand('insertHTML', false, imgHtml)) {
-                        ed.innerHTML += imgHtml;
-                    }
-                };
-                reader.readAsDataURL(file);
-                e.target.value = '';
-            });
-
             let attachedFileObj = null;
-            const fileInput = modalDiv.querySelector('#inputAvisoFile');
-            fileInput.addEventListener('change', (e) => {
+            modalDiv.querySelector('#inputAvisoFile').addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
@@ -1720,7 +1791,6 @@
             modalDiv.querySelector('#btnPublishAviso').addEventListener('click', async () => {
                 const subject = modalDiv.querySelector('#inputAvisoSubject').value.trim();
                 const description = modalDiv.querySelector('#inputAvisoDesc').value.trim();
-                const textHtml = ed.innerHTML;
 
                 if (!subject) {
                     showToast('O assunto do aviso é obrigatório!');
@@ -1733,7 +1803,7 @@
                     body: JSON.stringify({
                         subject,
                         description,
-                        textHtml,
+                        textHtml: ed.innerHTML,
                         fileName: attachedFileObj ? attachedFileObj.name : null,
                         fileData: attachedFileObj ? attachedFileObj.data : null,
                         fileType: attachedFileObj ? attachedFileObj.type : null
@@ -1741,6 +1811,7 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
+                    invalidateCache('avisos');
                     showToast(data.message || 'Aviso publicado!');
                     modalDiv.remove();
                     renderPage('avisos');
@@ -1755,14 +1826,14 @@
             const courses = await fetchCourses();
             const assigned = courses.find(c => c.id === user.assignedCourse);
             if (!assigned) {
-                centerContent.innerHTML = `<p><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg> Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
+                centerContent.innerHTML = `<p>${ICONS.warning} Selecione o curso que leciona em <strong>Meu Perfil</strong>.</p>`;
                 return;
             }
 
-            let launchedActivities = [];
+            const launchedActivities = [];
             assigned.modules.forEach(mod => {
-                mod.contents.filter(cnt => cnt.isAssignment).forEach(cnt => {
-                    launchedActivities.push({ ...cnt, moduleName: mod.name, moduleId: mod.id });
+                mod.contents.forEach(cnt => {
+                    if (cnt.isAssignment) launchedActivities.push({ ...cnt, moduleName: mod.name, moduleId: mod.id });
                 });
             });
 
@@ -1779,28 +1850,25 @@
                         const badgeText = formatForaPrazoBadge(actForaPrazo);
                         const isProva = act.e_prova === 'V';
 
-                        let infoPrazoExtra = '';
-                        if (isProva) {
-                            if (deadlineInfo.isPastEnd) infoPrazoExtra = ' (Sem tolerância)';
-                        } else {
-                            infoPrazoExtra = ' (Tolerância: 2 dias)';
-                        }
+                        const infoPrazoExtra = isProva
+                            ? (deadlineInfo.isPastEnd ? ' (Sem tolerância)' : '')
+                            : ' (Tolerância: 2 dias)';
 
                         return `
                             <div style="background: rgba(255,255,255,0.15); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3); display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
                                 <div style="flex: 1; min-width: 220px;">
                                     <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom: 6px;">
-                                        <span style="font-size: 0.8rem; background: rgba(245, 158, 11, 0.4); padding: 2px 8px; border-radius: 6px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v1"/><path d="M3 10h18l-2 9H5z"/></svg> Módulo: ${act.moduleName}</span>
+                                        <span style="font-size: 0.8rem; background: rgba(245, 158, 11, 0.4); padding: 2px 8px; border-radius: 6px;">${ICONS.folder} Módulo: ${act.moduleName}</span>
                                         <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: ${badgeColor};">${badgeText}</span>
                                     </div>
-                                    <strong style="color: #fef3c7; font-size:1.05rem; display:block;">${isProva ? `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> [PROVA${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]` : `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> [ATIVIDADE${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]`} ${act.subject}</strong>
+                                    <strong style="color: #fef3c7; font-size:1.05rem; display:block;">${isProva ? `${ICONS.exam} [PROVA${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]` : `${ICONS.clipboard} [ATIVIDADE${act.evaluationCode ? ' - ' + act.evaluationCode : ''}]`} ${act.subject}</strong>
                                     <div style="font-size:0.85rem; opacity:0.9; margin-top:2px;">${act.description || 'Sem descrição'}</div>
                                     <div style="font-size:0.78rem; opacity:0.8; margin-top:6px;">Período: ${act.startDate ? new Date(act.startDate).toLocaleString('pt-BR') : '-'} até ${act.endDate ? new Date(act.endDate).toLocaleString('pt-BR') : '-'}${infoPrazoExtra}</div>
                                     <div class="rendered-content" style="font-size:0.85rem; margin-top:8px; background: rgba(0,0,0,0.2); padding:8px; border-radius:6px; word-break:break-word;">${act.textHtml}</div>
                                 </div>
                                 <div style="display:flex; gap:8px; align-items:center;">
-                                    <button class="glass-btn btn-edit-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m16 4 4 4L8 20H4v-4z"/><path d="m14 6 4 4"/></svg> Editar</button>
-                                    <button class="glass-btn btn-del-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem; background: linear-gradient(135deg,#dc2626,#7f1d1d);"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6"/><path d="M10 11v6m4-6v6"/></svg> Excluir</button>
+                                    <button class="glass-btn btn-edit-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">${ICONS.edit} Editar</button>
+                                    <button class="glass-btn btn-del-hist-act" data-mod-id="${act.moduleId}" data-act-id="${act.id}" style="width: auto; padding: 6px 12px; font-size: 0.8rem; background: linear-gradient(135deg,#dc2626,#7f1d1d);">${ICONS.trash} Excluir</button>
                                 </div>
                             </div>
                         `;
@@ -1810,10 +1878,8 @@
 
             centerContent.querySelectorAll('.btn-edit-hist-act').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const modId = btn.getAttribute('data-mod-id');
-                    const actId = btn.getAttribute('data-act-id');
-                    const modObj = assigned.modules.find(m => m.id === modId);
-                    const actObj = modObj.contents.find(c => c.id === actId);
+                    const modObj = assigned.modules.find(m => m.id === btn.getAttribute('data-mod-id'));
+                    const actObj = modObj.contents.find(c => c.id === btn.getAttribute('data-act-id'));
                     renderModuleContentEditor(assigned, modObj, false, actObj);
                 });
             });
@@ -1830,6 +1896,7 @@
                     });
                     const data = await res.json();
                     if (res.ok) {
+                        invalidateCache('courses', 'submissions', 'boletim');
                         showToast(data.message || 'Atividade excluída.');
                         renderProfessorActivitiesHistory();
                     } else {
@@ -1850,18 +1917,18 @@
             modalDiv.innerHTML = `
                 <div class="modal-card" style="max-width: 550px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
-                        <h3 style="margin:0;">${assignment.e_prova === 'V' ? '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> Prova' : '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> Atividade'}: ${assignment.subject}</h3>
+                        <h3 style="margin:0;">${assignment.e_prova === 'V' ? `${ICONS.exam} Prova` : `${ICONS.clipboard} Atividade`}: ${assignment.subject}</h3>
                         <span style="font-size:0.75rem; font-weight:700; padding:3px 8px; border-radius:6px; background:${currentPrazoCode === 'V' ? 'rgba(220,38,38,0.75)' : 'rgba(16,185,129,0.65)'};">${formatForaPrazoBadge(currentPrazoCode)}</span>
                     </div>
                     <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">${assignment.description || ''}</div>
                     <div class="rendered-content" style="font-size: 0.85rem; background: rgba(0,0,0,0.22); padding: 10px; border-radius: 8px; margin-bottom: 10px;">${assignment.textHtml || ''}</div>
-                    ${deadlineInfo.inTolerance ? `<div style="background: rgba(245, 158, 11, 0.35); border: 1px solid #f59e0b; padding: 8px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 10px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></svg> Atenção: O prazo oficial encerrou, mas esta atividade está no período de tolerância de 2 dias.</div>` : ''}
-                    ${isAppealAccepted ? `<div style="background: rgba(16, 185, 129, 0.35); border: 1px solid #10b981; padding: 8px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 10px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3Z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1L19 14Z"/></svg> Apelação aceita! Prazo de 24h para envio até ${new Date(existingSub.appealDeadline).toLocaleString('pt-BR')}.</div>` : ''}
+                    ${deadlineInfo.inTolerance ? `<div style="background: rgba(245, 158, 11, 0.35); border: 1px solid #f59e0b; padding: 8px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 10px;">${ICONS.warning} Atenção: O prazo oficial encerrou, mas esta atividade está no período de tolerância de 2 dias.</div>` : ''}
+                    ${isAppealAccepted ? `<div style="background: rgba(16, 185, 129, 0.35); border: 1px solid #10b981; padding: 8px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 10px;">${ICONS.sparkle} Apelação aceita! Prazo de 24h para envio até ${new Date(existingSub.appealDeadline).toLocaleString('pt-BR')}.</div>` : ''}
                     ${isClosed ? `<div style="background: rgba(220, 38, 38, 0.45); border: 1px solid #ef4444; padding: 8px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 10px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> Prazo encerrado${assignment.e_prova === 'V' ? ' (Sem tolerância)' : ''}! Esta avaliação está fechada para novas respostas e a nota automática é 0.</div>` : ''}
                     <div class="editor-toolbar" style="${isClosed ? 'display:none;' : ''}">
                         <button type="button" id="btnAstBold"><b>Negrito</b></button>
                         <button type="button" id="btnAstItalic"><i>Itálico</i></button>
-                        <label for="inputAstImg"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg> Inserir Imagem</label>
+                        <label for="inputAstImg">${ICONS.image} Inserir Imagem</label>
                         <input type="file" id="inputAstImg" accept="image/*" style="display: none;">
                     </div>
                     <div id="richAssignmentEditor" class="rich-text-editor" contenteditable="${!isClosed}" style="min-height: 150px;">${existingSub ? existingSub.submissionHtml : ''}</div>
@@ -1876,24 +1943,9 @@
             const ed = modalDiv.querySelector('#richAssignmentEditor');
             if (!isClosed) {
                 enableImageResizingInEditor(ed);
+                insertImageIntoEditor(modalDiv.querySelector('#inputAstImg'), ed);
                 modalDiv.querySelector('#btnAstBold').addEventListener('click', () => { ed.focus(); document.execCommand('bold'); });
                 modalDiv.querySelector('#btnAstItalic').addEventListener('click', () => { ed.focus(); document.execCommand('italic'); });
-
-                const imgInput = modalDiv.querySelector('#inputAstImg');
-                imgInput.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        ed.focus();
-                        const imgHtml = `<img src="${event.target.result}" alt="Imagem" style="width: 75%; max-width: 100%; height: auto;">`;
-                        if (!document.execCommand('insertHTML', false, imgHtml)) {
-                            ed.innerHTML += imgHtml;
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                    e.target.value = '';
-                });
 
                 modalDiv.querySelector('#btnSubmitAssignment').addEventListener('click', async () => {
                     const res = await fetch('/api/submissions', {
@@ -1909,6 +1961,7 @@
                         })
                     });
                     const data = await res.json();
+                    invalidateCache('submissions', 'boletim');
                     showToast(data.message || (res.ok ? 'Enviado!' : 'Erro ao enviar.'));
                     modalDiv.remove();
                     renderPage('my_courses');
@@ -1923,7 +1976,7 @@
             centerContent.innerHTML = `
                 ${isAdminView ? '<button class="back-btn" id="backToAdminCourses">Voltar aos Cursos</button>' : ''}
                 <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                    <button id="btnViewOnlyContents" class="glass-btn" style="width: auto; padding: 8px 14px; font-size: 0.8rem;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h2a5 5 0 0 1 5 5 5 5 0 0 1 5-5h2a2 2 0 0 1 2 2v13"/><path d="M3 18a3 3 0 0 1 3-3h2a4 4 0 0 1 4 4 4 4 0 0 1 4-4h2a3 3 0 0 1 3 3"/></svg> Ver Histórico de Conteúdos Teóricos</button>
+                    <button id="btnViewOnlyContents" class="glass-btn" style="width: auto; padding: 8px 14px; font-size: 0.8rem;">${ICONS.book} Ver Histórico de Conteúdos Teóricos</button>
                 </div>
                 <p>Selecione um dos módulos para lançar novos conteúdos ou gerenciar:</p>
                 <div class="modules-container">
@@ -1938,19 +1991,14 @@
 
             if (isAdminView) {
                 const backBtn = document.getElementById('backToAdminCourses');
-                if (backBtn) {
-                    backBtn.addEventListener('click', () => renderPage(user.role === 'Administrador' ? 'admin_courses' : 'my_courses'));
-                }
+                if (backBtn) backBtn.addEventListener('click', () => renderPage(user.role === 'Administrador' ? 'admin_courses' : 'my_courses'));
             }
 
-            document.getElementById('btnViewOnlyContents').addEventListener('click', () => {
-                renderProfessorSelectModuleForContents(course, isAdminView);
-            });
+            document.getElementById('btnViewOnlyContents').addEventListener('click', () => renderProfessorSelectModuleForContents(course, isAdminView));
 
             document.querySelectorAll('.select-module-btn').forEach(box => {
                 box.addEventListener('click', () => {
-                    const modId = box.getAttribute('data-mod-id');
-                    const modObj = course.modules.find(m => m.id === modId);
+                    const modObj = course.modules.find(m => m.id === box.getAttribute('data-mod-id'));
                     renderModuleContentEditor(course, modObj, isAdminView);
                 });
             });
@@ -1975,8 +2023,7 @@
 
             document.querySelectorAll('.select-contents-module-btn').forEach(box => {
                 box.addEventListener('click', () => {
-                    const modId = box.getAttribute('data-mod-id');
-                    const modObj = course.modules.find(m => m.id === modId);
+                    const modObj = course.modules.find(m => m.id === box.getAttribute('data-mod-id'));
                     renderProfessorOnlyContentsView(course, modObj, isAdminView);
                 });
             });
@@ -1990,16 +2037,16 @@
                 <button class="back-btn" id="backToModSelect">Voltar aos Módulos</button>
                 <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
                     <div style="background: rgba(0,0,0,0.25); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3);">
-                        <h4 style="color: #fef3c7; margin-bottom: 6px;"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v1"/><path d="M3 10h18l-2 9H5z"/></svg> ${moduleObj.name}</h4>
+                        <h4 style="color: #fef3c7; margin-bottom: 6px;">${ICONS.folder} ${moduleObj.name}</h4>
                         ${onlyContents.length === 0 ? '<p style="font-size:0.85rem; opacity:0.8;">Nenhum conteúdo teórico lançado neste módulo.</p>' : ''}
                         ${onlyContents.map(cnt => `
                             <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; margin-top: 6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                 <div style="flex: 1; min-width: 180px;">
-                                    <strong><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> ${cnt.subject}</strong>
+                                    <strong>${ICONS.pin} ${cnt.subject}</strong>
                                     <div style="font-size:0.8rem; opacity:0.9; margin-top:2px;">${cnt.description || 'Sem descrição'}</div>
                                     <div class="rendered-content" style="font-size:0.85rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
                                 </div>
-                                <button class="glass-btn btn-edit-content-item" data-course="${course.id}" data-mod="${moduleObj.id}" data-id="${cnt.id}" style="width: auto; padding: 6px 10px; font-size: 0.75rem;">Editar</button>
+                                <button class="glass-btn btn-edit-content-item" data-id="${cnt.id}" style="width: auto; padding: 6px 10px; font-size: 0.75rem;">Editar</button>
                             </div>
                         `).join('')}
                     </div>
@@ -2009,15 +2056,9 @@
             document.getElementById('backToModSelect').addEventListener('click', () => renderProfessorSelectModuleForContents(course, isAdminView));
 
             centerContent.querySelectorAll('.btn-edit-content-item').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const cId = btn.getAttribute('data-course');
-                    const mId = btn.getAttribute('data-mod');
-                    const aId = btn.getAttribute('data-id');
-                    const allCourses = await fetchCourses();
-                    const cObj = allCourses.find(x => x.id === cId);
-                    const mObj = cObj.modules.find(x => x.id === mId);
-                    const itemObj = mObj.contents.find(x => x.id === aId);
-                    renderModuleContentEditor(cObj, mObj, isAdminView, itemObj);
+                btn.addEventListener('click', () => {
+                    const itemObj = moduleObj.contents.find(x => x.id === btn.getAttribute('data-id'));
+                    renderModuleContentEditor(course, moduleObj, isAdminView, itemObj);
                 });
             });
         }
@@ -2067,7 +2108,7 @@
                             <div class="editor-toolbar">
                                 <button type="button" id="btnAstSimpleBold"><b>Negrito</b></button>
                                 <button type="button" id="btnAstSimpleItalic"><i>Itálico</i></button>
-                                <label for="inputAstSimpleImg"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg> Inserir Imagem</label>
+                                <label for="inputAstSimpleImg">${ICONS.image} Inserir Imagem</label>
                                 <input type="file" id="inputAstSimpleImg" accept="image/*" style="display: none;">
                             </div>
                             <div id="richAssignmentEditor" class="rich-text-editor" contenteditable="true">${editItem && editItem.isAssignment ? editItem.textHtml : ''}</div>
@@ -2078,7 +2119,7 @@
                             <div class="editor-toolbar">
                                 <button type="button" id="btnFullBold"><b>Negrito</b></button>
                                 <button type="button" id="btnFullItalic"><i>Itálico</i></button>
-                                <label for="inputEditorImg"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg> Inserir Imagem</label>
+                                <label for="inputEditorImg">${ICONS.image} Inserir Imagem</label>
                                 <input type="file" id="inputEditorImg" accept="image/*" style="display: none;">
                             </div>
                             <div id="richFullEditor" class="rich-text-editor" contenteditable="true">${editItem && !editItem.isAssignment ? editItem.textHtml : ''}</div>
@@ -2099,12 +2140,21 @@
             const datesWrapper = document.getElementById('assignmentDatesWrapper');
             const simpleEditorBox = document.getElementById('simpleEditorBox');
             const fullEditorBox = document.getElementById('fullEditorBox');
-
             const richAstEd = document.getElementById('richAssignmentEditor');
             const richFullEd = document.getElementById('richFullEditor');
 
-            if (richAstEd) enableImageResizingInEditor(richAstEd);
-            if (richFullEd) enableImageResizingInEditor(richFullEd);
+            if (richAstEd) {
+                enableImageResizingInEditor(richAstEd);
+                insertImageIntoEditor(document.getElementById('inputAstSimpleImg'), richAstEd);
+                document.getElementById('btnAstSimpleBold').addEventListener('click', () => { richAstEd.focus(); document.execCommand('bold'); });
+                document.getElementById('btnAstSimpleItalic').addEventListener('click', () => { richAstEd.focus(); document.execCommand('italic'); });
+            }
+            if (richFullEd) {
+                enableImageResizingInEditor(richFullEd);
+                insertImageIntoEditor(document.getElementById('inputEditorImg'), richFullEd);
+                document.getElementById('btnFullBold').addEventListener('click', () => { richFullEd.focus(); document.execCommand('bold'); });
+                document.getElementById('btnFullItalic').addEventListener('click', () => { richFullEd.focus(); document.execCommand('italic'); });
+            }
 
             const selectEProva = document.getElementById('selectEProva');
             const selectEvaluationCode = document.getElementById('selectEvaluationCode');
@@ -2138,48 +2188,6 @@
                 fullEditorBox.style.display = isAct ? 'none' : 'block';
             });
 
-            if (richAstEd) {
-                document.getElementById('btnAstSimpleBold').addEventListener('click', () => { richAstEd.focus(); document.execCommand('bold'); });
-                document.getElementById('btnAstSimpleItalic').addEventListener('click', () => { richAstEd.focus(); document.execCommand('italic'); });
-                
-                const inputAstSimpleImg = document.getElementById('inputAstSimpleImg');
-                inputAstSimpleImg.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        richAstEd.focus();
-                        const imgHtml = `<img src="${event.target.result}" alt="Imagem" style="width: 75%; max-width: 100%; height: auto;">`;
-                        if (!document.execCommand('insertHTML', false, imgHtml)) {
-                            richAstEd.innerHTML += imgHtml;
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                    e.target.value = '';
-                });
-            }
-
-            if (richFullEd) {
-                document.getElementById('btnFullBold').addEventListener('click', () => { richFullEd.focus(); document.execCommand('bold'); });
-                document.getElementById('btnFullItalic').addEventListener('click', () => { richFullEd.focus(); document.execCommand('italic'); });
-
-                const inputEditorImg = document.getElementById('inputEditorImg');
-                inputEditorImg.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        richFullEd.focus();
-                        const imgHtml = `<img src="${event.target.result}" alt="Imagem" style="width: 75%; max-width: 100%; height: auto;">`;
-                        if (!document.execCommand('insertHTML', false, imgHtml)) {
-                            richFullEd.innerHTML += imgHtml;
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                    e.target.value = '';
-                });
-            }
-
             let attachedFileObj = null;
             const fileInputAtt = document.getElementById('inputFileAttachment');
             if (fileInputAtt) {
@@ -2204,8 +2212,14 @@
                 const endDate = document.getElementById('inputEndDate').value;
                 const textHtml = isAssignment ? richAstEd.innerHTML : richFullEd.innerHTML;
 
-                if (!subject) { showToast('O assunto é obrigatório!'); return; }
-                if (isAssignment && (!startDate || !endDate)) { showToast('Informe a data de início e término da atividade.'); return; }
+                if (!subject) {
+                    showToast('O assunto é obrigatório!');
+                    return;
+                }
+                if (isAssignment && (!startDate || !endDate)) {
+                    showToast('Informe a data de início e término da atividade.');
+                    return;
+                }
 
                 const payload = {
                     subject,
@@ -2233,8 +2247,11 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
+                    invalidateCache('courses', 'boletim');
+                    const refreshedCourses = await fetchCourses();
+                    const updatedCourse = refreshedCourses.find(c => c.id === course.id) || course;
                     showToast(data.message);
-                    renderProfessorCourseView(course, isAdminView);
+                    renderProfessorCourseView(updatedCourse, isAdminView);
                 } else {
                     showToast(data.message || 'Erro ao salvar.');
                 }
@@ -2258,7 +2275,7 @@
                                         : '';
                                     return `
                                         <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px;">
-                                            <strong>${cnt.isAssignment ? (cnt.e_prova === 'V' ? '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="4" y="4" width="13" height="17" rx="2"/><path d="M8 4.5V3h5v1.5"/><path d="m14 15 5-5 2 2-5 5-3 1z"/></svg> Prova' : '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="17" rx="2"/><path d="M16 4.5V3H10v1.5"/><path d="M12 10h4M12 14h4M12 18h4"/><path d="M4 7v14"/></svg> Atividade') : '<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> Matéria'}: ${cnt.subject}</strong>${badgeHtml}
+                                            <strong>${cnt.isAssignment ? (cnt.e_prova === 'V' ? `${ICONS.exam} Prova` : `${ICONS.clipboard} Atividade`) : `${ICONS.pin} Matéria`}: ${cnt.subject}</strong>${badgeHtml}
                                             <div class="rendered-content" style="font-size:0.82rem; margin-top:4px; word-break:break-word;">${cnt.textHtml}</div>
                                         </div>
                                     `;
@@ -2271,7 +2288,7 @@
             document.getElementById('backToStudentCourses').addEventListener('click', () => renderPage('my_courses'));
         }
 
-        function setupProfileEvents(courses) {
+        function setupProfileEvents() {
             const avatarClickArea = document.getElementById('avatarClickArea');
             const avatarFileInput = document.getElementById('avatarFileInput');
             avatarClickArea.addEventListener('click', () => avatarFileInput.click());
@@ -2280,9 +2297,7 @@
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = (event) => {
-                    openAvatarCropperModal(event.target.result);
-                };
+                reader.onload = (event) => openAvatarCropperModal(event.target.result);
                 reader.readAsDataURL(file);
                 e.target.value = '';
             });
@@ -2381,6 +2396,13 @@
             let startX = 0;
             let startY = 0;
 
+            const updateTransform = () => {
+                img.style.width = (img.naturalWidth * scale) + 'px';
+                img.style.height = (img.naturalHeight * scale) + 'px';
+                img.style.left = posX + 'px';
+                img.style.top = posY + 'px';
+            };
+
             img.onload = () => {
                 const minDim = Math.min(img.naturalWidth, img.naturalHeight);
                 scale = 280 / minDim;
@@ -2389,13 +2411,6 @@
                 posY = (280 - img.naturalHeight * scale) / 2;
                 updateTransform();
             };
-
-            function updateTransform() {
-                img.style.width = (img.naturalWidth * scale) + 'px';
-                img.style.height = (img.naturalHeight * scale) + 'px';
-                img.style.left = posX + 'px';
-                img.style.top = posY + 'px';
-            }
 
             container.addEventListener('pointerdown', (e) => {
                 isDragging = true;
@@ -2413,7 +2428,7 @@
 
             container.addEventListener('pointerup', (e) => {
                 isDragging = false;
-                try { container.releasePointerCapture(e.pointerId); } catch(err){}
+                try { container.releasePointerCapture(e.pointerId); } catch {}
             });
 
             zoomRange.addEventListener('input', (e) => {
@@ -2432,36 +2447,29 @@
                 canvas.width = 280;
                 canvas.height = 280;
                 const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, posX, posY, img.naturalWidth * scale, img.naturalHeight * scale);
+                const croppedBase64 = canvas.toDataURL('image/jpeg', 0.9);
 
-                const renderImg = new Image();
-                renderImg.src = imageSrc;
-                renderImg.onload = async () => {
-                    ctx.drawImage(renderImg, posX, posY, renderImg.naturalWidth * scale, renderImg.naturalHeight * scale);
-                    const croppedBase64 = canvas.toDataURL('image/jpeg', 0.9);
-
-                    const res = await fetch('/api/profile', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: user.email, avatar: croppedBase64 })
-                    });
-                    if (res.ok) {
-                        user.avatar = croppedBase64;
-                        localStorage.setItem('masterclass_user', JSON.stringify(user));
-                        const profileAvatarElem = document.getElementById('userAvatar');
-                        if (profileAvatarElem) profileAvatarElem.src = croppedBase64;
-                        updateNavAvatar();
-                        showToast('Foto de perfil atualizada com sucesso!');
-                    }
-                    modalDiv.remove();
-                };
+                const res = await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email, avatar: croppedBase64 })
+                });
+                if (res.ok) {
+                    user.avatar = croppedBase64;
+                    localStorage.setItem('masterclass_user', JSON.stringify(user));
+                    const profileAvatarElem = document.getElementById('userAvatar');
+                    if (profileAvatarElem) profileAvatarElem.src = croppedBase64;
+                    updateNavAvatar();
+                    showToast('Foto de perfil atualizada com sucesso!');
+                }
+                modalDiv.remove();
             });
         }
 
         function updateNavAvatar() {
             const avatarElem = document.getElementById('navProfileAvatar');
-            if (avatarElem) {
-                avatarElem.src = user.avatar || 'imagem4.jpeg';
-            }
+            if (avatarElem) avatarElem.src = user.avatar || 'imagem4.jpeg';
         }
         updateNavAvatar();
 

@@ -4,29 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Class - Acesso e Cadastro</title>
-    <link rel="icon" type="image/png" href="imagem8.png">
+    <link rel="icon" type="image/png" href="imagem8.1.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="index.css">
-
+    <link rel="stylesheet" href="index.css">
 </head>
 <body>
     <svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;overflow:hidden;pointer-events:none">
-        
-        <defs>
-            <linearGradient id="mcIconGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#36d1dc"/>
-                <stop offset="38%" stop-color="#6c63ff"/>
-                <stop offset="72%" stop-color="#c471ed"/>
-                <stop offset="100%" stop-color="#ff9a5a"/>
-            </linearGradient>
-            <linearGradient id="mcIconGlass" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ffffff" stop-opacity=".42"/>
-                <stop offset="48%" stop-color="#b9c7ff" stop-opacity=".16"/>
-                <stop offset="100%" stop-color="#7c3aed" stop-opacity=".30"/>
-            </linearGradient>
-        </defs>
         <filter id="liquidGlassRefraction" x="-15%" y="-15%" width="130%" height="130%">
             <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="8" result="waterNoise" />
             <feDisplacementMap in="SourceGraphic" in2="waterNoise" scale="9" xChannelSelector="R" yChannelSelector="G" />
@@ -36,13 +21,17 @@
     <div class="tooltip-glass" id="globalTooltip"></div>
 
     <div class="theme-toggle-top has-tooltip" data-tooltip="Alternar Tema Claro/Escuro" id="themeToggleBtn">
-        <span id="themeIcon"><svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"/></svg></span>
+        <span id="themeIcon">
+            <svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"/>
+            </svg>
+        </span>
         <span id="themeLabel">Modo Escuro</span>
     </div>
 
     <div class="glass-card">
         <div class="school-photo-container">
-            <img src="imagem5.jpeg" alt="Escola Master Class" class="school-photo has-tooltip" data-tooltip="Escola Master Class" id="schoolImg" onerror="this.src='https://via.placeholder.com/90?text=Escola'">
+            <img src="imagem5.jpeg" alt="Escola Master Class" class="school-photo has-tooltip" data-tooltip="Escola Master Class" id="schoolImg" onerror="this.onerror=null;this.src='https://via.placeholder.com/90?text=Escola'">
         </div>
 
         <h2 id="formTitle">Master Class</h2>
@@ -52,12 +41,12 @@
         <form id="loginForm">
             <div class="input-group">
                 <label for="loginEmail">E-mail</label>
-                <input type="email" id="loginEmail" placeholder="seu.email@exemplo.com" required>
+                <input type="email" id="loginEmail" placeholder="seu.email@exemplo.com" autocomplete="email" required>
             </div>
 
             <div class="input-group">
                 <label for="loginPassword">Senha</label>
-                <input type="password" id="loginPassword" placeholder="Sua senha" required>
+                <input type="password" id="loginPassword" placeholder="Sua senha" autocomplete="current-password" required>
             </div>
 
             <div class="forgot-password-link">
@@ -72,7 +61,7 @@
             <div id="forgotStep1">
                 <div class="input-group">
                     <label for="forgotEmail">E-mail da Conta</label>
-                    <input type="email" id="forgotEmail" placeholder="Digite seu e-mail cadastrado" required>
+                    <input type="email" id="forgotEmail" placeholder="Digite seu e-mail cadastrado" autocomplete="email" required>
                 </div>
                 <button type="button" id="btnVerifyForgotEmail">Verificar E-mail</button>
             </div>
@@ -80,11 +69,11 @@
             <div id="forgotStep2" style="display: none;">
                 <div class="input-group">
                     <label for="newPassword">Nova Senha</label>
-                    <input type="password" id="newPassword" placeholder="Mín. 8 caracteres, maiúscula, minúscula, número e símbolo">
+                    <input type="password" id="newPassword" placeholder="Mín. 8 caracteres, maiúscula, minúscula, número e símbolo" autocomplete="new-password">
                 </div>
                 <div class="input-group">
                     <label for="confirmNewPassword">Confirmar Nova Senha</label>
-                    <input type="password" id="confirmNewPassword" placeholder="Repita a nova senha">
+                    <input type="password" id="confirmNewPassword" placeholder="Repita a nova senha" autocomplete="new-password">
                 </div>
                 <button type="submit">Salvar Nova Senha</button>
             </div>
@@ -94,19 +83,19 @@
         <form id="registerForm" style="display: none;">
             <div class="input-group">
                 <label for="name">Nome Completo</label>
-                <input type="text" id="name" placeholder="Ex: João da Silva">
+                <input type="text" id="name" placeholder="Ex: João da Silva" autocomplete="name">
                 <div id="error-name" class="field-error"></div>
             </div>
 
             <div class="input-group">
                 <label for="email">E-mail</label>
-                <input type="email" id="email" placeholder="seu.email@exemplo.com">
+                <input type="email" id="email" placeholder="seu.email@exemplo.com" autocomplete="email">
                 <div id="error-email" class="field-error"></div>
             </div>
 
             <div class="input-group">
                 <label for="confirmEmail">Confirmar E-mail</label>
-                <input type="email" id="confirmEmail" placeholder="Repita o e-mail">
+                <input type="email" id="confirmEmail" placeholder="Repita o e-mail" autocomplete="email">
                 <div id="error-confirmEmail" class="field-error"></div>
             </div>
 
@@ -121,13 +110,13 @@
 
             <div class="input-group">
                 <label for="password">Senha</label>
-                <input type="password" id="password" placeholder="Sua senha segura">
+                <input type="password" id="password" placeholder="Sua senha segura" autocomplete="new-password">
                 <div id="error-password" class="field-error"></div>
             </div>
 
             <div class="input-group">
                 <label for="confirmPassword">Confirmar Senha</label>
-                <input type="password" id="confirmPassword" placeholder="Repita a senha">
+                <input type="password" id="confirmPassword" placeholder="Repita a senha" autocomplete="new-password">
                 <div id="error-confirmPassword" class="field-error"></div>
             </div>
 
@@ -136,328 +125,330 @@
 
         <div id="globalMessage" tabindex="-1"></div>
 
-        <div class="toggle-mode" id="toggleModeContainer">
-            <span id="toggleText">Você não tem uma conta?</span> 
+        <div class="toggle-mode">
+            <span id="toggleText">Você não tem uma conta?</span>
             <a id="toggleBtn">Cadastre-se</a>
         </div>
     </div>
 
-    
     <script>
-        // Inline line-icon helper: keeps icons self-contained and avoids external libraries.
-        function iconSvg(name) {
-            const icons = {
+        (() => {
+            'use strict';
+
+            const ICONS = {
                 sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
                 moon: '<path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"/>'
             };
-            return `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">${icons[name] || ''}</svg>`;
-        }
-    </script>
-<script>
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
-        const themeIcon = document.getElementById('themeIcon');
-        const themeLabel = document.getElementById('themeLabel');
-        const schoolImg = document.getElementById('schoolImg');
 
-        function applyTheme(isDark) {
-            if (isDark) {
-                document.body.classList.add('dark-theme');
-                themeIcon.innerHTML = iconSvg('sun');
-                themeLabel.innerText = 'Modo Claro';
-                schoolImg.src = 'Imagem9.png';
-                localStorage.setItem('masterclass_theme', 'dark');
-            } else {
-                document.body.classList.remove('dark-theme');
-                themeIcon.innerHTML = iconSvg('moon');
-                themeLabel.innerText = 'Modo Escuro';
-                schoolImg.src = 'imagem5.jpeg';
-                localStorage.setItem('masterclass_theme', 'light');
-            }
-        }
+            const iconSvg = (name) =>
+                `<svg class="ui-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">${ICONS[name] || ''}</svg>`;
 
-        const savedTheme = localStorage.getItem('masterclass_theme');
-        applyTheme(savedTheme === 'dark');
-
-        if (localStorage.getItem('masterclass_legacy') === 'true') {
-            document.body.classList.add('legacy-mode');
-        }
-
-        themeToggleBtn.addEventListener('click', () => {
-            const isDark = !document.body.classList.contains('dark-theme');
-            applyTheme(isDark);
-        });
-
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const forgotForm = document.getElementById('forgotForm');
-        const formTitle = document.getElementById('formTitle');
-        const formSubtitle = document.getElementById('formSubtitle');
-        const toggleBtn = document.getElementById('toggleBtn');
-        const toggleText = document.getElementById('toggleText');
-        const toggleModeContainer = document.getElementById('toggleModeContainer');
-        const globalMessage = document.getElementById('globalMessage');
-        const forgotPassBtn = document.getElementById('forgotPassBtn');
-
-        let currentMode = 'login'; // 'login', 'register', 'forgot'
-        let verifiedForgotEmail = '';
-
-        function focusAndScrollTo(el) {
-            if (!el) return;
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            if (typeof el.focus === 'function') {
-                el.focus({ preventScroll: true });
-            }
-        }
-
-        function displayGlobalMsg(text, isError = false) {
-            globalMessage.style.display = 'block';
-            globalMessage.className = isError ? 'error' : 'success';
-            globalMessage.innerText = text;
-            focusAndScrollTo(globalMessage);
-        }
-
-        const tooltip = document.getElementById('globalTooltip');
-        document.addEventListener('mouseover', (e) => {
-            const target = e.target.closest('.has-tooltip');
-            if (target) {
-                const text = target.getAttribute('data-tooltip');
-                if (text) {
-                    tooltip.innerText = text;
-                    tooltip.classList.add('visible');
-                }
-            }
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (tooltip.classList.contains('visible')) {
-                tooltip.style.left = `${e.clientX + 12}px`;
-                tooltip.style.top = `${e.clientY + 12}px`;
-            }
-        });
-
-        document.addEventListener('mouseout', (e) => {
-            const target = e.target.closest('.has-tooltip');
-            if (target) {
-                tooltip.classList.remove('visible');
-            }
-        });
-
-        // Alternar para tela de "Esqueci minha senha"
-        forgotPassBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            currentMode = 'forgot';
-            globalMessage.style.display = 'none';
-            loginForm.style.display = 'none';
-            registerForm.style.display = 'none';
-            forgotForm.style.display = 'block';
-            document.getElementById('forgotStep1').style.display = 'block';
-            document.getElementById('forgotStep2').style.display = 'none';
-
-            formTitle.innerText = 'Recuperar Senha';
-            formSubtitle.innerText = 'Informe seu e-mail cadastrado';
-            toggleText.innerText = 'Lembrou sua senha?';
-            toggleBtn.innerText = 'Fazer Login';
-        });
-
-        toggleBtn.addEventListener('click', () => {
-            globalMessage.style.display = 'none';
-
-            if (currentMode === 'login') {
-                // Ir para Cadastro
-                currentMode = 'register';
-                loginForm.style.display = 'none';
-                forgotForm.style.display = 'none';
-                registerForm.style.display = 'block';
-                formTitle.innerText = 'Criar Conta';
-                formSubtitle.innerText = 'Junte-se à Master Class';
-                toggleText.innerText = 'Já possui uma conta?';
-                toggleBtn.innerText = 'Fazer Login';
-            } else {
-                // Ir para Login (vindo de Cadastro ou Esqueci a Senha)
-                currentMode = 'login';
-                registerForm.style.display = 'none';
-                forgotForm.style.display = 'none';
-                loginForm.style.display = 'block';
-                formTitle.innerText = 'Master Class';
-                formSubtitle.innerText = 'Acesse sua conta educacional';
-                toggleText.innerText = 'Você não tem uma conta?';
-                toggleBtn.innerText = 'Cadastre-se';
-            }
-        });
-
-        // Passo 1: Verificar se o e-mail existe
-        document.getElementById('btnVerifyForgotEmail').addEventListener('click', async () => {
-            globalMessage.style.display = 'none';
-            const emailInput = document.getElementById('forgotEmail');
-            const email = emailInput.value.trim();
-
-            if (!email) {
-                displayGlobalMsg('Por favor, informe o e-mail.', true);
-                return;
-            }
-
-            try {
-                const response = await fetch('/forgot-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    verifiedForgotEmail = email;
-                    displayGlobalMsg(data.message, false);
-                    document.getElementById('forgotStep1').style.display = 'none';
-                    document.getElementById('forgotStep2').style.display = 'block';
-                    formSubtitle.innerText = 'Insira e confirme sua nova senha';
-                } else {
-                    displayGlobalMsg(data.message || 'E-mail não encontrado.', true);
-                }
-            } catch (err) {
-                console.error(err);
-                displayGlobalMsg('Erro ao conectar ao servidor.', true);
-            }
-        });
-
-        // Passo 2: Enviar nova senha
-        forgotForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            globalMessage.style.display = 'none';
-
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-
-            try {
-                const response = await fetch('/forgot-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: verifiedForgotEmail, newPassword, confirmNewPassword })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    displayGlobalMsg(data.message, false);
-                    setTimeout(() => {
-                        // Retorna para o login após sucesso
-                        toggleBtn.click();
-                    }, 1500);
-                } else {
-                    displayGlobalMsg(data.message || 'Erro ao redefinir senha.', true);
-                }
-            } catch (err) {
-                console.error(err);
-                displayGlobalMsg('Erro ao conectar ao servidor.', true);
-            }
-        });
-
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            globalMessage.style.display = 'none';
-
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            try {
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    localStorage.setItem('masterclass_user', JSON.stringify(data.user));
-                    displayGlobalMsg(`Bem-vindo(a), ${data.user.name}! Redirecionando...`, false);
-
-                    setTimeout(() => {
-                        window.location.href = 'home_page.html';
-                    }, 800);
-                } else {
-                    displayGlobalMsg(data.message || 'Erro ao realizar login.', true);
-                }
-            } catch (err) {
-                console.error(err);
-                displayGlobalMsg('Erro ao conectar ao servidor.', true);
-            }
-        });
-
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            document.querySelectorAll('.field-error').forEach(el => {
-                el.style.display = 'none';
-                el.innerText = '';
-            });
-            document.querySelectorAll('input, select').forEach(el => {
-                el.classList.remove('error-input');
-            });
-            globalMessage.style.display = 'none';
-
-            const payload = {
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
-                confirmEmail: document.getElementById('confirmEmail').value,
-                role: document.getElementById('role').value,
-                password: document.getElementById('password').value,
-                confirmPassword: document.getElementById('confirmPassword').value
+            // Cache de referências DOM
+            const dom = {
+                body: document.body,
+                themeToggleBtn: document.getElementById('themeToggleBtn'),
+                themeIcon: document.getElementById('themeIcon'),
+                themeLabel: document.getElementById('themeLabel'),
+                schoolImg: document.getElementById('schoolImg'),
+                tooltip: document.getElementById('globalTooltip'),
+                loginForm: document.getElementById('loginForm'),
+                registerForm: document.getElementById('registerForm'),
+                forgotForm: document.getElementById('forgotForm'),
+                forgotStep1: document.getElementById('forgotStep1'),
+                forgotStep2: document.getElementById('forgotStep2'),
+                formTitle: document.getElementById('formTitle'),
+                formSubtitle: document.getElementById('formSubtitle'),
+                toggleBtn: document.getElementById('toggleBtn'),
+                toggleText: document.getElementById('toggleText'),
+                globalMessage: document.getElementById('globalMessage'),
+                forgotPassBtn: document.getElementById('forgotPassBtn'),
+                btnVerifyForgotEmail: document.getElementById('btnVerifyForgotEmail')
             };
 
-            try {
-                const submitBtn = registerForm.querySelector('button[type="submit"]');
-                submitBtn.innerText = 'Cadastrando...';
-                submitBtn.disabled = true;
+            // Tema e modo legado
+            function applyTheme(isDark) {
+                dom.body.classList.toggle('dark-theme', isDark);
+                dom.themeIcon.innerHTML = iconSvg(isDark ? 'sun' : 'moon');
+                dom.themeLabel.textContent = isDark ? 'Modo Claro' : 'Modo Escuro';
+                dom.schoolImg.src = isDark ? 'Imagem9.png' : 'imagem5.jpeg';
+                localStorage.setItem('masterclass_theme', isDark ? 'dark' : 'light');
+            }
 
-                const response = await fetch('/register', {
+            applyTheme(localStorage.getItem('masterclass_theme') === 'dark');
+
+            if (localStorage.getItem('masterclass_legacy') === 'true') {
+                dom.body.classList.add('legacy-mode');
+            }
+
+            dom.themeToggleBtn.addEventListener('click', () => {
+                applyTheme(!dom.body.classList.contains('dark-theme'));
+            });
+
+            // Tooltip otimizado com requestAnimationFrame e transform3d (sem reflow de layout)
+            let activeTooltipTarget = null;
+            let rafPending = false;
+            let mouseX = 0;
+            let mouseY = 0;
+
+            document.addEventListener('mouseover', (e) => {
+                const target = e.target.closest('.has-tooltip');
+                if (!target || target === activeTooltipTarget) return;
+                const text = target.dataset.tooltip;
+                if (text) {
+                    activeTooltipTarget = target;
+                    dom.tooltip.textContent = text;
+                    dom.tooltip.classList.add('visible');
+                }
+            }, { passive: true });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!activeTooltipTarget) return;
+                mouseX = e.clientX + 12;
+                mouseY = e.clientY + 12;
+                if (!rafPending) {
+                    rafPending = true;
+                    requestAnimationFrame(() => {
+                        dom.tooltip.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
+                        rafPending = false;
+                    });
+                }
+            }, { passive: true });
+
+            document.addEventListener('mouseout', (e) => {
+                if (!activeTooltipTarget) return;
+                const related = e.relatedTarget?.closest?.('.has-tooltip');
+                if (related !== activeTooltipTarget) {
+                    activeTooltipTarget = null;
+                    dom.tooltip.classList.remove('visible');
+                }
+            }, { passive: true });
+
+            // Navegação entre formulários
+            let currentMode = 'login'; // 'login' | 'register' | 'forgot'
+            let verifiedForgotEmail = '';
+
+            const MODES = {
+                login: {
+                    title: 'Master Class',
+                    subtitle: 'Acesse sua conta educacional',
+                    toggleText: 'Você não tem uma conta?',
+                    toggleBtn: 'Cadastre-se'
+                },
+                register: {
+                    title: 'Criar Conta',
+                    subtitle: 'Junte-se à Master Class',
+                    toggleText: 'Já possui uma conta?',
+                    toggleBtn: 'Fazer Login'
+                },
+                forgot: {
+                    title: 'Recuperar Senha',
+                    subtitle: 'Informe seu e-mail cadastrado',
+                    toggleText: 'Lembrou sua senha?',
+                    toggleBtn: 'Fazer Login'
+                }
+            };
+
+            function switchMode(mode) {
+                currentMode = mode;
+                dom.globalMessage.style.display = 'none';
+                dom.loginForm.style.display = mode === 'login' ? 'block' : 'none';
+                dom.registerForm.style.display = mode === 'register' ? 'block' : 'none';
+                dom.forgotForm.style.display = mode === 'forgot' ? 'block' : 'none';
+
+                if (mode === 'forgot') {
+                    dom.forgotStep1.style.display = 'block';
+                    dom.forgotStep2.style.display = 'none';
+                }
+
+                const cfg = MODES[mode];
+                dom.formTitle.textContent = cfg.title;
+                dom.formSubtitle.textContent = cfg.subtitle;
+                dom.toggleText.textContent = cfg.toggleText;
+                dom.toggleBtn.textContent = cfg.toggleBtn;
+            }
+
+            dom.forgotPassBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchMode('forgot');
+            });
+
+            dom.toggleBtn.addEventListener('click', () => {
+                switchMode(currentMode === 'login' ? 'register' : 'login');
+            });
+
+            // Mensagens e foco
+            function focusAndScrollTo(el) {
+                if (!el) return;
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.focus?.({ preventScroll: true });
+            }
+
+            function displayGlobalMsg(text, isError = false) {
+                dom.globalMessage.style.display = 'block';
+                dom.globalMessage.className = isError ? 'error' : 'success';
+                dom.globalMessage.textContent = text;
+                focusAndScrollTo(dom.globalMessage);
+            }
+
+            // Helper centralizado de requisições POST JSON
+            async function postJson(url, payload) {
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+                const data = await response.json().catch(() => ({}));
+                return { ok: response.ok, data };
+            }
 
-                const data = await response.json();
-                
-                submitBtn.innerText = 'Finalizar Cadastro';
-                submitBtn.disabled = false;
+            // Recuperação de senha - Passo 1
+            dom.btnVerifyForgotEmail.addEventListener('click', async () => {
+                dom.globalMessage.style.display = 'none';
+                const email = document.getElementById('forgotEmail').value.trim();
 
-                if (response.ok) {
-                    displayGlobalMsg(data.message || 'Cadastro realizado com sucesso!', false);
-                    registerForm.reset();
+                if (!email) {
+                    displayGlobalMsg('Por favor, informe o e-mail.', true);
+                    return;
+                }
 
-                    setTimeout(() => {
-                        toggleBtn.click();
-                    }, 1200);
-                } else {
-                    if (data.issues && Array.isArray(data.issues)) {
+                dom.btnVerifyForgotEmail.disabled = true;
+                try {
+                    const { ok, data } = await postJson('/forgot-password', { email });
+                    if (ok) {
+                        verifiedForgotEmail = email;
+                        displayGlobalMsg(data.message, false);
+                        dom.forgotStep1.style.display = 'none';
+                        dom.forgotStep2.style.display = 'block';
+                        dom.formSubtitle.textContent = 'Insira e confirme sua nova senha';
+                    } else {
+                        displayGlobalMsg(data.message || 'E-mail não encontrado.', true);
+                    }
+                } catch {
+                    displayGlobalMsg('Erro ao conectar ao servidor.', true);
+                } finally {
+                    dom.btnVerifyForgotEmail.disabled = false;
+                }
+            });
+
+            // Recuperação de senha - Passo 2
+            dom.forgotForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                dom.globalMessage.style.display = 'none';
+
+                const submitBtn = dom.forgotForm.querySelector('button[type="submit"]');
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+                submitBtn.disabled = true;
+                try {
+                    const { ok, data } = await postJson('/forgot-password', {
+                        email: verifiedForgotEmail,
+                        newPassword,
+                        confirmNewPassword
+                    });
+
+                    if (ok) {
+                        displayGlobalMsg(data.message, false);
+                        setTimeout(() => switchMode('login'), 1500);
+                    } else {
+                        displayGlobalMsg(data.message || 'Erro ao redefinir senha.', true);
+                    }
+                } catch {
+                    displayGlobalMsg('Erro ao conectar ao servidor.', true);
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+
+            // Login
+            dom.loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                dom.globalMessage.style.display = 'none';
+
+                const submitBtn = dom.loginForm.querySelector('button[type="submit"]');
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+
+                submitBtn.disabled = true;
+                try {
+                    const { ok, data } = await postJson('/login', { email, password });
+
+                    if (ok) {
+                        localStorage.setItem('masterclass_user', JSON.stringify(data.user));
+                        displayGlobalMsg(`Bem-vindo(a), ${data.user.name}! Redirecionando...`, false);
+                        setTimeout(() => {
+                            window.location.href = 'home_page.html';
+                        }, 800);
+                    } else {
+                        displayGlobalMsg(data.message || 'Erro ao realizar login.', true);
+                        submitBtn.disabled = false;
+                    }
+                } catch {
+                    displayGlobalMsg('Erro ao conectar ao servidor.', true);
+                    submitBtn.disabled = false;
+                }
+            });
+
+            // Cadastro
+            const registerErrors = dom.registerForm.querySelectorAll('.field-error');
+            const registerInputs = dom.registerForm.querySelectorAll('input, select');
+
+            dom.registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                registerErrors.forEach((el) => {
+                    el.style.display = 'none';
+                    el.textContent = '';
+                });
+                registerInputs.forEach((el) => el.classList.remove('error-input'));
+                dom.globalMessage.style.display = 'none';
+
+                const payload = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    confirmEmail: document.getElementById('confirmEmail').value,
+                    role: document.getElementById('role').value,
+                    password: document.getElementById('password').value,
+                    confirmPassword: document.getElementById('confirmPassword').value
+                };
+
+                const submitBtn = dom.registerForm.querySelector('button[type="submit"]');
+                submitBtn.textContent = 'Cadastrando...';
+                submitBtn.disabled = true;
+
+                try {
+                    const { ok, data } = await postJson('/register', payload);
+
+                    if (ok) {
+                        displayGlobalMsg(data.message || 'Cadastro realizado com sucesso!', false);
+                        dom.registerForm.reset();
+                        setTimeout(() => switchMode('login'), 1200);
+                    } else if (Array.isArray(data.issues)) {
                         let firstErrorElem = null;
-                        data.issues.forEach(issue => {
+                        for (const issue of data.issues) {
                             const fieldName = issue.path[0];
                             const errorDiv = document.getElementById(`error-${fieldName}`);
                             const inputField = document.getElementById(fieldName);
 
                             if (errorDiv) {
-                                errorDiv.innerText = `* ${issue.message}`;
+                                errorDiv.textContent = `* ${issue.message}`;
                                 errorDiv.style.display = 'block';
                             }
                             if (inputField) {
                                 inputField.classList.add('error-input');
                                 if (!firstErrorElem) firstErrorElem = inputField;
                             }
-                        });
-                        if (firstErrorElem) {
-                            focusAndScrollTo(firstErrorElem);
                         }
+                        if (firstErrorElem) focusAndScrollTo(firstErrorElem);
                     }
+                } catch {
+                    displayGlobalMsg('Erro ao conectar ao servidor.', true);
+                } finally {
+                    submitBtn.textContent = 'Finalizar Cadastro';
+                    submitBtn.disabled = false;
                 }
-            } catch (err) {
-                const submitBtn = registerForm.querySelector('button[type="submit"]');
-                submitBtn.innerText = 'Finalizar Cadastro';
-                submitBtn.disabled = false;
-
-                displayGlobalMsg('Erro ao conectar ao servidor.', true);
-            }
-        });
+            });
+        })();
     </script>
 </body>
 </html>
